@@ -50,9 +50,13 @@ async function buildSearchIndex() {
 }
 export default async function RootLayout({ children }) {
   const searchIndex = await buildSearchIndex();
-  let navCategories = [];
+  let nurseryCategories = [];
+  let gardenCategories = [];
   try {
-    navCategories = await getCategories("nursery");
+    nurseryCategories = await getCategories("nursery");
+  } catch (e) { /* התעלמות */ }
+  try {
+    gardenCategories = await getCategories("garden");
   } catch (e) { /* התעלמות */ }
   return (
     <html lang="he" dir="rtl">
@@ -63,7 +67,7 @@ export default async function RootLayout({ children }) {
       </head>
       <body>
         <CartProvider>
-          <SiteHeader searchIndex={searchIndex} categories={navCategories} />
+          <SiteHeader searchIndex={searchIndex} nurseryCategories={nurseryCategories} gardenCategories={gardenCategories} />
           <div style={{ minHeight: "60vh" }}>{children}</div>
           <SiteFooter />
         </CartProvider>
