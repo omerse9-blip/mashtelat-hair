@@ -82,14 +82,14 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           </button>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
           <button
             onClick={goHome}
             style={{
               width: "100%", textAlign: "inherit", cursor: "pointer", background: "transparent",
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "15px 14px", borderRadius: 12, fontSize: 16.5, fontWeight: 700,
-              color: "var(--green)", marginBottom: 2, fontFamily: "inherit",
+              padding: "10px 14px", borderRadius: 10, fontSize: 16.5, fontWeight: 700,
+              color: "var(--green)", fontFamily: "inherit",
               border: "none", borderBottom: "1px solid rgba(207,155,111,0.22)",
             }}
           >
@@ -106,8 +106,8 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
                 style={{
                   width: "100%", textAlign: "inherit", cursor: "pointer", background: "transparent",
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "15px 14px", borderRadius: 12, fontSize: 16.5, fontWeight: 600,
-                  color: "var(--ink)", marginBottom: 2, fontFamily: "inherit",
+                  padding: "10px 14px", borderRadius: 10, fontSize: 16.5, fontWeight: 600,
+                  color: "var(--ink)", fontFamily: "inherit",
                   border: "none",
                   borderBottom: i < categories.length - 1 ? "1px solid rgba(207,155,111,0.22)" : "none",
                 }}
@@ -123,7 +123,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
   );
 
   return (
-    <header style={{ borderBottom: "1px solid var(--line)", position: "sticky", top: 0, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)", zIndex: 50 }}>
+    <header style={{ borderBottom: "1px solid var(--line)", position: "sticky", top: 0, background: "rgba(247,242,233,0.92)", backdropFilter: "blur(8px)", zIndex: 50 }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <button
@@ -142,7 +142,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <SearchOverlay index={searchIndex} />
-          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid var(--line)", fontSize: 20 }} aria-label="עגלה">
+          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid var(--line)", background: "var(--card)", fontSize: 20 }} aria-label="עגלה">
             🛒
             {count > 0 ? (
               <span style={{ position: "absolute", top: -4, insetInlineEnd: -4, minWidth: 20, height: 20, padding: "0 5px", borderRadius: 999, background: "var(--green)", color: "#fff", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -168,7 +168,7 @@ function NavTab({ href, label, active }) {
         padding: "8px 14px",
         borderRadius: 999,
         whiteSpace: "nowrap",
-        background: active ? "var(--green)" : "transparent",
+        background: active ? "var(--green)" : "var(--card)",
         color: active ? "#fff" : "var(--ink)",
         border: active ? "1px solid var(--green)" : "1px solid var(--line)",
       }}
