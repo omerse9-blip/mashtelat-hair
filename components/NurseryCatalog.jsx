@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "./CartProvider";
 
@@ -8,6 +8,23 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   const [activeId, setActiveId] = useState(categories[0]?.id || null);
   const [zoomImg, setZoomImg] = useState(null);
   const products = activeId ? (productsByCat[activeId] || []) : [];
+
+  // סגירת התמונה בלחיצת "חזור" בטלפון במקום יציאה מהדף
+  useEffect(() => {
+    if (!zoomImg) return;
+    window.history.pushState({ zoom: true }, "");
+    const onPop = () => setZoomImg(null);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [zoomImg]);
+
+  function closeZoom() {
+    if (window.history.state && window.history.state.zoom) {
+      window.history.back();
+    } else {
+      setZoomImg(null);
+    }
+  }
 
   if (!categories.length) {
     return (
@@ -51,7 +68,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
 
       {zoomImg ? (
         <div
-          onClick={() => setZoomImg(null)}
+          onClick={closeZoom}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}
         >
           <img
@@ -61,7 +78,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
             style={{ maxWidth: "92vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
           />
           <button
-            onClick={() => setZoomImg(null)}
+            onClick={closeZoom}
             style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 40, height: 40, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
             aria-label="סגירה"
           >
