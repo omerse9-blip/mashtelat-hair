@@ -2,14 +2,44 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCart } from "./CartProvider";
 
 export default function NurseryCatalog({ categories, productsByCat }) {
-  const [activeId, setActiveId] = useState(categories[0]?.id || null);
-  const [zoomImg, setZoomImg] = useState(null);
-  const products = activeId ? (productsByCat[activeId] || []) : [];
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  // סגירת התמונה בלחיצת "חזור" בטלפון במקום יציאה מהדף
+  function findCat(idStr) {
+    return categories.find((c) => String(c.id) === String(idStr)) || null;
+  }
+
+  const catFromUrl = searchParams.get("cat");
+  const initialCat = findCat(catFromUrl) || categories[0] || null;
+  const [activeId, setActiveId] = useState(initialCat ? initialCat.id : null);
+
+  const [zoomImg, setZoomImg] = useState(null);
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("cat");
+    const match = findCat(fromUrl);
+    if (match) {
+      setActiveId(match.id);
+    } else if (categories[0]) {
+      setActiveId(categories[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  function selectCategory(id) {
+    setActiveId(id);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("cat", String(id));
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }
+
+  const products = activeId != null ? (productsByCat[activeId] || productsByCat[String(activeId)] || []) : [];
+
   useEffect(() => {
     if (!zoomImg) return;
     window.history.pushState({ zoom: true }, "");
@@ -38,11 +68,11 @@ export default function NurseryCatalog({ categories, productsByCat }) {
     <div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 36 }}>
         {categories.map((c) => {
-          const active = c.id === activeId;
+          const active = String(c.id) === String(activeId);
           return (
             <button
               key={c.id}
-              onClick={() => setActiveId(c.id)}
+              onClick={() => selectCategory(c.id)}
               style={{
                 fontSize: 15, fontWeight: 600, padding: "9px 20px", borderRadius: 999, cursor: "pointer",
                 background: active ? "var(--green)" : "#fff",
@@ -62,7 +92,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 18 }}>
-          {products.map((p) => <ProductCard key={p.id} product={p} onZoom={setZoomImg} />)}
+          {products.map((p) => <ProductCard key={p.id} product={p} activeId={activeId} onZoom={setZoomImg} />)}
         </div>
       )}
 
@@ -90,7 +120,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   );
 }
 
-function ProductCard({ product, onZoom }) {
+function ProductCard({ product, activeId, onZoom }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -100,6 +130,8 @@ function ProductCard({ product, onZoom }) {
   const multi = product._multi;
   const hasSizes = product._hasSizes;
   const inStock = product.in_stock;
+
+  const productHref = `/product/${product.id}?from=${encodeURIComponent(String(activeId))}`;
 
   function handleAdd() {
     addItem({
@@ -133,7 +165,7 @@ function ProductCard({ product, onZoom }) {
       </div>
 
       <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-        <Link href={`/product/${product.id}`} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <Link href={productHref} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <p style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{product.name}</p>
           {sizeText ? <p style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p> : null}
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -148,7 +180,7 @@ function ProductCard({ product, onZoom }) {
           {!inStock ? (
             <div style={{ textAlign: "center", padding: "8px", borderRadius: 10, background: "#f4f4f4", color: "var(--muted)", fontSize: 14, fontWeight: 600 }}>אזל מהמלאי</div>
           ) : hasSizes ? (
-            <Link href={`/product/${product.id}`} style={{ display: "block", textAlign: "center", padding: "9px", borderRadius: 10, border: "1px solid var(--green)", color: "var(--green)", fontSize: 14, fontWeight: 700 }}>
+            <Link href={productHref} style={{ display: "block", textAlign: "center", padding: "9px", borderRadius: 10, border: "1px solid var(--green)", color: "var(--green)", fontSize: 14, fontWeight: 700 }}>
               בחירת מידה
             </Link>
           ) : (
