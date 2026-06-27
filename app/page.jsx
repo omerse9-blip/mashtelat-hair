@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getCategories, getProducts, cardPrice, cardImage, cardSizeText } from "../lib/siteData";
 import NurseryCatalog from "../components/NurseryCatalog";
 
@@ -39,7 +40,9 @@ export default async function NurseryPage() {
         </p>
       </section>
 
-      <NurseryCatalog categories={categories} productsByCat={productsByCat} />
+      <Suspense fallback={null}>
+        <NurseryCatalog categories={categories} productsByCat={productsByCat} />
+      </Suspense>
     </main>
   );
 }
