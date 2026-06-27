@@ -126,8 +126,8 @@ export default function ProductView({ product }) {
           .product-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
           .product-image {
             aspect-ratio: auto;
-            height: 34vh;
-            max-height: 34vh;
+            height: 40vh;
+            max-height: 40vh;
           }
           .product-title { font-size: 24px !important; margin-bottom: 4px !important; }
           .product-sizetext { font-size: 14px !important; margin-bottom: 8px !important; }
