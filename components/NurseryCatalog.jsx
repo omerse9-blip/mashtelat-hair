@@ -96,7 +96,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
               onClick={() => selectCategory(c.id)}
               style={{
                 fontSize: 15, fontWeight: 600, padding: "9px 20px", borderRadius: 999, cursor: "pointer",
-                background: active ? "var(--green)" : "#fff",
+                background: active ? "var(--green)" : "var(--card)",
                 color: active ? "#fff" : "var(--ink)",
                 border: active ? "1px solid var(--green)" : "1px solid var(--line)",
               }}
@@ -112,7 +112,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
           אין מוצרים במחלקה זו עדיין.
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 18 }}>
+        <div className="catalog-grid">
           {products.map((p) => <ProductCard key={p.id} product={p} activeId={activeId} onZoom={setZoomImg} highlight={String(p.id) === focusId} />)}
         </div>
       )}
@@ -137,6 +137,20 @@ export default function NurseryCatalog({ categories, productsByCat }) {
           </button>
         </div>
       ) : null}
+
+      <style>{`
+        .catalog-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 18px;
+        }
+        @media (max-width: 640px) {
+          .catalog-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
@@ -170,16 +184,17 @@ function ProductCard({ product, activeId, onZoom, highlight }) {
   return (
     <div
       id={`product-${product.id}`}
+      className="product-card"
       style={{
         border: highlight ? "1px solid var(--green)" : "1px solid var(--line)",
-        borderRadius: 14, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column",
-        boxShadow: highlight ? "0 0 0 3px rgba(63,122,82,0.35)" : "none",
+        borderRadius: 14, overflow: "hidden", background: "var(--card)", display: "flex", flexDirection: "column",
+        boxShadow: highlight ? "0 0 0 3px rgba(47,93,66,0.35)" : "none",
         transition: "box-shadow 0.4s ease, border-color 0.4s ease",
       }}
     >
       <div
         onClick={() => img && onZoom(img)}
-        style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", overflow: "hidden", cursor: img ? "zoom-in" : "default" }}
+        style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "var(--green-soft)", overflow: "hidden", cursor: img ? "zoom-in" : "default" }}
       >
         {img ? (
           <Image
@@ -193,19 +208,19 @@ function ProductCard({ product, activeId, onZoom, highlight }) {
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 28 }}>🪴</div>
         )}
         {!inStock ? (
-          <span style={{ position: "absolute", top: 10, insetInlineStart: 10, background: "rgba(31,42,36,0.82)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
+          <span style={{ position: "absolute", top: 10, insetInlineStart: 10, background: "rgba(44,58,48,0.82)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
             אזל מהמלאי
           </span>
         ) : null}
       </div>
 
-      <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+      <div className="product-body" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
         <Link href={productHref} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <p style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{product.name}</p>
-          {sizeText ? <p style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p> : null}
+          <p className="product-name" style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{product.name}</p>
+          {sizeText ? <p className="product-size" style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p> : null}
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
             {multi ? <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span> : null}
-            <span style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
+            <span className="product-price" style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
               {price != null ? `₪${price}` : "—"}
             </span>
           </div>
@@ -213,18 +228,28 @@ function ProductCard({ product, activeId, onZoom, highlight }) {
 
         <div style={{ marginTop: "auto" }}>
           {!inStock ? (
-            <div style={{ textAlign: "center", padding: "8px", borderRadius: 10, background: "#f4f4f4", color: "var(--muted)", fontSize: 14, fontWeight: 600 }}>אזל מהמלאי</div>
+            <div style={{ textAlign: "center", padding: "8px", borderRadius: 10, background: "var(--green-soft)", color: "var(--muted)", fontSize: 14, fontWeight: 600 }}>אזל מהמלאי</div>
           ) : hasSizes ? (
-            <Link href={productHref} style={{ display: "block", textAlign: "center", padding: "9px", borderRadius: 10, border: "1px solid var(--green)", color: "var(--green)", fontSize: 14, fontWeight: 700 }}>
+            <Link href={productHref} className="product-cta" style={{ display: "block", textAlign: "center", padding: "9px", borderRadius: 10, border: "1px solid var(--green)", color: "var(--green)", fontSize: 14, fontWeight: 700 }}>
               בחירת מידה
             </Link>
           ) : (
-            <button onClick={handleAdd} style={{ width: "100%", padding: "9px", borderRadius: 10, border: "none", background: added ? "#2f6b43" : "var(--green)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            <button onClick={handleAdd} className="product-cta" style={{ width: "100%", padding: "9px", borderRadius: 10, border: "none", background: added ? "var(--green-dark)" : "var(--green)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
               {added ? "✓ נוסף לסל" : "הוספה לסל"}
             </button>
           )}
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .product-card .product-body { padding: 9px 10px !important; gap: 5px !important; }
+          .product-card .product-name { font-size: 14px !important; }
+          .product-card .product-size { font-size: 12px !important; }
+          .product-card .product-price { font-size: 16px !important; }
+          .product-card .product-cta { padding: 8px !important; font-size: 13px !important; }
+        }
+      `}</style>
     </div>
   );
 }
