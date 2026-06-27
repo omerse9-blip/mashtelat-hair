@@ -7,26 +7,24 @@ export default async function HomePage() {
   let count = 0;
   let detail = "";
 
-  const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
   try {
-    if (!hasUrl || !hasKey) {
-      throw new Error(`חסר משתנה סביבה: ${!hasUrl ? "URL " : ""}${!hasKey ? "KEY" : ""}`);
-    }
-    const { count: c, error } = await supabase
+    const { data, error } = await supabase
       .from("categories")
-      .select("id", { count: "exact", head: true })
-      .eq("kind", "nursery");
+      .select("id, name, kind")
+      .limit(5);
     if (error) throw error;
-    count = c || 0;
+    count = (data || []).length;
+    detail = JSON.stringify(data, null, 2);
   } catch (e) {
     status = "error";
     detail = JSON.stringify({
+      name: e?.name,
       message: e?.message,
       code: e?.code,
       details: e?.details,
       hint: e?.hint,
+      keys: Object.keys(e || {}),
+      raw: String(e),
     }, null, 2);
   }
 
@@ -41,15 +39,12 @@ export default async function HomePage() {
       </p>
 
       <div style={{ display: "inline-block", padding: "12px 20px", borderRadius: 999, background: status === "ok" ? "var(--green-soft)" : "#fdecec", color: status === "ok" ? "var(--green)" : "#b3261e", fontWeight: 600 }}>
-        {status === "ok" ? `מחובר ל-Supabase · ${count} מחלקות משתלה` : "אין חיבור ל-Supabase"}
+        {status === "ok" ? `מחובר ל-Supabase · ${count} מחלקות` : "אין חיבור ל-Supabase"}
       </div>
 
-      {status === "error" && (
-        <pre style={{ marginTop: 20, padding: 16, background: "#faf7f7", border: "1px solid #eee", borderRadius: 10, textAlign: "start", direction: "ltr", fontSize: 13, color: "#b3261e", whiteSpace: "pre-wrap" }}>
-          {detail}
-          {"\n"}URL set: {String(hasUrl)} | KEY set: {String(hasKey)}
-        </pre>
-      )}
+      <pre style={{ marginTop: 20, padding: 16, background: "#faf7f7", border: "1px solid #eee", borderRadius: 10, textAlign: "start", direction: "ltr", fontSize: 13, color: status === "ok" ? "#3f7a52" : "#b3261e", whiteSpace: "pre-wrap" }}>
+        {detail}
+      </pre>
     </main>
   );
 }
