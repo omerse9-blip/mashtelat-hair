@@ -4,6 +4,8 @@ import SiteFooter from "../components/SiteFooter";
 import { CartProvider } from "../components/CartProvider";
 import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "משתלת העיר",
   description: "משתלה איכותית באילת — עצים, שיחים, צמחי נוי, כדים וכלי גינון.",
