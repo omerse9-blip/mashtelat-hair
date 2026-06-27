@@ -12,7 +12,6 @@ export default function SearchOverlay({ index }) {
 
   const data = index && index.nursery ? index : { nursery: [], garden: [] };
 
-  // כפתור "חזור" בטלפון סוגר את החיפוש במקום לצאת מהדף
   useEffect(() => {
     if (!open) return;
     window.history.pushState({ search: true }, "");
@@ -43,7 +42,6 @@ export default function SearchOverlay({ index }) {
 
   const term = q.trim().toLowerCase();
 
-  // סינון חי מהאות הראשונה — מקומי לחלוטין, ללא קריאת רשת
   const results = useMemo(() => {
     if (!term) return { nursery: [], garden: [] };
     const nursery = data.nursery.filter((p) =>
@@ -56,7 +54,6 @@ export default function SearchOverlay({ index }) {
   }, [data, term]);
 
   const total = results.nursery.length + results.garden.length;
-  const indexCount = data.nursery.length + data.garden.length;
 
   return (
     <>
@@ -71,6 +68,11 @@ export default function SearchOverlay({ index }) {
       {open ? (
         <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.98)", zIndex: 100, display: "flex", flexDirection: "column" }}>
           <div style={{ maxWidth: 700, width: "100%", margin: "0 auto", padding: "18px 16px", display: "flex", flexDirection: "column", height: "100%" }}>
+
+            <div style={{ background: "#2f6b43", color: "#fff", textAlign: "center", padding: "10px", borderRadius: 10, fontSize: 15, fontWeight: 700, marginBottom: 14 }}>
+              בדיקה — נטענו: {data.nursery.length} מוצרים · {data.garden.length} פריטי גינון
+            </div>
+
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <input
                 ref={inputRef}
@@ -90,18 +92,9 @@ export default function SearchOverlay({ index }) {
 
             <div style={{ overflowY: "auto", flex: 1 }}>
               {!term ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>
-                  התחילו להקליד כדי לחפש
-                  <br />
-                  <span style={{ fontSize: 12 }}>
-                    (זמינים לחיפוש: {data.nursery.length} מוצרים, {data.garden.length} פריטי גינון)
-                  </span>
-                </p>
+                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>התחילו להקליד כדי לחפש</p>
               ) : total === 0 ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>
-                  לא נמצאו תוצאות עבור {`"${q.trim()}"`}
-                  {indexCount === 0 ? <><br /><span style={{ fontSize: 12 }}>(האינדקס ריק — הנתונים לא נטענו)</span></> : null}
-                </p>
+                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>לא נמצאו תוצאות עבור {`"${q.trim()}"`}</p>
               ) : (
                 <>
                   {results.nursery.length > 0 ? (
