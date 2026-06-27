@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCart } from "./CartProvider";
 import SearchOverlay from "./SearchOverlay";
 
-export default function SiteHeader() {
+export default function SiteHeader({ searchIndex }) {
   const pathname = usePathname();
   const isGarden = pathname.startsWith("/garden");
   const { count } = useCart();
@@ -19,7 +19,7 @@ export default function SiteHeader() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <NavTab href="/" label="משתלה" active={!isGarden} />
           <NavTab href="/garden" label="גינון" active={isGarden} />
-          <SearchOverlay />
+          <SearchOverlay index={searchIndex} />
           <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid var(--line)", fontSize: 20 }} aria-label="עגלה">
             🛒
             {count > 0 ? (
