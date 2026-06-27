@@ -2,12 +2,13 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 import SearchOverlay from "./SearchOverlay";
 
 export default function SiteHeader({ searchIndex, nurseryCategories = [], gardenCategories = [] }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isGarden = pathname.startsWith("/garden");
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -39,6 +40,16 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
     }
   }
 
+  function goToCategory(catId) {
+    const url = `${baseHref}?cat=${catId}`;
+    closeMenu();
+    setTimeout(() => {
+      router.push(url);
+      router.refresh();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 50);
+  }
+
   const menuOverlay = (
     <div
       onClick={closeMenu}
@@ -67,20 +78,21 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
             <p style={{ color: "var(--muted)", fontSize: 15, padding: "16px 12px" }}>אין מחלקות להצגה.</p>
           ) : (
             categories.map((c, i) => (
-              <Link
+              <button
                 key={c.id}
-                href={`${baseHref}?cat=${c.id}`}
-                onClick={closeMenu}
+                onClick={() => goToCategory(c.id)}
                 style={{
+                  width: "100%", textAlign: "inherit", cursor: "pointer", background: "transparent",
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "15px 14px", borderRadius: 12, fontSize: 16.5, fontWeight: 600,
-                  color: "var(--ink)", marginBottom: 2,
+                  color: "var(--ink)", marginBottom: 2, fontFamily: "inherit",
+                  border: "none",
                   borderBottom: i < categories.length - 1 ? "1px solid rgba(207,155,111,0.22)" : "none",
                 }}
               >
                 <span>{c.name}</span>
                 <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>‹</span>
-              </Link>
+              </button>
             ))
           )}
         </div>
