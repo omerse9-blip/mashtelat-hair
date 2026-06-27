@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export default function NurseryCatalog({ categories, productsByCat }) {
   const [activeId, setActiveId] = useState(categories[0]?.id || null);
+  const [zoomImg, setZoomImg] = useState(null);
   const products = activeId ? (productsByCat[activeId] || []) : [];
 
   if (!categories.length) {
@@ -42,14 +43,35 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 18 }}>
-          {products.map((p) => <ProductCard key={p.id} product={p} />)}
+          {products.map((p) => <ProductCard key={p.id} product={p} onZoom={setZoomImg} />)}
+        </div>
+      )}
+
+      {zoomImg && (
+        <div
+          onClick={() => setZoomImg(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}
+        >
+          <img
+            src={zoomImg}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "92vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+          />
+          <button
+            onClick={() => setZoomImg(null)}
+            style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 40, height: 40, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
+            aria-label="סגירה"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-function ProductCard({ product }) {
+function ProductCard({ product, onZoom }) {
   const img = product._image;
   const price = product._price;
   const sizeText = product._sizeText;
@@ -58,7 +80,10 @@ function ProductCard({ product }) {
 
   return (
     <div style={{ border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column" }}>
-      <div style={{ aspectRatio: "1 / 1", background: "#f4f6f4", position: "relative" }}>
+      <div
+        onClick={() => img && onZoom(img)}
+        style={{ aspectRatio: "1 / 1", background: "#f4f6f4", position: "relative", cursor: img ? "zoom-in" : "default" }}
+      >
         {img ? (
           <img src={img} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
