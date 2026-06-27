@@ -50,6 +50,15 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
     }, 50);
   }
 
+  function goHome() {
+    closeMenu();
+    setTimeout(() => {
+      router.push(baseHref);
+      router.refresh();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 50);
+  }
+
   const menuOverlay = (
     <div
       onClick={closeMenu}
@@ -74,6 +83,19 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
+          <button
+            onClick={goHome}
+            style={{
+              width: "100%", textAlign: "inherit", cursor: "pointer", background: "transparent",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "15px 14px", borderRadius: 12, fontSize: 16.5, fontWeight: 700,
+              color: "var(--green)", marginBottom: 2, fontFamily: "inherit",
+              border: "none", borderBottom: "1px solid rgba(207,155,111,0.22)",
+            }}
+          >
+            <span>דף הבית</span>
+            <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>‹</span>
+          </button>
           {categories.length === 0 ? (
             <p style={{ color: "var(--muted)", fontSize: 15, padding: "16px 12px" }}>אין מחלקות להצגה.</p>
           ) : (
