@@ -1,14 +1,12 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import { getCategories, getGardenWorks } from "../../lib/siteData";
 import GardenGallery from "../../components/GardenGallery";
-
 export const revalidate = 0;
-
 export const metadata = {
   title: "גינון העיר — הקמת גינות, תחזוקה ושדרוג באילת",
   description: "גינון העיר: הקמת גינות, תחזוקה שוטפת ושדרוג גינה באילת. צפו בעבודות שלנו ותאמו פגישה.",
 };
-
 export default async function GardenPage() {
   let categories = [];
   const worksByCat = {};
@@ -23,7 +21,16 @@ export default async function GardenPage() {
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 20px" }}>
       <section style={{ textAlign: "center", marginBottom: 44 }}>
-        <p style={{ color: "var(--green)", fontWeight: 700, letterSpacing: 1, marginBottom: 10 }}>גינון העיר</p>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
+          <Image
+            src="/logo-ginun.png"
+            alt="גינון העיר"
+            width={96}
+            height={96}
+            priority
+            style={{ width: 96, height: 96, objectFit: "contain" }}
+          />
+        </div>
         <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.12, marginBottom: 14 }}>
           גינה שמדברת בעדכם.
         </h1>
