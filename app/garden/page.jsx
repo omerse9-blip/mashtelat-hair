@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { getCategories, getGardenWorks } from "../../lib/siteData";
 import GardenGallery from "../../components/GardenGallery";
 
 export const revalidate = 0;
+
 export const metadata = {
   title: "גינון העיר — הקמת גינות, תחזוקה ושדרוג באילת",
   description: "גינון העיר: הקמת גינות, תחזוקה שוטפת ושדרוג גינה באילת. צפו בעבודות שלנו ותאמו פגישה.",
@@ -10,7 +12,6 @@ export const metadata = {
 export default async function GardenPage() {
   let categories = [];
   const worksByCat = {};
-
   try {
     categories = await getCategories("garden");
     for (const c of categories) {
@@ -19,7 +20,6 @@ export default async function GardenPage() {
   } catch (e) {
     categories = [];
   }
-
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 20px" }}>
       <section style={{ textAlign: "center", marginBottom: 44 }}>
@@ -31,8 +31,9 @@ export default async function GardenPage() {
           הקמת גינות, תחזוקה שוטפת ושדרוג — עבודה מקצועית מהיסוד ועד הפרט האחרון.
         </p>
       </section>
-
-      <GardenGallery categories={categories} worksByCat={worksByCat} />
+      <Suspense fallback={null}>
+        <GardenGallery categories={categories} worksByCat={worksByCat} />
+      </Suspense>
     </main>
   );
 }
