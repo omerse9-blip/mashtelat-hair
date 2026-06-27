@@ -142,7 +142,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <SearchOverlay index={searchIndex} />
-          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid var(--line)", background: "var(--card)", fontSize: 20 }} aria-label="עגלה">
+          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid #cf9b6f", background: "#cf9b6f", fontSize: 20 }} aria-label="עגלה">
             🛒
             {count > 0 ? (
               <span style={{ position: "absolute", top: -4, insetInlineEnd: -4, minWidth: 20, height: 20, padding: "0 5px", borderRadius: 999, background: "var(--green)", color: "#fff", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -168,9 +168,9 @@ function NavTab({ href, label, active }) {
         padding: "8px 14px",
         borderRadius: 999,
         whiteSpace: "nowrap",
-        background: active ? "var(--green)" : "var(--card)",
-        color: active ? "#fff" : "var(--ink)",
-        border: active ? "1px solid var(--green)" : "1px solid var(--line)",
+        background: active ? "var(--green)" : "#cf9b6f",
+        color: "#fff",
+        border: active ? "1px solid var(--green)" : "1px solid #cf9b6f",
       }}
     >
       {label}
