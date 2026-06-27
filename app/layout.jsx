@@ -1,6 +1,7 @@
 import "./globals.css";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
+import { CartProvider } from "../components/CartProvider";
 
 export const metadata = {
   title: "משתלת העיר",
@@ -16,9 +17,11 @@ export default function RootLayout({ children }) {
         <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <SiteHeader />
-        <div style={{ minHeight: "60vh" }}>{children}</div>
-        <SiteFooter />
+        <CartProvider>
+          <SiteHeader />
+          <div style={{ minHeight: "60vh" }}>{children}</div>
+          <SiteFooter />
+        </CartProvider>
       </body>
     </html>
   );
