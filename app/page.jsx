@@ -1,21 +1,44 @@
+import { getCategories, getProducts, cardPrice, cardImage, cardSizeText } from "../lib/siteData";
+import NurseryCatalog from "../components/NurseryCatalog";
+
+export const revalidate = 0;
 export const metadata = { title: "משתלת העיר — משתלה" };
 
-export default function NurseryPage() {
+export default async function NurseryPage() {
+  let categories = [];
+  const productsByCat = {};
+
+  try {
+    categories = await getCategories("nursery");
+    for (const c of categories) {
+      const products = await getProducts(c.id);
+      productsByCat[c.id] = products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        in_stock: p.in_stock,
+        _image: cardImage(p),
+        _price: cardPrice(p),
+        _sizeText: cardSizeText(p),
+        _multi: !!(p.has_sizes && p.product_sizes?.length > 1),
+      }));
+    }
+  } catch (e) {
+    categories = [];
+  }
+
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 20px" }}>
-      <section style={{ textAlign: "center", marginBottom: 48 }}>
+      <section style={{ textAlign: "center", marginBottom: 44 }}>
         <p style={{ color: "var(--green)", fontWeight: 700, letterSpacing: 1, marginBottom: 10 }}>משתלת העיר · אילת</p>
         <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.12, marginBottom: 14 }}>
           כל הצמחים, במקום אחד.
         </h1>
         <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto" }}>
-          עצים, שיחים, צמחי נוי, כדים וכלי גינון — בחרו, הזמינו, ואנחנו ניצור קשר לתיאום.
+          עצים, שיחים, צמחי נוי, כדים וכלי גינון — בחרו מחלקה והתחילו.
         </p>
       </section>
 
-      <div style={{ textAlign: "center", padding: "60px 20px", border: "1px dashed var(--line)", borderRadius: 16, color: "var(--muted)" }}>
-        כאן יוצג קטלוג המשתלה — בקרוב.
-      </div>
+      <NurseryCatalog categories={categories} productsByCat={productsByCat} />
     </main>
   );
 }
