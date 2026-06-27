@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const BOOK_URL = "https://ginun-haair.vercel.app/book";
 
@@ -11,6 +11,23 @@ export default function GardenGallery({ categories, worksByCat }) {
   const works = activeId ? (worksByCat[activeId] || []) : [];
   const images = works.filter((w) => w.media_type === "image");
   const videos = works.filter((w) => w.media_type === "video");
+
+  // סגירת התמונה בלחיצת "חזור" בטלפון במקום יציאה מהדף
+  useEffect(() => {
+    if (!zoom) return;
+    window.history.pushState({ zoom: true }, "");
+    const onPop = () => setZoom(null);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [zoom]);
+
+  function closeZoom() {
+    if (window.history.state && window.history.state.zoom) {
+      window.history.back();
+    } else {
+      setZoom(null);
+    }
+  }
 
   const tabStyle = (active) => ({
     fontSize: 15, fontWeight: 600, padding: "9px 20px", borderRadius: 999, cursor: "pointer",
@@ -72,8 +89,15 @@ export default function GardenGallery({ categories, worksByCat }) {
       </div>
 
       {zoom ? (
-        <div onClick={() => setZoom(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}>
+        <div onClick={closeZoom} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}>
           <img src={zoom} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12 }} />
+          <button
+            onClick={closeZoom}
+            style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 40, height: 40, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
+            aria-label="סגירה"
+          >
+            ✕
+          </button>
         </div>
       ) : null}
     </div>
