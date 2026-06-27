@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "./CartProvider";
@@ -10,10 +11,13 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
   const isGarden = pathname.startsWith("/garden");
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const categories = isGarden ? gardenCategories : nurseryCategories;
   const menuTitle = isGarden ? "שירותי הגינון" : "המחלקות שלנו";
   const baseHref = isGarden ? "/garden" : "/";
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -34,6 +38,55 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
       setMenuOpen(false);
     }
   }
+
+  const menuOverlay = (
+    <div
+      onClick={closeMenu}
+      style={{ position: "fixed", inset: 0, background: "rgba(33,58,45,0.45)", backdropFilter: "blur(2px)", zIndex: 1000, display: "flex", justifyContent: "flex-start" }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(84vw, 340px)", height: "100%", background: "#f7f2e9",
+          boxShadow: "0 0 50px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", background: "var(--green)", flexShrink: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
+          <button
+            onClick={closeMenu}
+            aria-label="סגירה"
+            style={{ width: 36, height: 36, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
+          {categories.length === 0 ? (
+            <p style={{ color: "var(--muted)", fontSize: 15, padding: "16px 12px" }}>אין מחלקות להצגה.</p>
+          ) : (
+            categories.map((c, i) => (
+              <Link
+                key={c.id}
+                href={`${baseHref}?cat=${c.id}`}
+                onClick={closeMenu}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "15px 14px", borderRadius: 12, fontSize: 16.5, fontWeight: 600,
+                  color: "var(--ink)", marginBottom: 2,
+                  borderBottom: i < categories.length - 1 ? "1px solid rgba(207,155,111,0.22)" : "none",
+                }}
+              >
+                <span>{c.name}</span>
+                <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>‹</span>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <header style={{ borderBottom: "1px solid var(--line)", position: "sticky", top: 0, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)", zIndex: 50 }}>
@@ -66,55 +119,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
         </div>
       </div>
 
-      {menuOpen ? (
-        <div
-          onClick={closeMenu}
-          style={{ position: "fixed", inset: 0, background: "rgba(33,58,45,0.45)", backdropFilter: "blur(2px)", zIndex: 200, display: "flex", justifyContent: "flex-start" }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: "min(84vw, 340px)", height: "100%", background: "var(--cream, #f7f2e9)",
-              boxShadow: "0 0 50px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column",
-              borderInlineStart: "1px solid var(--line)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid var(--line)", background: "var(--green)" }}>
-              <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
-              <button
-                onClick={closeMenu}
-                aria-label="סגירה"
-                style={{ width: 36, height: 36, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
-              {categories.length === 0 ? (
-                <p style={{ color: "var(--muted)", fontSize: 15, padding: "16px 12px" }}>אין מחלקות להצגה.</p>
-              ) : (
-                categories.map((c, i) => (
-                  <Link
-                    key={c.id}
-                    href={`${baseHref}?cat=${c.id}`}
-                    onClick={closeMenu}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "15px 14px", borderRadius: 12, fontSize: 16.5, fontWeight: 600,
-                      color: "var(--ink)", marginBottom: 2,
-                      borderBottom: i < categories.length - 1 ? "1px solid rgba(207,155,111,0.22)" : "none",
-                    }}
-                  >
-                    <span>{c.name}</span>
-                    <span style={{ color: "var(--clay, #cf9b6f)", fontSize: 18, fontWeight: 700 }}>‹</span>
-                  </Link>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {menuOpen && mounted ? createPortal(menuOverlay, document.body) : null}
     </header>
   );
 }
