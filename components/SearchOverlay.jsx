@@ -40,20 +40,26 @@ export default function SearchOverlay({ index }) {
     router.push(href);
   }
 
-  const term = q.trim().toLowerCase();
+  // נרמול: הסרת רווחים מיותרים ותווים נסתרים, השוואה ללא תלות ברישיות
+  function norm(s) {
+    return String(s || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  const term = norm(q);
 
   const results = useMemo(() => {
     if (!term) return { nursery: [], garden: [] };
     const nursery = data.nursery.filter((p) =>
-      `${p.name || ""} ${p.desc || ""}`.toLowerCase().includes(term)
+      norm(`${p.name || ""} ${p.desc || ""}`).includes(term)
     );
     const garden = data.garden.filter((w) =>
-      (w.caption || "").toLowerCase().includes(term)
+      norm(w.caption || "").includes(term)
     );
     return { nursery, garden };
   }, [data, term]);
 
   const total = results.nursery.length + results.garden.length;
+  const sampleNames = data.nursery.map((p) => p.name).join(" | ");
 
   return (
     <>
@@ -69,8 +75,11 @@ export default function SearchOverlay({ index }) {
         <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.98)", zIndex: 100, display: "flex", flexDirection: "column" }}>
           <div style={{ maxWidth: 700, width: "100%", margin: "0 auto", padding: "18px 16px", display: "flex", flexDirection: "column", height: "100%" }}>
 
-            <div style={{ background: "#2f6b43", color: "#fff", textAlign: "center", padding: "10px", borderRadius: 10, fontSize: 15, fontWeight: 700, marginBottom: 14 }}>
-              בדיקה — נטענו: {data.nursery.length} מוצרים · {data.garden.length} פריטי גינון
+            <div style={{ background: "#2f6b43", color: "#fff", textAlign: "center", padding: "8px 10px", borderRadius: 10, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
+              נטענו {data.nursery.length} מוצרים · {data.garden.length} גינון
+              <div style={{ fontSize: 12, fontWeight: 400, marginTop: 4, wordBreak: "break-word" }}>
+                שמות: {sampleNames || "(ריק)"}
+              </div>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
