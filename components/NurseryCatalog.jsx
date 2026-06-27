@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useCart } from "./CartProvider";
 
 export default function NurseryCatalog({ categories, productsByCat }) {
   const [activeId, setActiveId] = useState(categories[0]?.id || null);
@@ -48,7 +49,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </div>
       )}
 
-      {zoomImg && (
+      {zoomImg ? (
         <div
           onClick={() => setZoomImg(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}
@@ -67,17 +68,34 @@ export default function NurseryCatalog({ categories, productsByCat }) {
             ✕
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
 
 function ProductCard({ product, onZoom }) {
+  const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
+
   const img = product._image;
   const price = product._price;
   const sizeText = product._sizeText;
   const multi = product._multi;
+  const hasSizes = product._hasSizes;
   const inStock = product.in_stock;
+
+  function handleAdd() {
+    addItem({
+      key: product.id,
+      productId: product.id,
+      name: product.name,
+      sizeLabel: sizeText || "",
+      price: price,
+      image: img,
+    }, 1);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1400);
+  }
 
   return (
     <div style={{ border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column" }}>
@@ -90,24 +108,38 @@ function ProductCard({ product, onZoom }) {
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 28 }}>🪴</div>
         )}
-        {!inStock && (
+        {!inStock ? (
           <span style={{ position: "absolute", top: 10, insetInlineStart: 10, background: "rgba(31,42,36,0.82)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999 }}>
             אזל מהמלאי
           </span>
-        )}
+        ) : null}
       </div>
 
-      <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-        <Link href={`/product/${product.id}`} style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+      <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+        <Link href={`/product/${product.id}`} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <p style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{product.name}</p>
-          {sizeText && <p style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p>}
-          <div style={{ marginTop: "auto", paddingTop: 8, display: "flex", alignItems: "baseline", gap: 6 }}>
-            {multi && <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span>}
+          {sizeText ? <p style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p> : null}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            {multi ? <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span> : null}
             <span style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
               {price != null ? `₪${price}` : "—"}
             </span>
           </div>
         </Link>
+
+        <div style={{ marginTop: "auto" }}>
+          {!inStock ? (
+            <div style={{ textAlign: "center", padding: "8px", borderRadius: 10, background: "#f4f4f4", color: "var(--muted)", fontSize: 14, fontWeight: 600 }}>אזל מהמלאי</div>
+          ) : hasSizes ? (
+            <Link href={`/product/${product.id}`} style={{ display: "block", textAlign: "center", padding: "9px", borderRadius: 10, border: "1px solid var(--green)", color: "var(--green)", fontSize: 14, fontWeight: 700 }}>
+              בחירת מידה
+            </Link>
+          ) : (
+            <button onClick={handleAdd} style={{ width: "100%", padding: "9px", borderRadius: 10, border: "none", background: added ? "#2f6b43" : "var(--green)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+              {added ? "✓ נוסף לסל" : "הוספה לסל"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
