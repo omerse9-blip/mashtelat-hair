@@ -62,7 +62,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           boxShadow: "0 0 50px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", background: "var(--green)", flexShrink: 0 }}>
+        <div style={{ height: 66, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "var(--green)", flexShrink: 0 }}>
           <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
           <button
             onClick={closeMenu}
