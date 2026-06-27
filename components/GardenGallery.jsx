@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 const BOOK_URL = "https://ginun-haair.vercel.app/book";
 
@@ -60,8 +61,14 @@ export default function GardenGallery({ categories, worksByCat }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 18, marginBottom: videos.length ? 40 : 0 }}>
               {images.map((w) => (
                 <figure key={w.id} style={{ margin: 0 }}>
-                  <div onClick={() => setZoom(w.media_url)} style={{ aspectRatio: "4 / 3", borderRadius: 14, overflow: "hidden", background: "#f4f6f4", cursor: "zoom-in" }}>
-                    <img src={w.media_url} alt={w.caption || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <div onClick={() => setZoom(w.media_url)} style={{ position: "relative", aspectRatio: "4 / 3", borderRadius: 14, overflow: "hidden", background: "#f4f6f4", cursor: "zoom-in" }}>
+                    <Image
+                      src={w.media_url}
+                      alt={w.caption || ""}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 280px"
+                      style={{ objectFit: "cover" }}
+                    />
                   </div>
                   {w.caption ? <figcaption style={{ color: "var(--muted)", fontSize: 14, marginTop: 8 }}>{w.caption}</figcaption> : null}
                 </figure>
