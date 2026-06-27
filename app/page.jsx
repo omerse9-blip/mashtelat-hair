@@ -22,7 +22,12 @@ export default async function HomePage() {
     count = c || 0;
   } catch (e) {
     status = "error";
-    detail = e?.message || String(e);
+    detail = JSON.stringify({
+      message: e?.message,
+      code: e?.code,
+      details: e?.details,
+      hint: e?.hint,
+    }, null, 2);
   }
 
   return (
@@ -42,7 +47,7 @@ export default async function HomePage() {
       {status === "error" && (
         <pre style={{ marginTop: 20, padding: 16, background: "#faf7f7", border: "1px solid #eee", borderRadius: 10, textAlign: "start", direction: "ltr", fontSize: 13, color: "#b3261e", whiteSpace: "pre-wrap" }}>
           {detail}
-          {"\n\n"}URL set: {String(hasUrl)} | KEY set: {String(hasKey)}
+          {"\n"}URL set: {String(hasUrl)} | KEY set: {String(hasKey)}
         </pre>
       )}
     </main>
