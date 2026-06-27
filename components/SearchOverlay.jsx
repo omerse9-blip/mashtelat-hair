@@ -56,6 +56,7 @@ export default function SearchOverlay({ index }) {
   }, [data, term]);
 
   const total = results.nursery.length + results.garden.length;
+  const indexCount = data.nursery.length + data.garden.length;
 
   return (
     <>
@@ -89,9 +90,18 @@ export default function SearchOverlay({ index }) {
 
             <div style={{ overflowY: "auto", flex: 1 }}>
               {!term ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>התחילו להקליד כדי לחפש</p>
+                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>
+                  התחילו להקליד כדי לחפש
+                  <br />
+                  <span style={{ fontSize: 12 }}>
+                    (זמינים לחיפוש: {data.nursery.length} מוצרים, {data.garden.length} פריטי גינון)
+                  </span>
+                </p>
               ) : total === 0 ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>לא נמצאו תוצאות עבור {`"${q.trim()}"`}</p>
+                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>
+                  לא נמצאו תוצאות עבור {`"${q.trim()}"`}
+                  {indexCount === 0 ? <><br /><span style={{ fontSize: 12 }}>(האינדקס ריק — הנתונים לא נטענו)</span></> : null}
+                </p>
               ) : (
                 <>
                   {results.nursery.length > 0 ? (
