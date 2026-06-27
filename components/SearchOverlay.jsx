@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function SearchOverlay() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [results, setResults] = useState({ nursery: [], garden: [] });
-  const [loading, setLoading] = useState(false);
+  const [index, setIndex] = useState(null); // { nursery: [], garden: [] }
+  const [loadingIndex, setLoadingIndex] = useState(false);
   const inputRef = useRef(null);
   const router = useRouter();
 
@@ -25,29 +25,18 @@ export default function SearchOverlay() {
     if (open && inputRef.current) inputRef.current.focus();
   }, [open]);
 
-  // חיפוש עם השהיה קצרה (debounce) כדי לא להעמיס בכל הקלדה
+  // טעינת כל הפריטים פעם אחת בפתיחה הראשונה; הסינון עצמו מקומי ומיידי
   useEffect(() => {
-    if (!open) return;
-    const term = q.trim();
-    if (term.length < 2) {
-      setResults({ nursery: [], garden: [] });
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const t = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`);
-        const data = await res.json();
-        setResults(data && data.nursery ? data : { nursery: [], garden: [] });
-      } catch {
-        setResults({ nursery: [], garden: [] });
-      } finally {
-        setLoading(false);
-      }
-    }, 250);
-    return () => clearTimeout(t);
-  }, [q, open]);
+    if (!open || index || loadingIndex) return;
+    setLoadingIndex(true);
+    fetch("/api/search")
+      .then((res) => res.json())
+      .then((data) => {
+        setIndex(data && data.nursery ? data : { nursery: [], garden: [] });
+      })
+      .catch(() => setIndex({ nursery: [], garden: [] }))
+      .finally(() => setLoadingIndex(false));
+  }, [open, index, loadingIndex]);
 
   function openSearch() { setOpen(true); }
 
@@ -64,6 +53,20 @@ export default function SearchOverlay() {
     setQ("");
     router.push(href);
   }
+
+  const term = q.trim().toLowerCase();
+
+  // סינון חי מהאות הראשונה
+  const results = useMemo(() => {
+    if (!index || !term) return { nursery: [], garden: [] };
+    const nursery = index.nursery.filter((p) =>
+      `${p.name || ""} ${p.desc || ""}`.toLowerCase().includes(term)
+    );
+    const garden = index.garden.filter((w) =>
+      (w.caption || "").toLowerCase().includes(term)
+    );
+    return { nursery, garden };
+  }, [index, term]);
 
   const total = results.nursery.length + results.garden.length;
 
@@ -98,10 +101,10 @@ export default function SearchOverlay() {
             </div>
 
             <div style={{ overflowY: "auto", flex: 1 }}>
-              {q.trim().length < 2 ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>הקלידו לפחות שתי אותיות כדי לחפש</p>
-              ) : loading ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>מחפש...</p>
+              {!term ? (
+                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>
+                  {loadingIndex ? "טוען..." : "התחילו להקליד כדי לחפש"}
+                </p>
               ) : total === 0 ? (
                 <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>לא נמצאו תוצאות עבור {`"${q.trim()}"`}</p>
               ) : (
