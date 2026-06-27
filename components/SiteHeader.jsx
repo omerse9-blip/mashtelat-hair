@@ -11,14 +11,16 @@ export default function SiteHeader({ searchIndex, categories = [] }) {
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const brandName = isGarden ? "גינון העיר" : "משתלת העיר";
-
   useEffect(() => {
     if (!menuOpen) return;
     window.history.pushState({ menu: true }, "");
     const onPop = () => setMenuOpen(false);
     window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      document.body.style.overflow = "";
+    };
   }, [menuOpen]);
 
   function closeMenu() {
@@ -31,22 +33,23 @@ export default function SiteHeader({ searchIndex, categories = [] }) {
 
   return (
     <header style={{ borderBottom: "1px solid var(--line)", position: "sticky", top: 0, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)", zIndex: 50 }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <button
             onClick={() => setMenuOpen(true)}
             aria-label="תפריט"
-            style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 5, width: 42, height: 42, borderRadius: 12, border: "1px solid var(--line)", background: "var(--card)", cursor: "pointer", padding: 0 }}
+            style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5, width: 42, height: 42, borderRadius: 12, border: "1px solid var(--line)", background: "var(--card)", cursor: "pointer", padding: 0 }}
           >
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
           </button>
-          <Link href={isGarden ? "/garden" : "/"} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontWeight: 700, fontSize: 20, color: "var(--ink)" }}>{brandName}</span>
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <NavTab href="/" label="משתלת העיר" active={!isGarden} />
+            <NavTab href="/garden" label="גינון העיר" active={isGarden} />
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <SearchOverlay index={searchIndex} />
           <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid var(--line)", fontSize: 20 }} aria-label="עגלה">
             🛒
@@ -59,37 +62,61 @@ export default function SiteHeader({ searchIndex, categories = [] }) {
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid var(--line)" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <NavTab href="/" label="משתלת העיר" active={!isGarden} />
-          <NavTab href="/garden" label="גינון העיר" active={isGarden} />
-        </div>
-      </div>
-
       {menuOpen ? (
-        <div onClick={closeMenu} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex" }}>
+        <div
+          onClick={closeMenu}
+          style={{ position: "fixed", inset: 0, background: "rgba(33,58,45,0.45)", backdropFilter: "blur(2px)", zIndex: 200, display: "flex", justifyContent: "flex-start" }}
+        >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ width: "min(82vw, 320px)", maxHeight: "100vh", overflowY: "auto", background: "var(--card)", boxShadow: "0 0 40px rgba(0,0,0,0.3)", padding: "18px 16px", display: "flex", flexDirection: "column", gap: 4 }}
+            style={{
+              width: "min(84vw, 340px)", height: "100%", background: "var(--cream, #f7f2e9)",
+              boxShadow: "0 0 50px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column",
+              borderInlineStart: "1px solid var(--line)",
+            }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <span style={{ fontWeight: 700, fontSize: 18, color: "var(--ink)" }}>מחלקות</span>
-              <button onClick={closeMenu} aria-label="סגירה" style={{ width: 36, height: 36, borderRadius: 999, border: "none", background: "var(--green-soft)", fontSize: 18, cursor: "pointer" }}>✕</button>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid var(--line)", background: "var(--green)" }}>
+              <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>המחלקות שלנו</span>
+              <button
+                onClick={closeMenu}
+                aria-label="סגירה"
+                style={{ width: 36, height: 36, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                ✕
+              </button>
             </div>
-            {categories.length === 0 ? (
-              <p style={{ color: "var(--muted)", fontSize: 14 }}>אין מחלקות להצגה.</p>
-            ) : (
-              categories.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/?cat=${c.id}`}
-                  onClick={closeMenu}
-                  style={{ display: "block", padding: "12px 14px", borderRadius: 12, fontSize: 16, fontWeight: 600, color: "var(--ink)", borderBottom: "1px solid var(--line)" }}
-                >
-                  {c.name}
-                </Link>
-              ))
-            )}
+
+            <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
+              {categories.length === 0 ? (
+                <p style={{ color: "var(--muted)", fontSize: 15, padding: "16px 12px" }}>אין מחלקות להצגה.</p>
+              ) : (
+                categories.map((c, i) => (
+                  <Link
+                    key={c.id}
+                    href={`/?cat=${c.id}`}
+                    onClick={closeMenu}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "15px 14px", borderRadius: 12, fontSize: 16.5, fontWeight: 600,
+                      color: "var(--ink)", marginBottom: 2,
+                      borderBottom: i < categories.length - 1 ? "1px solid rgba(207,155,111,0.22)" : "none",
+                    }}
+                  >
+                    <span>{c.name}</span>
+                    <span style={{ color: "var(--clay, #cf9b6f)", fontSize: 18, fontWeight: 700 }}>‹</span>
+                  </Link>
+                ))
+              )}
+            </div>
+
+            <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 8 }}>
+              <Link href="/" onClick={closeMenu} style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: 12, fontSize: 15, fontWeight: 700, background: !isGarden ? "var(--green)" : "var(--card)", color: !isGarden ? "#fff" : "var(--ink)", border: "1px solid var(--green)" }}>
+                משתלת העיר
+              </Link>
+              <Link href="/garden" onClick={closeMenu} style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: 12, fontSize: 15, fontWeight: 700, background: isGarden ? "var(--green)" : "var(--card)", color: isGarden ? "#fff" : "var(--ink)", border: "1px solid var(--green)" }}>
+                גינון העיר
+              </Link>
+            </div>
           </div>
         </div>
       ) : null}
@@ -102,10 +129,11 @@ function NavTab({ href, label, active }) {
     <Link
       href={href}
       style={{
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: 600,
-        padding: "8px 18px",
+        padding: "8px 14px",
         borderRadius: 999,
+        whiteSpace: "nowrap",
         background: active ? "var(--green)" : "transparent",
         color: active ? "#fff" : "var(--ink)",
         border: active ? "1px solid var(--green)" : "1px solid var(--line)",
