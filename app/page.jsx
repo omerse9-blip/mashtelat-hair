@@ -26,18 +26,17 @@ export default async function NurseryPage() {
     categories = [];
   }
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 20px" }}>
+    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px 56px" }}>
       <section style={{ textAlign: "center", marginBottom: 44 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
           <Image
             src="/logo-mashtela.png"
             alt="משתלת העיר"
-            width={96}
-            height={96}
+            width={108}
+            height={108}
             priority
-            style={{ width: 96, height: 96, objectFit: "contain" }}
+            style={{ width: 108, height: 108, objectFit: "contain" }}
           />
-          <p style={{ color: "var(--muted)", fontSize: 14, fontWeight: 600, marginTop: 8, letterSpacing: 0.5 }}>מבית גינון העיר</p>
         </div>
         <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.12, marginBottom: 14 }}>
           כל הצמחים, במקום אחד.
