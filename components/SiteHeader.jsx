@@ -61,8 +61,8 @@ export default function SiteHeader({ searchIndex, categories = [] }) {
 
       <div style={{ borderTop: "1px solid var(--line)" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <NavTab href="/" label="משתלה" active={!isGarden} />
-          <NavTab href="/garden" label="גינון" active={isGarden} />
+          <NavTab href="/" label="משתלת העיר" active={!isGarden} />
+          <NavTab href="/garden" label="גינון העיר" active={isGarden} />
         </div>
       </div>
 
