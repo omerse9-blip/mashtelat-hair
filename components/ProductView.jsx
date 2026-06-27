@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { sizeLabel } from "../lib/siteData";
 import { useCart } from "./CartProvider";
 
@@ -63,7 +64,14 @@ export default function ProductView({ product }) {
         style={{ background: "#f4f6f4", borderRadius: 18, overflow: "hidden", cursor: image ? "zoom-in" : "default", position: "relative" }}
       >
         {image ? (
-          <img src={image} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <Image
+            src={image}
+            alt={product.name}
+            fill
+            priority
+            sizes="(max-width: 720px) 100vw, 550px"
+            style={{ objectFit: "cover" }}
+          />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 48 }}>🪴</div>
         )}
