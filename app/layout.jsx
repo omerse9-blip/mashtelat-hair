@@ -3,17 +3,17 @@ import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { CartProvider } from "../components/CartProvider";
 import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
-export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "משתלת העיר",
   description: "משתלה איכותית באילת — עצים, שיחים, צמחי נוי, כדים וכלי גינון.",
 };
-// בניית אינדקס חיפוש בצד השרת (אותן פונקציות שמפעילות את הקטלוג)
-async function buildSearchIndex() {
+
+// בניית אינדקס חיפוש בצד השרת (משתמש בפונקציות הממוטמנות)
+async function buildSearchIndex(nurseryCats, gardenCats) {
   const nursery = [];
   try {
-    const cats = await getCategories("nursery");
-    for (const c of cats) {
+    for (const c of nurseryCats) {
       const products = await getProducts(c.id);
       for (const p of products) {
         nursery.push({
@@ -31,8 +31,7 @@ async function buildSearchIndex() {
   } catch (e) { /* התעלמות */ }
   const garden = [];
   try {
-    const cats = await getCategories("garden");
-    for (const c of cats) {
+    for (const c of gardenCats) {
       const works = await getGardenWorks(c.id);
       for (const w of works) {
         garden.push({
@@ -48,21 +47,19 @@ async function buildSearchIndex() {
   } catch (e) { /* התעלמות */ }
   return { nursery, garden };
 }
+
 export default async function RootLayout({ children }) {
-  const searchIndex = await buildSearchIndex();
   let nurseryCategories = [];
   let gardenCategories = [];
   try {
     nurseryCategories = await getCategories("nursery");
-  } catch (e) {
-    console.log("NURSERY ERROR", e.message);
-  }
+  } catch (e) { /* התעלמות */ }
   try {
     gardenCategories = await getCategories("garden");
-  } catch (e) {
-    console.log("GARDEN ERROR", e.message);
-  }
-  console.log("NAV CATEGORIES", nurseryCategories.length, gardenCategories.length);
+  } catch (e) { /* התעלמות */ }
+
+  const searchIndex = await buildSearchIndex(nurseryCategories, gardenCategories);
+
   return (
     <html lang="he" dir="rtl">
       <head>
