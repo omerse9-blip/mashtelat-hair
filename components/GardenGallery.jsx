@@ -2,14 +2,58 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 const BOOK_URL = "https://ginun-haair.vercel.app/book";
 
 export default function GardenGallery({ categories, worksByCat }) {
-  const [activeId, setActiveId] = useState(categories[0]?.id || null);
-  const [zoom, setZoom] = useState(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const works = activeId ? (worksByCat[activeId] || []) : [];
+  function findCat(idStr) {
+    return categories.find((c) => String(c.id) === String(idStr)) || null;
+  }
+
+  const catFromUrl = searchParams.get("cat");
+  const initialCat = findCat(catFromUrl) || categories[0] || null;
+  const [activeId, setActiveId] = useState(initialCat ? initialCat.id : null);
+  const [zoom, setZoom] = useState(null);
+  const [focusId, setFocusId] = useState(null);
+
+  useEffect(() => {
+    const match = findCat(searchParams.get("cat"));
+    if (match) setActiveId(match.id);
+    else if (categories[0]) setActiveId(categories[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  // הגעה ממסך החיפוש: גלילה אל הפריט במחלקת הגינון והדגשה קצרה
+  useEffect(() => {
+    const f = searchParams.get("focus");
+    if (!f) return;
+    setFocusId(String(f));
+    const scrollT = setTimeout(() => {
+      const el = document.getElementById(`work-${f}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+    const clearT = setTimeout(() => setFocusId(null), 2200);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("focus");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    return () => { clearTimeout(scrollT); clearTimeout(clearT); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  function selectCategory(id) {
+    setActiveId(id);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("cat", String(id));
+    params.delete("focus");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  }
+
+  const works = activeId ? (worksByCat[activeId] || worksByCat[String(activeId)] || []) : [];
   const images = works.filter((w) => w.media_type === "image");
   const videos = works.filter((w) => w.media_type === "video");
 
@@ -39,12 +83,18 @@ export default function GardenGallery({ categories, worksByCat }) {
 
   const bookStyle = { display: "inline-block", background: "var(--green)", color: "#fff", fontSize: 17, fontWeight: 700, padding: "14px 36px", borderRadius: 999 };
 
+  function ringStyle(id) {
+    return String(id) === focusId
+      ? { boxShadow: "0 0 0 3px rgba(63,122,82,0.5)", transition: "box-shadow 0.4s ease" }
+      : { transition: "box-shadow 0.4s ease" };
+  }
+
   return (
     <div>
       {categories.length > 0 ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 36 }}>
           {categories.map((c) => (
-            <button key={c.id} onClick={() => setActiveId(c.id)} style={tabStyle(c.id === activeId)}>
+            <button key={c.id} onClick={() => selectCategory(c.id)} style={tabStyle(String(c.id) === String(activeId))}>
               {c.name}
             </button>
           ))}
@@ -60,7 +110,7 @@ export default function GardenGallery({ categories, worksByCat }) {
           {images.length > 0 ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 18, marginBottom: videos.length ? 40 : 0 }}>
               {images.map((w) => (
-                <figure key={w.id} style={{ margin: 0 }}>
+                <figure key={w.id} id={`work-${w.id}`} style={{ margin: 0, borderRadius: 14, ...ringStyle(w.id) }}>
                   <div onClick={() => setZoom(w.media_url)} style={{ position: "relative", aspectRatio: "4 / 3", borderRadius: 14, overflow: "hidden", background: "#f4f6f4", cursor: "zoom-in" }}>
                     <Image
                       src={w.media_url}
@@ -79,7 +129,7 @@ export default function GardenGallery({ categories, worksByCat }) {
           {videos.length > 0 ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 18 }}>
               {videos.map((w) => (
-                <figure key={w.id} style={{ margin: 0 }}>
+                <figure key={w.id} id={`work-${w.id}`} style={{ margin: 0, borderRadius: 14, ...ringStyle(w.id) }}>
                   <div style={{ aspectRatio: "16 / 9", borderRadius: 14, overflow: "hidden", background: "#000" }}>
                     <iframe src={`https://www.youtube.com/embed/${w.media_url}`} title={w.caption || "video"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: "100%", height: "100%", border: "none" }} />
                   </div>
