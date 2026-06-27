@@ -101,15 +101,15 @@ function ProductCard({ product, onZoom }) {
     <div style={{ border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column" }}>
       <div
         onClick={() => img && onZoom(img)}
-        style={{ aspectRatio: "1 / 1", background: "#f4f6f4", position: "relative", cursor: img ? "zoom-in" : "default" }}
+        style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", overflow: "hidden", cursor: img ? "zoom-in" : "default" }}
       >
         {img ? (
-          <img src={img} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={img} alt={product.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 28 }}>🪴</div>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 28 }}>🪴</div>
         )}
         {!inStock ? (
-          <span style={{ position: "absolute", top: 10, insetInlineStart: 10, background: "rgba(31,42,36,0.82)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999 }}>
+          <span style={{ position: "absolute", top: 10, insetInlineStart: 10, background: "rgba(31,42,36,0.82)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
             אזל מהמלאי
           </span>
         ) : null}
