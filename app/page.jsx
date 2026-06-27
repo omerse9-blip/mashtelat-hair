@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import { getCategories, getProducts, cardPrice, cardImage, cardSizeText } from "../lib/siteData";
 import NurseryCatalog from "../components/NurseryCatalog";
-export const revalidate = 0;
+
 export const metadata = { title: "משתלת העיר — משתלה" };
+
 export default async function NurseryPage() {
   let categories = [];
   const productsByCat = {};
