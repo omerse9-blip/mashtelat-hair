@@ -20,8 +20,13 @@ export default function SearchOverlay({ index }) {
     return () => window.removeEventListener("popstate", onPop);
   }, [open]);
 
+  // נעילת גלילת הרקע כשהחיפוש פתוח, כדי שהשכבה תכסה את כל המסך
   useEffect(() => {
-    if (open && inputRef.current) inputRef.current.focus();
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    if (inputRef.current) inputRef.current.focus();
+    return () => { document.body.style.overflow = prev; };
   }, [open]);
 
   function openSearch() { setOpen(true); }
@@ -63,10 +68,6 @@ export default function SearchOverlay({ index }) {
 
   const total = results.nursery.length + results.garden.length;
 
-  const rawCodes = [...q].map((c) => c.charCodeAt(0)).join(",");
-  const termCodes = [...term].map((c) => c.charCodeAt(0)).join(",");
-  const firstName = data.nursery[0] ? data.nursery[0].name : "(אין)";
-
   return (
     <>
       <button
@@ -78,10 +79,19 @@ export default function SearchOverlay({ index }) {
       </button>
 
       {open ? (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(255,255,255,0.98)", zIndex: 100, display: "flex", flexDirection: "column" }}>
-          <div style={{ maxWidth: 700, width: "100%", margin: "0 auto", padding: "18px 16px", display: "flex", flexDirection: "column", height: "100%" }}>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            width: "100vw", height: "100dvh",
+            background: "#fff",
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: 700, margin: "0 auto", padding: "18px 16px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexShrink: 0 }}>
               <input
                 ref={inputRef}
                 value={q}
@@ -98,19 +108,11 @@ export default function SearchOverlay({ index }) {
               </button>
             </div>
 
-            <div style={{ background: "#2f6b43", color: "#fff", padding: "10px 12px", borderRadius: 10, fontSize: 13, lineHeight: 1.7, marginBottom: 14, wordBreak: "break-word" }}>
-              <div>נטענו: {data.nursery.length} מוצרים, {data.garden.length} גינון</div>
-              <div>מוצר ראשון: {firstName}</div>
-              <div>הקלדת גולמי: {`"${q}"`} | קודים: {rawCodes || "(ריק)"}</div>
-              <div>אחרי ניקוי: {`"${term}"`} | קודים: {termCodes || "(ריק)"}</div>
-              <div>תוצאות שנמצאו: {total}</div>
-            </div>
-
-            <div style={{ overflowY: "auto", flex: 1 }}>
+            <div style={{ overflowY: "auto", flex: 1, minHeight: 0 }}>
               {!term ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 20 }}>התחילו להקליד כדי לחפש</p>
+                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>התחילו להקליד כדי לחפש</p>
               ) : total === 0 ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 20 }}>לא נמצאו תוצאות עבור {`"${q.trim()}"`}</p>
+                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>לא נמצאו תוצאות עבור {`"${q.trim()}"`}</p>
               ) : (
                 <>
                   {results.nursery.length > 0 ? (
