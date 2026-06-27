@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function NurseryCatalog({ categories, productsByCat }) {
   const [activeId, setActiveId] = useState(categories[0]?.id || null);
@@ -97,14 +98,16 @@ function ProductCard({ product, onZoom }) {
       </div>
 
       <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-        <p style={{ fontWeight: 700, fontSize: 16 }}>{product.name}</p>
-        {sizeText && <p style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p>}
-        <div style={{ marginTop: "auto", paddingTop: 8, display: "flex", alignItems: "baseline", gap: 6 }}>
-          {multi && <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span>}
-          <span style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
-            {price != null ? `₪${price}` : "—"}
-          </span>
-        </div>
+        <Link href={`/product/${product.id}`} style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+          <p style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{product.name}</p>
+          {sizeText && <p style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p>}
+          <div style={{ marginTop: "auto", paddingTop: 8, display: "flex", alignItems: "baseline", gap: 6 }}>
+            {multi && <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span>}
+            <span style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
+              {price != null ? `₪${price}` : "—"}
+            </span>
+          </div>
+        </Link>
       </div>
     </div>
   );
