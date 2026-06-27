@@ -5,11 +5,15 @@ import { usePathname } from "next/navigation";
 import { useCart } from "./CartProvider";
 import SearchOverlay from "./SearchOverlay";
 
-export default function SiteHeader({ searchIndex, categories = [] }) {
+export default function SiteHeader({ searchIndex, nurseryCategories = [], gardenCategories = [] }) {
   const pathname = usePathname();
   const isGarden = pathname.startsWith("/garden");
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const categories = isGarden ? gardenCategories : nurseryCategories;
+  const menuTitle = isGarden ? "שירותי הגינון" : "המחלקות שלנו";
+  const baseHref = isGarden ? "/garden" : "/";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -76,7 +80,7 @@ export default function SiteHeader({ searchIndex, categories = [] }) {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid var(--line)", background: "var(--green)" }}>
-              <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>המחלקות שלנו</span>
+              <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
               <button
                 onClick={closeMenu}
                 aria-label="סגירה"
@@ -93,7 +97,7 @@ export default function SiteHeader({ searchIndex, categories = [] }) {
                 categories.map((c, i) => (
                   <Link
                     key={c.id}
-                    href={`/?cat=${c.id}`}
+                    href={`${baseHref}?cat=${c.id}`}
                     onClick={closeMenu}
                     style={{
                       display: "flex", alignItems: "center", justifyContent: "space-between",
