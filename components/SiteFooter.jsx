@@ -7,15 +7,28 @@ const EMAIL = "service.ginun@gmail.com";
 const FB_NURSERY = "https://www.facebook.com/share/1BCkoPJAca/";
 const FB_GARDEN = "https://www.facebook.com/share/1JJUirptBe/";
 const IG_NURSERY = "https://www.instagram.com/mishtelet_city";
+const MAPS = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("משתלת העיר אילת");
 export default function SiteFooter() {
   return (
     <footer style={{ borderTop: "1px solid var(--line)", marginTop: 80, background: "#fafbfa" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 32 }}>
         <div>
           <p style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>משתלת העיר</p>
-          <p style={{ color: "var(--muted)", lineHeight: 1.7 }}>
+          <p style={{ color: "var(--muted)", lineHeight: 1.7, marginBottom: 12 }}>
             יוזמה 6, אזור התעשייה<br />אילת
           </p>
+          
+            href={MAPS}
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 999, border: "1px solid var(--green)", color: "var(--green)", fontWeight: 600, fontSize: 14 }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            ניווט למשתלה
+          </a>
         </div>
         <div>
           <p style={{ fontWeight: 700, marginBottom: 12 }}>שעות פתיחה</p>
