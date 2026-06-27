@@ -16,7 +16,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   }
 
   const catFromUrl = searchParams.get("cat");
-  const initialCat = findCat(catFromUrl) || categories[0] || null;
+  const initialCat = findCat(catFromUrl);
   const [activeId, setActiveId] = useState(initialCat ? initialCat.id : null);
 
   const [zoomImg, setZoomImg] = useState(null);
@@ -25,11 +25,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   useEffect(() => {
     const fromUrl = searchParams.get("cat");
     const match = findCat(fromUrl);
-    if (match) {
-      setActiveId(match.id);
-    } else if (categories[0]) {
-      setActiveId(categories[0].id);
-    }
+    setActiveId(match ? match.id : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -51,6 +47,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  const activeCat = activeId != null ? findCat(activeId) : null;
   const products = activeId != null ? (productsByCat[activeId] || productsByCat[String(activeId)] || []) : [];
 
   useEffect(() => {
@@ -79,7 +76,49 @@ export default function NurseryCatalog({ categories, productsByCat }) {
 
   return (
     <div>
-      {products.length === 0 ? (
+      <section style={{ textAlign: "center", marginBottom: 44 }}>
+        {activeCat ? (
+          <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.12 }}>
+            {activeCat.name}
+          </h1>
+        ) : (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
+              <Image
+                src="/logo-mashtela.png"
+                alt="משתלת העיר"
+                width={108}
+                height={108}
+                priority
+                style={{ width: 108, height: 108, objectFit: "contain" }}
+              />
+            </div>
+            <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.12, marginBottom: 14 }}>
+              כל הצמחים, במקום אחד.
+            </h1>
+            <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto" }}>
+              עצים, שיחים, צמחי נוי, כדים וכלי גינון — בחרו מחלקה והתחילו.
+            </p>
+          </>
+        )}
+      </section>
+
+      {activeId == null ? (
+        <div className="cat-tiles">
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => {
+                router.push(`/?cat=${c.id}`);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="cat-tile"
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      ) : products.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 20px", border: "1px dashed var(--line)", borderRadius: 16, color: "var(--muted)" }}>
           אין מוצרים במחלקה זו עדיין.
         </div>
@@ -116,11 +155,37 @@ export default function NurseryCatalog({ categories, productsByCat }) {
           grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
           gap: 18px;
         }
+        .cat-tiles {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 12px;
+        }
+        .cat-tile {
+          padding: 22px 16px;
+          border-radius: 16px;
+          border: 1px solid var(--line);
+          background: var(--card);
+          color: var(--ink);
+          font-size: 17px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+        }
+        .cat-tile:hover {
+          background: var(--green-soft);
+          border-color: var(--green);
+        }
+        .cat-tile:active { transform: scale(0.98); }
         @media (max-width: 640px) {
           .catalog-grid {
             grid-template-columns: 1fr 1fr;
             gap: 10px;
           }
+          .cat-tiles {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
+          .cat-tile { padding: 18px 12px; font-size: 15.5px; }
         }
       `}</style>
     </div>
