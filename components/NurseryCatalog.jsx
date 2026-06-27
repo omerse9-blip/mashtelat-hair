@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCart } from "./CartProvider";
 
@@ -153,7 +154,13 @@ function ProductCard({ product, activeId, onZoom }) {
         style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", overflow: "hidden", cursor: img ? "zoom-in" : "default" }}
       >
         {img ? (
-          <img src={img} alt={product.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <Image
+            src={img}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, 220px"
+            style={{ objectFit: "cover" }}
+          />
         ) : (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 28 }}>🪴</div>
         )}
