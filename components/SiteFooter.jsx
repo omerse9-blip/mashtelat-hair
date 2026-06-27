@@ -42,10 +42,16 @@ const WA_ICON = (
     <path d="M17.6 6.3A7.9 7.9 0 0 0 12 4a8 8 0 0 0-6.9 12l-1.1 4 4.1-1.1A8 8 0 1 0 17.6 6.3zM12 18.5a6.5 6.5 0 0 1-3.3-.9l-.24-.14-2.43.64.65-2.37-.16-.25A6.5 6.5 0 1 1 12 18.5zm3.6-4.87c-.2-.1-1.17-.58-1.35-.64s-.31-.1-.44.1-.51.64-.63.77-.23.15-.43.05a5.3 5.3 0 0 1-1.56-.96 5.9 5.9 0 0 1-1.08-1.34c-.11-.2 0-.3.09-.4s.2-.23.3-.35a1.36 1.36 0 0 0 .2-.33.37.37 0 0 0 0-.35c0-.1-.44-1.06-.6-1.45s-.32-.33-.44-.34h-.37a.72.72 0 0 0-.52.24 2.17 2.17 0 0 0-.68 1.62 3.77 3.77 0 0 0 .79 2 8.63 8.63 0 0 0 3.3 2.92c.46.2.82.32 1.1.41a2.66 2.66 0 0 0 1.22.08 2 2 0 0 0 1.3-.92 1.62 1.62 0 0 0 .12-.92c-.05-.08-.18-.13-.38-.23z" />
   </svg>
 );
+const MAP_ICON = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
 
 export default function SiteFooter() {
   return (
-    <footer style={{ borderTop: "1px solid var(--line)", marginTop: 80, background: "#fafbfa" }}>
+    <footer style={{ borderTop: "1px solid var(--line)", marginTop: 80, background: "#f7f2e9" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 32 }}>
         <div>
           <p style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>משתלת העיר</p>
@@ -58,10 +64,7 @@ export default function SiteFooter() {
             rel="noreferrer"
             style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 999, border: "1px solid var(--green)", color: "var(--green)", fontWeight: 600, fontSize: 14 }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
+            {MAP_ICON}
             ניווט למשתלה
           </a>
         </div>
