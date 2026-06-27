@@ -20,6 +20,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   const [activeId, setActiveId] = useState(initialCat ? initialCat.id : null);
 
   const [zoomImg, setZoomImg] = useState(null);
+  const [focusId, setFocusId] = useState(null);
 
   useEffect(() => {
     const fromUrl = searchParams.get("cat");
@@ -32,10 +33,29 @@ export default function NurseryCatalog({ categories, productsByCat }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // הגעה ממסך החיפוש: גלילה אל המוצר במחלקה והדגשה קצרה
+  useEffect(() => {
+    const f = searchParams.get("focus");
+    if (!f) return;
+    setFocusId(String(f));
+    const scrollT = setTimeout(() => {
+      const el = document.getElementById(`product-${f}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+    const clearT = setTimeout(() => setFocusId(null), 2200);
+    // הסרת focus מהכתובת כדי שרענון לא יפעיל שוב
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("focus");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    return () => { clearTimeout(scrollT); clearTimeout(clearT); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   function selectCategory(id) {
     setActiveId(id);
     const params = new URLSearchParams(searchParams.toString());
     params.set("cat", String(id));
+    params.delete("focus");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
@@ -93,7 +113,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 18 }}>
-          {products.map((p) => <ProductCard key={p.id} product={p} activeId={activeId} onZoom={setZoomImg} />)}
+          {products.map((p) => <ProductCard key={p.id} product={p} activeId={activeId} onZoom={setZoomImg} highlight={String(p.id) === focusId} />)}
         </div>
       )}
 
@@ -121,7 +141,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   );
 }
 
-function ProductCard({ product, activeId, onZoom }) {
+function ProductCard({ product, activeId, onZoom, highlight }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -148,7 +168,15 @@ function ProductCard({ product, activeId, onZoom }) {
   }
 
   return (
-    <div style={{ border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column" }}>
+    <div
+      id={`product-${product.id}`}
+      style={{
+        border: highlight ? "1px solid var(--green)" : "1px solid var(--line)",
+        borderRadius: 14, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column",
+        boxShadow: highlight ? "0 0 0 3px rgba(63,122,82,0.35)" : "none",
+        transition: "box-shadow 0.4s ease, border-color 0.4s ease",
+      }}
+    >
       <div
         onClick={() => img && onZoom(img)}
         style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", overflow: "hidden", cursor: img ? "zoom-in" : "default" }}
