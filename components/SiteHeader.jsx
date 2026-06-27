@@ -11,6 +11,8 @@ export default function SiteHeader({ searchIndex, categories = [] }) {
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const brandName = isGarden ? "גינון העיר" : "משתלת העיר";
+
   useEffect(() => {
     if (!menuOpen) return;
     window.history.pushState({ menu: true }, "");
@@ -40,9 +42,8 @@ export default function SiteHeader({ searchIndex, categories = [] }) {
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
           </button>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontWeight: 700, fontSize: 20, color: "var(--ink)" }}>משתלת העיר</span>
-            <span style={{ fontSize: 20 }}>🌿</span>
+          <Link href={isGarden ? "/garden" : "/"} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontWeight: 700, fontSize: 20, color: "var(--ink)" }}>{brandName}</span>
           </Link>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
