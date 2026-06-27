@@ -4,13 +4,13 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-export default function SearchOverlay() {
+export default function SearchOverlay({ index }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [index, setIndex] = useState(null); // { nursery: [], garden: [] }
-  const [loadingIndex, setLoadingIndex] = useState(false);
   const inputRef = useRef(null);
   const router = useRouter();
+
+  const data = index && index.nursery ? index : { nursery: [], garden: [] };
 
   // כפתור "חזור" בטלפון סוגר את החיפוש במקום לצאת מהדף
   useEffect(() => {
@@ -24,19 +24,6 @@ export default function SearchOverlay() {
   useEffect(() => {
     if (open && inputRef.current) inputRef.current.focus();
   }, [open]);
-
-  // טעינת כל הפריטים פעם אחת בפתיחה הראשונה; הסינון עצמו מקומי ומיידי
-  useEffect(() => {
-    if (!open || index || loadingIndex) return;
-    setLoadingIndex(true);
-    fetch("/api/search")
-      .then((res) => res.json())
-      .then((data) => {
-        setIndex(data && data.nursery ? data : { nursery: [], garden: [] });
-      })
-      .catch(() => setIndex({ nursery: [], garden: [] }))
-      .finally(() => setLoadingIndex(false));
-  }, [open, index, loadingIndex]);
 
   function openSearch() { setOpen(true); }
 
@@ -56,17 +43,17 @@ export default function SearchOverlay() {
 
   const term = q.trim().toLowerCase();
 
-  // סינון חי מהאות הראשונה
+  // סינון חי מהאות הראשונה — מקומי לחלוטין, ללא קריאת רשת
   const results = useMemo(() => {
-    if (!index || !term) return { nursery: [], garden: [] };
-    const nursery = index.nursery.filter((p) =>
+    if (!term) return { nursery: [], garden: [] };
+    const nursery = data.nursery.filter((p) =>
       `${p.name || ""} ${p.desc || ""}`.toLowerCase().includes(term)
     );
-    const garden = index.garden.filter((w) =>
+    const garden = data.garden.filter((w) =>
       (w.caption || "").toLowerCase().includes(term)
     );
     return { nursery, garden };
-  }, [index, term]);
+  }, [data, term]);
 
   const total = results.nursery.length + results.garden.length;
 
@@ -102,9 +89,7 @@ export default function SearchOverlay() {
 
             <div style={{ overflowY: "auto", flex: 1 }}>
               {!term ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>
-                  {loadingIndex ? "טוען..." : "התחילו להקליד כדי לחפש"}
-                </p>
+                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>התחילו להקליד כדי לחפש</p>
               ) : total === 0 ? (
                 <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>לא נמצאו תוצאות עבור {`"${q.trim()}"`}</p>
               ) : (
