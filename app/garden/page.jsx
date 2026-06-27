@@ -19,16 +19,16 @@ export default async function GardenPage() {
     categories = [];
   }
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 20px" }}>
+    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px 56px" }}>
       <section style={{ textAlign: "center", marginBottom: 44 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
           <Image
             src="/logo-ginun.png"
             alt="גינון העיר"
-            width={96}
-            height={96}
+            width={108}
+            height={108}
             priority
-            style={{ width: 96, height: 96, objectFit: "contain" }}
+            style={{ width: 108, height: 108, objectFit: "contain" }}
           />
         </div>
         <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.12, marginBottom: 14 }}>
