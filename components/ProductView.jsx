@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { sizeLabel } from "../lib/siteData";
 import { useCart } from "./CartProvider";
 
@@ -22,6 +22,26 @@ export default function ProductView({ product }) {
     ? (current.image_url || product.image_url || sizes.find((s) => s.image_url)?.image_url || null)
     : (product.image_url || null);
 
+  // סגירת התמונה בלחיצת "חזור" בטלפון במקום יציאה מהדף
+  useEffect(() => {
+    if (!zoom) return;
+    window.history.pushState({ zoom: true }, "");
+    const onPop = () => setZoom(false);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [zoom]);
+
+  function openZoom() {
+    if (image) setZoom(true);
+  }
+  function closeZoom() {
+    if (window.history.state && window.history.state.zoom) {
+      window.history.back();
+    } else {
+      setZoom(false);
+    }
+  }
+
   function handleAdd() {
     addItem({
       key: hasSizes ? `${product.id}_${current.id || sel}` : product.id,
@@ -38,7 +58,7 @@ export default function ProductView({ product }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 36, alignItems: "start" }} className="product-grid">
       <div
-        onClick={() => image && setZoom(true)}
+        onClick={openZoom}
         className="product-image"
         style={{ background: "#f4f6f4", borderRadius: 18, overflow: "hidden", cursor: image ? "zoom-in" : "default", position: "relative" }}
       >
@@ -113,8 +133,15 @@ export default function ProductView({ product }) {
       </div>
 
       {zoom && image ? (
-        <div onClick={() => setZoom(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}>
+        <div onClick={closeZoom} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}>
           <img src={image} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12 }} />
+          <button
+            onClick={closeZoom}
+            style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 40, height: 40, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
+            aria-label="סגירה"
+          >
+            ✕
+          </button>
         </div>
       ) : null}
 
