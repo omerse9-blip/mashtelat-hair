@@ -73,7 +73,7 @@ export default function SearchOverlay({ index }) {
       <button
         onClick={openSearch}
         aria-label="חיפוש"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid var(--line)", background: "#fff", fontSize: 18, cursor: "pointer" }}
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid #cf9b6f", background: "#cf9b6f", fontSize: 18, cursor: "pointer" }}
       >
         🔍
       </button>
