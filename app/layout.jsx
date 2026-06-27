@@ -54,10 +54,15 @@ export default async function RootLayout({ children }) {
   let gardenCategories = [];
   try {
     nurseryCategories = await getCategories("nursery");
-  } catch (e) { /* התעלמות */ }
+  } catch (e) {
+    console.log("NURSERY ERROR", e.message);
+  }
   try {
     gardenCategories = await getCategories("garden");
-  } catch (e) { /* התעלמות */ }
+  } catch (e) {
+    console.log("GARDEN ERROR", e.message);
+  }
+  console.log("NAV CATEGORIES", nurseryCategories.length, gardenCategories.length);
   return (
     <html lang="he" dir="rtl">
       <head>
