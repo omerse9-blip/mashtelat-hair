@@ -54,16 +54,16 @@ export default function ProductView({ product }) {
         ) : null}
       </div>
 
-      <div>
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>{product.name}</h1>
-        {sizeText ? <p style={{ color: "var(--muted)", fontSize: 16, marginBottom: 16 }}>{sizeText}</p> : null}
+      <div className="product-info">
+        <h1 className="product-title" style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>{product.name}</h1>
+        {sizeText ? <p className="product-sizetext" style={{ color: "var(--muted)", fontSize: 16, marginBottom: 16 }}>{sizeText}</p> : null}
 
-        <div style={{ fontSize: 30, fontWeight: 700, color: "var(--green)", marginBottom: 24 }}>
+        <div className="product-price" style={{ fontSize: 30, fontWeight: 700, color: "var(--green)", marginBottom: 24 }}>
           {price != null ? `₪${price}` : "—"}
         </div>
 
         {hasSizes ? (
-          <div style={{ marginBottom: 24 }}>
+          <div className="product-sizes" style={{ marginBottom: 24 }}>
             <p style={{ fontWeight: 600, marginBottom: 10 }}>בחירת גודל</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {sizes.map((s, i) => {
@@ -88,7 +88,7 @@ export default function ProductView({ product }) {
         ) : null}
 
         {product.in_stock ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <div className="product-actions" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden" }}>
               <button onClick={() => setQty((q) => Math.max(1, q - 1))} style={{ width: 40, height: 44, border: "none", background: "#fff", fontSize: 20, cursor: "pointer" }}>−</button>
               <span style={{ minWidth: 36, textAlign: "center", fontWeight: 700 }}>{qty}</span>
@@ -123,12 +123,17 @@ export default function ProductView({ product }) {
           aspect-ratio: 1 / 1;
         }
         @media (max-width: 720px) {
-          .product-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .product-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
           .product-image {
             aspect-ratio: auto;
-            max-height: 46vh;
-            height: 46vh;
+            height: 34vh;
+            max-height: 34vh;
           }
+          .product-title { font-size: 24px !important; margin-bottom: 4px !important; }
+          .product-sizetext { font-size: 14px !important; margin-bottom: 8px !important; }
+          .product-price { font-size: 24px !important; margin-bottom: 14px !important; }
+          .product-sizes { margin-bottom: 14px !important; }
+          .product-actions { margin-bottom: 12px !important; }
         }
       `}</style>
     </div>
