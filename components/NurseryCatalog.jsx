@@ -51,14 +51,6 @@ export default function NurseryCatalog({ categories, productsByCat }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  function selectCategory(id) {
-    setActiveId(id);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("cat", String(id));
-    params.delete("focus");
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }
-
   const products = activeId != null ? (productsByCat[activeId] || productsByCat[String(activeId)] || []) : [];
 
   useEffect(() => {
@@ -87,26 +79,6 @@ export default function NurseryCatalog({ categories, productsByCat }) {
 
   return (
     <div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 36 }}>
-        {categories.map((c) => {
-          const active = String(c.id) === String(activeId);
-          return (
-            <button
-              key={c.id}
-              onClick={() => selectCategory(c.id)}
-              style={{
-                fontSize: 15, fontWeight: 600, padding: "9px 20px", borderRadius: 999, cursor: "pointer",
-                background: active ? "var(--green)" : "var(--card)",
-                color: active ? "#fff" : "var(--ink)",
-                border: active ? "1px solid var(--green)" : "1px solid var(--line)",
-              }}
-            >
-              {c.name}
-            </button>
-          );
-        })}
-      </div>
-
       {products.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 20px", border: "1px dashed var(--line)", borderRadius: 16, color: "var(--muted)" }}>
           אין מוצרים במחלקה זו עדיין.
