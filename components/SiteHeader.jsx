@@ -112,15 +112,6 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
                 ))
               )}
             </div>
-
-            <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 8 }}>
-              <Link href="/" onClick={closeMenu} style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: 12, fontSize: 15, fontWeight: 700, background: !isGarden ? "var(--green)" : "var(--card)", color: !isGarden ? "#fff" : "var(--ink)", border: "1px solid var(--green)" }}>
-                משתלת העיר
-              </Link>
-              <Link href="/garden" onClick={closeMenu} style={{ display: "block", textAlign: "center", padding: "12px", borderRadius: 12, fontSize: 15, fontWeight: 700, background: isGarden ? "var(--green)" : "var(--card)", color: isGarden ? "#fff" : "var(--ink)", border: "1px solid var(--green)" }}>
-                גינון העיר
-              </Link>
-            </div>
           </div>
         </div>
       ) : null}
