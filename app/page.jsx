@@ -19,6 +19,7 @@ export default async function NurseryPage() {
         _image: cardImage(p),
         _price: cardPrice(p),
         _sizeText: cardSizeText(p),
+        _hasSizes: !!(p.has_sizes && p.product_sizes?.length),
         _multi: !!(p.has_sizes && p.product_sizes?.length > 1),
       }));
     }
