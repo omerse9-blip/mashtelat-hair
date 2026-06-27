@@ -39,7 +39,8 @@ export default function ProductView({ product }) {
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 36, alignItems: "start" }} className="product-grid">
       <div
         onClick={() => image && setZoom(true)}
-        style={{ aspectRatio: "1 / 1", background: "#f4f6f4", borderRadius: 18, overflow: "hidden", cursor: image ? "zoom-in" : "default", position: "relative" }}
+        className="product-image"
+        style={{ background: "#f4f6f4", borderRadius: 18, overflow: "hidden", cursor: image ? "zoom-in" : "default", position: "relative" }}
       >
         {image ? (
           <img src={image} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -118,8 +119,16 @@ export default function ProductView({ product }) {
       ) : null}
 
       <style>{`
+        .product-image {
+          aspect-ratio: 1 / 1;
+        }
         @media (max-width: 720px) {
-          .product-grid { grid-template-columns: 1fr !important; }
+          .product-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .product-image {
+            aspect-ratio: auto;
+            max-height: 46vh;
+            height: 46vh;
+          }
         }
       `}</style>
     </div>
