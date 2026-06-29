@@ -9,6 +9,8 @@ const FB_GARDEN = "https://www.facebook.com/share/1JJUirptBe/";
 const IG_NURSERY = "https://www.instagram.com/mishtelet_city";
 const MAPS = "https://maps.app.goo.gl/?link=" + encodeURIComponent("https://www.google.com/maps/place/?q=place_id:ChIJAYo6AjhxABURzvN46FMox1A");
 
+const FOOTER_BG = "#f7f2e9";
+
 const linkStyle = { color: "var(--ink)" };
 const mutedLink = { color: "var(--muted)" };
 
@@ -31,6 +33,7 @@ export default function SiteFooter() {
   const grid = {
     maxWidth: 1100, margin: "0 auto", padding: "48px 20px", display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 32,
+    background: FOOTER_BG,
   };
   const navBtn = {
     display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px",
@@ -39,14 +42,14 @@ export default function SiteFooter() {
   };
   const bottomBar = {
     borderTop: "1px solid var(--line)", padding: "16px 20px", textAlign: "center",
-    color: "var(--muted)", fontSize: 13,
+    color: "var(--muted)", fontSize: 13, background: FOOTER_BG,
   };
   const bottomLinks = {
     display: "flex", flexWrap: "wrap", gap: "6px 18px", justifyContent: "center", marginBottom: 10,
   };
 
   return (
-    <footer style={{ borderTop: "1px solid var(--line)", marginTop: 80, background: "#f7f2e9" }}>
+    <footer style={{ borderTop: "1px solid var(--line)", marginTop: 80, background: FOOTER_BG }}>
       <div style={grid}>
         <div>
           <p style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>משתלת העיר</p>
