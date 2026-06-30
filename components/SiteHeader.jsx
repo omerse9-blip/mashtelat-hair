@@ -168,7 +168,7 @@ function NavTab({ href, label, active }) {
       href={href}
       style={{
         fontSize: 14,
-        fontWeight: 600,
+        fontWeight: 700,
         padding: "8px 14px",
         borderRadius: 999,
         whiteSpace: "nowrap",
