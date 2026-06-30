@@ -4,9 +4,9 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-const BTN_BG = "#efe7d8";
-const BTN_BORDER = "#e0d4bf";
-const BTN_SHADOW = "0 1px 3px rgba(91,70,40,0.10)";
+const BTN_BG = "#fbf8f1";
+const BTN_BORDER = "#ece3d4";
+const BTN_SHADOW = "0 1px 2px rgba(91,70,40,0.06)";
 
 export default function SearchOverlay({ index }) {
   const [open, setOpen] = useState(false);
