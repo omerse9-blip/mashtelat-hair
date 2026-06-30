@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+const BTN_BG = "#fbf8f1";
+
 export default function SearchOverlay({ index }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -73,7 +75,7 @@ export default function SearchOverlay({ index }) {
       <button
         onClick={openSearch}
         aria-label="חיפוש"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid #cf9b6f", background: "#cf9b6f", fontSize: 18, cursor: "pointer" }}
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: `1px solid ${BTN_BG}`, background: BTN_BG, fontSize: 18, cursor: "pointer" }}
       >
         🔍
       </button>
