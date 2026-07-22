@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const PHONE = "0533669089";
-const PHONE_DISPLAY = "053-3669089";
+const PHONE_DISPLAY = "053-366-9089";
 const WA = "972533669089";
 const EMAIL = "service.ginun@gmail.com";
 const FB_NURSERY = "https://www.facebook.com/share/1BCkoPJAca/";
@@ -11,7 +11,6 @@ const MAPS = "https://maps.app.goo.gl/?link=" + encodeURIComponent("https://www.
 
 const FOOTER_BG = "#f7f2e9";
 
-const contactLink = { color: "var(--green)", fontWeight: 600, textDecoration: "none" };
 const navLink = { color: "var(--ink)", textDecoration: "none" };
 const mutedLink = { color: "var(--muted)", textDecoration: "none" };
 
@@ -33,6 +32,9 @@ const bodyText = {
 const channelRow = { display: "flex", alignItems: "center", gap: 10, marginBottom: 14, textDecoration: "none" };
 const channelText = { color: "var(--green)", fontWeight: 600, fontSize: 15 };
 const iconWrap = { flexShrink: 0, display: "flex", alignItems: "center" };
+
+// טווח שעות: כיוון LTR מאולץ כדי שהמספרים יופיעו תמיד 9:00 - 18:00 ולא יתהפכו
+const hoursRange = { unicodeBidi: "isolate", direction: "ltr", display: "inline-block" };
 
 function PhoneIcon() {
   return (
@@ -125,8 +127,8 @@ export default function SiteFooter() {
 
         <div>
           <p style={colHeading}>שעות פתיחה</p>
-          <p style={{ ...bodyText, whiteSpace: "nowrap", marginBottom: 6 }}>ראשון עד חמישי: 9:00 - 18:00</p>
-          <p style={{ ...bodyText, whiteSpace: "nowrap" }}>שישי: 9:00 - 15:00</p>
+          <p style={{ ...bodyText, marginBottom: 6 }}>ראשון עד חמישי: <span style={hoursRange}>9:00 - 18:00</span></p>
+          <p style={bodyText}>שישי: <span style={hoursRange}>9:00 - 15:00</span></p>
         </div>
 
         <div>
