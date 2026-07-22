@@ -98,7 +98,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
             }}
           >
             <span>דף הבית</span>
-            <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>‹</span>
+            <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>›</span>
           </button>
           {categories.length === 0 ? (
             <p style={{ color: "var(--muted)", fontSize: 15, padding: "16px 12px" }}>אין מחלקות להצגה.</p>
@@ -117,7 +117,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
                 }}
               >
                 <span>{c.name}</span>
-                <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>‹</span>
+                <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>›</span>
               </button>
             ))
           )}
