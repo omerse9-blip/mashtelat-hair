@@ -11,11 +11,10 @@ const MAPS = "https://maps.app.goo.gl/?link=" + encodeURIComponent("https://www.
 
 const FOOTER_BG = "#f7f2e9";
 
-// טקסט לחיץ: ירוק המותג באופן קבוע — מסמן לחיצוּת בכל מכשיר, גם מובייל
-const linkStyle = { color: "var(--green)", fontWeight: 600, textDecoration: "none" };
+const contactLink = { color: "var(--green)", fontWeight: 600, textDecoration: "none" };
+const navLink = { color: "var(--ink)", textDecoration: "none" };
 const mutedLink = { color: "var(--muted)", textDecoration: "none" };
 
-// תווית עמודה: קטנה ומרווחת מאוד, אפורה, עם הרבה אוויר מתחתיה — נקראת כתווית ולא כטקסט קטן
 const colHeading = {
   fontWeight: 600,
   fontSize: 12,
@@ -24,13 +23,33 @@ const colHeading = {
   marginBottom: 22,
 };
 
-// תוכן לא-לחיץ (כתובת, שעות): שחור-רך
 const bodyText = {
   color: "var(--ink)",
   fontSize: 15,
   lineHeight: 1.8,
   marginBottom: 12,
 };
+
+const channelRow = { display: "flex", alignItems: "center", gap: 10, marginBottom: 14, textDecoration: "none" };
+const channelText = { color: "var(--green)", fontWeight: 600, fontSize: 15 };
+const iconWrap = { flexShrink: 0, display: "flex", alignItems: "center" };
+
+function PhoneIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--green)" aria-hidden="true">
+      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.18z"/>
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="M2 7l10 6 10-6" />
+    </svg>
+  );
+}
 
 function WhatsappIcon() {
   return (
@@ -68,11 +87,10 @@ function FacebookIcon() {
 }
 
 function Social(props) {
-  const wrap = { display: "flex", alignItems: "center", gap: 10, marginBottom: 14 };
   return (
-    <a href={props.href} target="_blank" rel="noreferrer" style={wrap}>
-      <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>{props.icon}</span>
-      <span style={{ color: "var(--green)", fontWeight: 600, fontSize: 15 }}>{props.label}</span>
+    <a href={props.href} target="_blank" rel="noreferrer" style={channelRow}>
+      <span style={iconWrap}>{props.icon}</span>
+      <span style={channelText}>{props.label}</span>
     </a>
   );
 }
@@ -113,13 +131,18 @@ export default function SiteFooter() {
 
         <div>
           <p style={colHeading}>יצירת קשר</p>
-          <p style={bodyText}>
-            <a href={`tel:${PHONE}`} style={linkStyle}>טלפון: {PHONE_DISPLAY}</a>
-          </p>
-          <Social href={`https://wa.me/${WA}`} label="וואטסאפ" icon={<WhatsappIcon />} />
-          <p style={bodyText}>
-            <a href={`mailto:${EMAIL}`} style={linkStyle}>{EMAIL}</a>
-          </p>
+          <a href={`tel:${PHONE}`} style={channelRow}>
+            <span style={iconWrap}><PhoneIcon /></span>
+            <span style={channelText}>{PHONE_DISPLAY}</span>
+          </a>
+          <a href={`https://wa.me/${WA}`} target="_blank" rel="noreferrer" style={channelRow}>
+            <span style={iconWrap}><WhatsappIcon /></span>
+            <span style={channelText}>{PHONE_DISPLAY}</span>
+          </a>
+          <a href={`mailto:${EMAIL}`} style={channelRow}>
+            <span style={iconWrap}><MailIcon /></span>
+            <span style={channelText}>{EMAIL}</span>
+          </a>
         </div>
 
         <div>
@@ -131,10 +154,10 @@ export default function SiteFooter() {
 
         <div>
           <p style={colHeading}>מידע ותקנון</p>
-          <p style={bodyText}><Link href="/terms" style={linkStyle}>תקנון ותנאי שימוש</Link></p>
-          <p style={bodyText}><Link href="/refund-policy" style={linkStyle}>מדיניות ביטולים והחזרות</Link></p>
-          <p style={bodyText}><Link href="/privacy" style={linkStyle}>מדיניות פרטיות</Link></p>
-          <p style={bodyText}><Link href="/accessibility" style={linkStyle}>הצהרת נגישות</Link></p>
+          <p style={bodyText}><Link href="/terms" style={navLink}>תקנון ותנאי שימוש</Link></p>
+          <p style={bodyText}><Link href="/refund-policy" style={navLink}>מדיניות ביטולים והחזרות</Link></p>
+          <p style={bodyText}><Link href="/privacy" style={navLink}>מדיניות פרטיות</Link></p>
+          <p style={bodyText}><Link href="/accessibility" style={navLink}>הצהרת נגישות</Link></p>
         </div>
       </div>
 
