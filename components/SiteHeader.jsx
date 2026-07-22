@@ -129,7 +129,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
   return (
     <header style={{ borderBottom: "1px solid var(--line)", position: "sticky", top: 0, background: "rgba(247,242,233,0.92)", backdropFilter: "blur(8px)", zIndex: 50 }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
           <button
             onClick={() => setMenuOpen(true)}
             aria-label="תפריט"
@@ -139,12 +139,14 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
           </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <NavTab href="/" label="משתלת העיר" active={!isGarden} />
-            <NavTab href="/garden" label="גינון העיר" active={isGarden} />
-          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <NavTab href="/" label="משתלת העיר" active={!isGarden} />
+          <NavTab href="/garden" label="גינון העיר" active={isGarden} />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, flex: 1, minWidth: 0 }}>
           <SearchOverlay index={searchIndex} />
           <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: `1px solid ${BTN_BORDER}`, background: BTN_BG, boxShadow: BTN_SHADOW, fontSize: 20 }} aria-label="עגלה">
             🛒
