@@ -18,6 +18,7 @@ export default function ProductView({ product }) {
 
   const price = hasSizes ? Number(current.price) : (product.single_price != null ? Number(product.single_price) : null);
   const sizeText = hasSizes ? sizeLabel(current) : (product.single_size || "");
+  const sizeDesc = hasSizes ? (current.description || "") : "";
 
   const image = hasSizes
     ? (current.image_url || product.image_url || sizes.find((s) => s.image_url)?.image_url || null)
@@ -112,6 +113,9 @@ export default function ProductView({ product }) {
                 );
               })}
             </div>
+            {sizeDesc ? (
+              <p className="product-sizedesc" style={{ color: "var(--muted)", fontSize: 15, marginTop: 12 }}>{sizeDesc}</p>
+            ) : null}
           </div>
         ) : null}
 
@@ -168,6 +172,7 @@ export default function ProductView({ product }) {
           .product-sizetext { font-size: 14px !important; margin-bottom: 8px !important; }
           .product-price { font-size: 24px !important; margin-bottom: 14px !important; }
           .product-sizes { margin-bottom: 14px !important; }
+          .product-sizedesc { font-size: 14px !important; margin-top: 10px !important; }
           .product-actions { margin-bottom: 12px !important; }
         }
       `}</style>
