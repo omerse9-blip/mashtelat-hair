@@ -204,8 +204,8 @@ const sheetFooter = { display: "flex", gap: 10, padding: "10px 16px", borderTop:
 const goCartBtn = { flex: 1, textAlign: "center", padding: "11px", borderRadius: 10, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" };
 const continueBtn = { flex: 1, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 600, cursor: "pointer" };
 
-// הקוביות ב-90% מגודלן: הרשת עם עמודות צרות ב-10% וממורכזת, כך שהחלון עצמו נשאר באותו רוחב
-const cardGrid = { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 0.9fr))", gap: 10, alignItems: "stretch", justifyContent: "center" };
+// הקוביות ב-90% ממה שהיו (0.9 × 0.9 = 0.81), הרשת ממורכזת כך שהחלון עצמו נשאר באותו רוחב
+const cardGrid = { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 0.81fr))", gap: 10, alignItems: "stretch", justifyContent: "center" };
 const card = { border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column", height: "100%", padding: 0 };
 const cardImg = { width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", flexShrink: 0 };
 const cardImgEmpty = { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, color: "var(--muted)" };
