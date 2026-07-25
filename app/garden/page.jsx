@@ -2,11 +2,14 @@ import { Suspense } from "react";
 import Image from "next/image";
 import { getCategories, getGardenWorks } from "../../lib/siteData";
 import GardenGallery from "../../components/GardenGallery";
+
 export const revalidate = 0;
+
 export const metadata = {
   title: "גינון העיר — הקמת גינות, תחזוקה ושדרוג באילת",
   description: "גינון העיר: הקמת גינות, תחזוקה שוטפת ושדרוג גינה באילת. צפו בעבודות שלנו ותאמו פגישה.",
 };
+
 export default async function GardenPage() {
   let categories = [];
   const worksByCat = {};
@@ -31,7 +34,7 @@ export default async function GardenPage() {
             style={{ width: 108, height: 108, objectFit: "contain" }}
           />
         </div>
-        <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.12, marginBottom: 14 }}>
+        <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 52, fontWeight: 400, lineHeight: 1.15, marginBottom: 14 }}>
           גינה שמדברת בעדכם.
         </h1>
         <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto" }}>
