@@ -4,14 +4,19 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { sizeLabel } from "../lib/siteData";
 import { useCart } from "./CartProvider";
+import AddonsPopup from "./AddonsPopup";
 
-export default function ProductView({ product }) {
+export default function ProductView({ product, addonGroups }) {
   const hasSizes = product.has_sizes && product.product_sizes?.length > 0;
   const [sel, setSel] = useState(0);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [zoom, setZoom] = useState(false);
+  const [addonsOpen, setAddonsOpen] = useState(false);
+  const [parentKey, setParentKey] = useState(null);
   const { addItem } = useCart();
+
+  const hasAddons = addonGroups && addonGroups.length > 0;
 
   const sizes = product.product_sizes || [];
   const current = hasSizes ? sizes[sel] : null;
@@ -45,8 +50,9 @@ export default function ProductView({ product }) {
   }
 
   function handleAdd() {
+    const key = hasSizes ? `${product.id}_${current.id || sel}` : product.id;
     addItem({
-      key: hasSizes ? `${product.id}_${current.id || sel}` : product.id,
+      key,
       productId: product.id,
       name: product.name,
       sizeLabel: sizeText || "",
@@ -55,6 +61,16 @@ export default function ProductView({ product }) {
     }, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 1600);
+    if (hasAddons) {
+      setParentKey(key);
+      setAddonsOpen(true);
+    }
+  }
+
+  function openAddons() {
+    const key = hasSizes ? `${product.id}_${current.id || sel}` : product.id;
+    setParentKey(key);
+    setAddonsOpen(true);
   }
 
   return (
@@ -139,6 +155,16 @@ export default function ProductView({ product }) {
           </div>
         )}
 
+        {product.in_stock && hasAddons ? (
+          <button
+            onClick={openAddons}
+            className="product-addons-btn"
+            style={{ width: "100%", height: 44, borderRadius: 10, border: "1px solid var(--green)", background: "#fff", color: "var(--green)", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 20 }}
+          >
+            תוספות מומלצות
+          </button>
+        ) : null}
+
         {product.description ? (
           <p style={{ color: "var(--ink)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{product.description}</p>
         ) : null}
@@ -156,6 +182,14 @@ export default function ProductView({ product }) {
           </button>
         </div>
       ) : null}
+
+      <AddonsPopup
+        open={addonsOpen}
+        onClose={() => setAddonsOpen(false)}
+        groups={addonGroups}
+        parentKey={parentKey}
+        parentName={product.name}
+      />
 
       <style>{`
         .product-image {
