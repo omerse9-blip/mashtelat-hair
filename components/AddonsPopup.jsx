@@ -156,7 +156,7 @@ function GroupCard({ group, onOpen }) {
         {img ? <img src={img} alt={group.category_name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={cardImgEmpty}>🪴</div>}
       </div>
       <div style={cardBody}>
-        <p style={cardName}>{group.category_name}</p>
+        <p style={groupName}>{group.category_name}</p>
         <span style={{ ...addBtn, background: "var(--green)", display: "block", textAlign: "center" }}>לבחירה ›</span>
       </div>
     </button>
@@ -204,12 +204,14 @@ const sheetFooter = { display: "flex", gap: 10, padding: "10px 16px", borderTop:
 const goCartBtn = { flex: 1, textAlign: "center", padding: "11px", borderRadius: 10, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" };
 const continueBtn = { flex: 1, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 600, cursor: "pointer" };
 
-const cardGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch" };
+// הקוביות ב-90% מגודלן: הרשת עם עמודות צרות ב-10% וממורכזת, כך שהחלון עצמו נשאר באותו רוחב
+const cardGrid = { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 0.9fr))", gap: 10, alignItems: "stretch", justifyContent: "center" };
 const card = { border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column", height: "100%", padding: 0 };
 const cardImg = { width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", flexShrink: 0 };
 const cardImgEmpty = { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, color: "var(--muted)" };
 const cardBody = { display: "flex", flexDirection: "column", flex: 1, padding: "6px 8px 8px" };
 const cardName = { fontWeight: 600, fontSize: 13, textAlign: "center", marginBottom: 6, lineHeight: 1.3 };
+const groupName = { fontWeight: 700, fontSize: 16, textAlign: "center", marginBottom: 6, lineHeight: 1.3 };
 const cardPriceStyle = { color: "var(--green)", fontWeight: 700, fontSize: 14, textAlign: "center", marginBottom: 6 };
 const addBtn = { marginTop: "auto", padding: "7px", borderRadius: 8, border: "none", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" };
 
