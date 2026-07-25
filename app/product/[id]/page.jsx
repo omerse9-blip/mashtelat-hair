@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { getProductById, getAllProductIds, getAddonsForCategory, cardPrice } from "../../../lib/siteData";
 import ProductView from "../../../components/ProductView";
+
 export const revalidate = 0;
+
 export async function generateStaticParams() {
   try {
     const ids = await getAllProductIds();
@@ -10,6 +12,7 @@ export async function generateStaticParams() {
     return [];
   }
 }
+
 export async function generateMetadata({ params }) {
   const product = await getProductById(params.id);
   if (!product) return { title: "מוצר לא נמצא — משתלת העיר" };
@@ -22,6 +25,7 @@ export async function generateMetadata({ params }) {
       : `${product.name} למכירה במשתלת העיר אילת${price != null ? `. החל מ-₪${price}` : ""}.`,
   };
 }
+
 export default async function ProductPage({ params }) {
   const product = await getProductById(params.id);
   if (!product) {
@@ -33,11 +37,21 @@ export default async function ProductPage({ params }) {
     );
   }
   const addonGroups = await getAddonsForCategory(product.category_id);
+  const catName = product.categories?.name || "";
+
   return (
     <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
-      <Link href="/" style={{ color: "var(--muted)", fontSize: 14, display: "inline-block", marginBottom: 24 }}>
-        › חזרה לקטלוג
-      </Link>
+      <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)" }}>
+        <Link href="/" style={{ color: "var(--muted)" }}>דף הבית</Link>
+        {catName ? (
+          <>
+            <span style={{ margin: "0 8px" }}>/</span>
+            <Link href={`/?cat=${encodeURIComponent(product.category_id)}`} style={{ color: "var(--green)", fontWeight: 600 }}>
+              {catName}
+            </Link>
+          </>
+        ) : null}
+      </nav>
       <ProductView product={product} addonGroups={addonGroups} />
     </main>
   );
