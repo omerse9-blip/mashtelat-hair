@@ -24,7 +24,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   const [focusId, setFocusId] = useState(null);
   const [notices, setNotices] = useState([]);
 
-  // עדכוני שעות פעילות חריגות — באנר בראש הדף
+  // עדכוני שעות פעילות חריגות — הודעה עדינה בראש הדף
   useEffect(() => {
     let alive = true;
     getDeliveryNotices(14).then((n) => { if (alive) setNotices(n || []); }).catch(() => {});
@@ -74,13 +74,9 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   return (
     <div>
       {notices.length > 0 ? (
-        <div style={{ background: "#FBF3E4", border: "1px solid #E8D9B8", borderRadius: 12, padding: "12px 16px", marginBottom: 22 }}>
-          {notices.map((t, i) => (
-            <p key={i} style={{ color: "#7A5B1E", fontSize: 14, fontWeight: 600, lineHeight: 1.6, marginBottom: i === notices.length - 1 ? 0 : 4 }}>
-              {t}
-            </p>
-          ))}
-        </div>
+        <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
+          לתשומת לבכם, {notices.join(", ")}.
+        </p>
       ) : null}
 
       <section style={{ textAlign: "center", marginBottom: 36 }}>
@@ -96,7 +92,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
                 style={{ width: 108, height: 108, objectFit: "contain" }}
               />
             </div>
-            <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.12, marginBottom: 14 }}>
+            <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 52, fontWeight: 400, lineHeight: 1.15, marginBottom: 14 }}>
               כל הצמחים, במקום אחד.
             </h1>
             <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto 28px" }}>
