@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { sizeLabel } from "../lib/siteData";
+import { sizeLabel, singleSizeText } from "../lib/siteData";
 import { useCart } from "./CartProvider";
 import AddonsPopup from "./AddonsPopup";
 
@@ -26,6 +26,7 @@ export default function ProductView({ product, addonGroups }) {
 
   const price = hasSizes ? Number(current.price) : (product.single_price != null ? Number(product.single_price) : null);
   const sizeDesc = hasSizes ? (current.description || "") : "";
+  const singleText = hasSizes ? "" : singleSizeText(product);
 
   const image = hasSizes
     ? (current.image_url || product.image_url || sizes.find((s) => s.image_url)?.image_url || null)
@@ -57,7 +58,7 @@ export default function ProductView({ product, addonGroups }) {
       key,
       productId: product.id,
       name: product.name,
-      sizeLabel: hasSizes ? sizeLabel(current) : (product.single_size || ""),
+      sizeLabel: hasSizes ? sizeLabel(current) : singleText,
       price: price,
       image: image,
     }, qty);
@@ -108,6 +109,10 @@ export default function ProductView({ product, addonGroups }) {
 
       <div className="product-info">
         <h1 className="product-title" style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>{product.name}</h1>
+
+        {singleText ? (
+          <p className="product-sizetext" style={{ color: "var(--muted)", fontSize: 16, marginBottom: 16 }}>{singleText}</p>
+        ) : null}
 
         <div className="product-price" style={{ fontSize: 30, fontWeight: 700, color: "var(--green)", marginBottom: 24 }}>
           {price != null ? `₪${price}` : "—"}
@@ -209,6 +214,7 @@ export default function ProductView({ product, addonGroups }) {
           }
           .product-disclaimer { font-size: 12px !important; margin-top: 8px !important; }
           .product-title { font-size: 24px !important; margin-bottom: 4px !important; }
+          .product-sizetext { font-size: 14px !important; margin-bottom: 8px !important; }
           .product-price { font-size: 24px !important; margin-bottom: 14px !important; }
           .product-sizes { margin-bottom: 14px !important; }
           .product-sizedesc { font-size: 14px !important; margin-top: 10px !important; }
