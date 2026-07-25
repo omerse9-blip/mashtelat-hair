@@ -9,7 +9,6 @@ export const metadata = {
   description: "משתלה איכותית באילת — עצים, שיחים, צמחי נוי, כדים וכלי גינון.",
 };
 
-// בניית אינדקס חיפוש בצד השרת (משתמש בפונקציות הממוטמנות)
 async function buildSearchIndex(nurseryCats, gardenCats) {
   const nursery = [];
   try {
@@ -57,15 +56,13 @@ export default async function RootLayout({ children }) {
   try {
     gardenCategories = await getCategories("garden");
   } catch (e) { /* התעלמות */ }
-
   const searchIndex = await buildSearchIndex(nurseryCategories, gardenCategories);
-
   return (
     <html lang="he" dir="rtl">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Gveret+Levin&display=swap" rel="stylesheet" />
       </head>
       <body>
         <CartProvider>
