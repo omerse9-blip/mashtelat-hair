@@ -17,6 +17,7 @@ export default function ProductView({ product, addonGroups }) {
   const { addItem } = useCart();
 
   const hasAddons = addonGroups && addonGroups.length > 0;
+  const disclaimer = product.categories?.disclaimer || "";
 
   const sizes = product.product_sizes || [];
   const current = hasSizes ? sizes[sel] : null;
@@ -74,27 +75,32 @@ export default function ProductView({ product, addonGroups }) {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 36, alignItems: "start" }} className="product-grid">
-      <div
-        onClick={openZoom}
-        className="product-image"
-        style={{ background: "#f4f6f4", borderRadius: 18, overflow: "hidden", cursor: image ? "zoom-in" : "default", position: "relative" }}
-      >
-        {image ? (
-          <Image
-            src={image}
-            alt={product.name}
-            fill
-            priority
-            sizes="(max-width: 720px) 100vw, 550px"
-            style={{ objectFit: "cover" }}
-          />
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 48 }}>🪴</div>
-        )}
-        {!product.in_stock ? (
-          <span style={{ position: "absolute", top: 14, insetInlineStart: 14, background: "rgba(31,42,36,0.82)", color: "#fff", fontSize: 13, fontWeight: 600, padding: "5px 12px", borderRadius: 999 }}>
-            אזל מהמלאי
-          </span>
+      <div className="product-image-col">
+        <div
+          onClick={openZoom}
+          className="product-image"
+          style={{ background: "#f4f6f4", borderRadius: 18, overflow: "hidden", cursor: image ? "zoom-in" : "default", position: "relative" }}
+        >
+          {image ? (
+            <Image
+              src={image}
+              alt={product.name}
+              fill
+              priority
+              sizes="(max-width: 720px) 100vw, 550px"
+              style={{ objectFit: "cover" }}
+            />
+          ) : (
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 48 }}>🪴</div>
+          )}
+          {!product.in_stock ? (
+            <span style={{ position: "absolute", top: 14, insetInlineStart: 14, background: "rgba(31,42,36,0.82)", color: "#fff", fontSize: 13, fontWeight: 600, padding: "5px 12px", borderRadius: 999 }}>
+              אזל מהמלאי
+            </span>
+          ) : null}
+        </div>
+        {disclaimer ? (
+          <p className="product-disclaimer" style={{ color: "var(--muted)", fontSize: 13, marginTop: 10, lineHeight: 1.5 }}>{disclaimer}</p>
         ) : null}
       </div>
 
@@ -199,6 +205,7 @@ export default function ProductView({ product, addonGroups }) {
             height: 40vh;
             max-height: 40vh;
           }
+          .product-disclaimer { font-size: 12px !important; margin-top: 8px !important; }
           .product-title { font-size: 24px !important; margin-bottom: 4px !important; }
           .product-price { font-size: 24px !important; margin-bottom: 14px !important; }
           .product-sizes { margin-bottom: 14px !important; }
