@@ -198,22 +198,22 @@ function cardImageOf(product) {
 }
 
 const overlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
-const sheet = { background: "#fff", width: "100%", maxWidth: 480, maxHeight: "85vh", borderRadius: 18, display: "flex", flexDirection: "column", overflow: "hidden" };
-const sheetHeader = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid var(--line)", flexShrink: 0 };
+const sheet = { background: "#fff", width: "100%", maxWidth: 520, maxHeight: "88vh", borderRadius: 18, display: "flex", flexDirection: "column", overflow: "hidden" };
+const sheetHeader = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--line)", flexShrink: 0 };
 const closeBtn = { width: 32, height: 32, borderRadius: 999, border: "none", background: "#f2f2f0", fontSize: 18, cursor: "pointer" };
-const sheetBody = { padding: "16px", overflowY: "auto", flex: 1 };
-const sheetFooter = { display: "flex", gap: 10, padding: "12px 16px", borderTop: "1px solid var(--line)", flexShrink: 0 };
-const goCartBtn = { flex: 1, textAlign: "center", padding: "12px", borderRadius: 10, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" };
-const continueBtn = { flex: 1, padding: "12px", borderRadius: 10, border: "1px solid var(--line)", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 600, cursor: "pointer" };
+const sheetBody = { padding: "12px", overflowY: "auto", flex: 1 };
+const sheetFooter = { display: "flex", gap: 10, padding: "10px 16px", borderTop: "1px solid var(--line)", flexShrink: 0 };
+const goCartBtn = { flex: 1, textAlign: "center", padding: "11px", borderRadius: 10, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" };
+const continueBtn = { flex: 1, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 600, cursor: "pointer" };
 
-const cardGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "stretch" };
+const cardGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch" };
 const card = { border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column", height: "100%", padding: 0 };
 const cardImg = { width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", flexShrink: 0 };
-const cardImgEmpty = { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, color: "var(--muted)" };
-const cardBody = { display: "flex", flexDirection: "column", flex: 1, padding: "8px 10px 10px" };
-const cardName = { fontWeight: 600, fontSize: 14, textAlign: "center", marginBottom: 8 };
-const cardPriceStyle = { color: "var(--green)", fontWeight: 700, fontSize: 15, textAlign: "center", marginBottom: 8 };
-const addBtn = { marginTop: "auto", padding: "9px", borderRadius: 8, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" };
+const cardImgEmpty = { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, color: "var(--muted)" };
+const cardBody = { display: "flex", flexDirection: "column", flex: 1, padding: "6px 8px 8px" };
+const cardName = { fontWeight: 600, fontSize: 13, textAlign: "center", marginBottom: 6, lineHeight: 1.3 };
+const cardPriceStyle = { color: "var(--green)", fontWeight: 700, fontSize: 14, textAlign: "center", marginBottom: 6 };
+const addBtn = { marginTop: "auto", padding: "7px", borderRadius: 8, border: "none", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" };
 
 const sizeOverlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 320, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 };
 const sizeBox = { background: "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 320 };
