@@ -56,6 +56,11 @@ export default function CheckoutPage() {
     return () => { alive = false; };
   }, [method]);
 
+  // אחרי שההזמנה נשלחה — גלילה לראש הדף כדי להראות את מסך האישור
+  useEffect(() => {
+    if (done) window.scrollTo({ top: 0, behavior: "auto" });
+  }, [done]);
+
   const currentDay = options.find((o) => o.date === selDate);
 
   if (!ready) return null;
