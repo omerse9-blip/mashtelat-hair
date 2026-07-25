@@ -141,13 +141,15 @@ function AddonCard({ product, onAdd }) {
   return (
     <div style={card}>
       <div style={cardImg}>
-        {img ? <img src={img} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={cardImgEmpty}>🪴</div>}
+        {img ? <img src={img} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={cardImgEmpty}>🪴</div>}
       </div>
-      <p style={cardName}>{product.name}</p>
-      <p style={cardPriceStyle}>{multi ? `החל מ-₪${price}` : `₪${price}`}</p>
-      <button onClick={click} style={{ ...addBtn, background: added ? "#2f6b43" : "var(--green)" }}>
-        {added ? "✓ נוסף" : "הוספה לסל"}
-      </button>
+      <div style={cardBody}>
+        <p style={cardName}>{product.name}</p>
+        <p style={cardPriceStyle}>{multi ? `החל מ-₪${price}` : `₪${price}`}</p>
+        <button onClick={click} style={{ ...addBtn, background: added ? "#2f6b43" : "var(--green)" }}>
+          {added ? "✓ נוסף" : "הוספה לסל"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -169,13 +171,14 @@ const sheetFooter = { display: "flex", gap: 10, padding: "12px 16px", borderTop:
 const goCartBtn = { flex: 1, textAlign: "center", padding: "12px", borderRadius: 10, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" };
 const continueBtn = { flex: 1, padding: "12px", borderRadius: 10, border: "1px solid var(--line)", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 600, cursor: "pointer" };
 
-const cardGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 };
-const card = { border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column" };
-const cardImg = { width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4" };
+const cardGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "stretch" };
+const card = { border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column", height: "100%" };
+const cardImg = { width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", flexShrink: 0 };
 const cardImgEmpty = { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, color: "var(--muted)" };
-const cardName = { fontWeight: 600, fontSize: 14, padding: "8px 10px 2px", textAlign: "center" };
-const cardPriceStyle = { color: "var(--green)", fontWeight: 700, fontSize: 15, padding: "0 10px 8px", textAlign: "center" };
-const addBtn = { margin: "0 10px 10px", padding: "9px", borderRadius: 8, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" };
+const cardBody = { display: "flex", flexDirection: "column", flex: 1, padding: "8px 10px 10px" };
+const cardName = { fontWeight: 600, fontSize: 14, textAlign: "center", marginBottom: 2 };
+const cardPriceStyle = { color: "var(--green)", fontWeight: 700, fontSize: 15, textAlign: "center", marginBottom: 8 };
+const addBtn = { marginTop: "auto", padding: "9px", borderRadius: 8, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" };
 
 const sizeOverlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 320, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 };
 const sizeBox = { background: "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 320 };
