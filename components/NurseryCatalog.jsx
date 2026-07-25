@@ -93,8 +93,8 @@ export default function NurseryCatalog({ categories, productsByCat }) {
               />
             </div>
             <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 40, fontWeight: 400, lineHeight: 1.2, marginBottom: 14, maxWidth: 320, marginInline: "auto" }}>
-              <span style={{ display: "block", textAlign: "right", paddingInlineStart: "20%" }}>כל הצמחים,</span>
-              <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "20%" }}>במקום אחד.</span>
+              <span style={{ display: "block", textAlign: "right", paddingInlineStart: "17%" }}>כל הצמחים,</span>
+              <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "17%" }}>במקום אחד.</span>
             </h1>
             <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto 28px" }}>
               עצים, שיחים, צמחי נוי, כדים וכלי גינון — בחרו מחלקה והתחילו.
