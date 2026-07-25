@@ -109,7 +109,6 @@ export default function ProductView({ product, addonGroups }) {
 
         {hasSizes ? (
           <div className="product-sizes" style={{ marginBottom: 24 }}>
-            <p style={{ fontWeight: 600, marginBottom: 10 }}>בחירת גודל</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {sizes.map((s, i) => {
                 const active = i === sel;
