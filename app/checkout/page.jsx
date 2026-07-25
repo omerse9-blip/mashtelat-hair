@@ -204,13 +204,13 @@ export default function CheckoutPage() {
                 </select>
 
                 <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>שעה</label>
-                <div dir="ltr" style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "flex-start" }}>
+                <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {(currentDay?.windows || []).map((w) => (
                     <button
                       key={w}
                       onClick={() => setSelWindow(w)}
                       style={{
-                        padding: "9px 16px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                        padding: "11px 8px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
                         background: selWindow === w ? "var(--green)" : "#fff",
                         color: selWindow === w ? "#fff" : "var(--ink)",
                         border: selWindow === w ? "1px solid var(--green)" : "1px solid var(--line)",
