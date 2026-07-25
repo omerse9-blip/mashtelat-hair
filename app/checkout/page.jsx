@@ -1,335 +1,254 @@
-import { unstable_cache } from "next/cache";
-import { supabase } from "./supabaseClient";
+"use client";
 
-const CACHE_SECONDS = 60;
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useCart } from "../../components/CartProvider";
+import { createOrder, getDeliveryOptions } from "../../lib/siteData";
 
-function byPrice(list) {
-  return [...(list || [])].sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+const BUSINESS_WA = "972533669089";
+
+function field(label, value, onChange, props = {}) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }}
+        {...props}
+      />
+    </div>
+  );
 }
 
-// יצירת הזמנה דרך פונקציית RPC מאובטחת. מחזיר את מספר ההזמנה הרץ.
-export async function createOrder(details, items) {
-  const payload = items.map((it) => ({
-    name: it.name,
-    sizeLabel: it.sizeLabel || "",
-    price: Number(it.price),
-    quantity: it.quantity,
-  }));
-  const { data, error } = await supabase.rpc("create_public_order", {
-    p_customer_name: details.customer_name,
-    p_customer_phone: details.customer_phone,
-    p_customer_address: details.customer_address || "",
-    p_is_gift: details.is_gift,
-    p_recipient_name: details.recipient_name || "",
-    p_recipient_phone: details.recipient_phone || "",
-    p_recipient_address: details.recipient_address || "",
-    p_notes: details.notes || "",
-    p_items: payload,
-  });
-  if (error) throw new Error(error.message);
-  return data;
-}
+export default function CheckoutPage() {
+  const { items, total, count, clear, ready } = useCart();
 
-// מחלקות לפי סוג (nursery / garden), ממוינות לפי position — עם מטמון
-export const getCategories = unstable_cache(
-  async (kind) => {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("kind", kind)
-      .order("position", { ascending: true });
-    if (error) throw new Error(error.message);
-    return data || [];
-  },
-  ["categories"],
-  { revalidate: CACHE_SECONDS, tags: ["categories"] }
-);
+  const [method, setMethod] = useState(null); // "pickup" | "gift"
+  const [cName, setCName] = useState("");
+  const [cPhone, setCPhone] = useState("");
+  const [rName, setRName] = useState("");
+  const [rPhone, setRPhone] = useState("");
+  const [rAddr, setRAddr] = useState("");
+  const [greeting, setGreeting] = useState("");
+  const [notes, setNotes] = useState("");
 
-// מוצרים לפי מחלקה — עם מטמון
-export const getProducts = unstable_cache(
-  async (categoryId) => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, product_sizes(*)")
-      .eq("category_id", categoryId)
-      .eq("is_active", true)
-      .order("position", { ascending: true });
-    if (error) throw new Error(error.message);
-    return (data || []).map((p) => ({
-      ...p,
-      product_sizes: byPrice(p.product_sizes),
-    }));
-  },
-  ["products"],
-  { revalidate: CACHE_SECONDS, tags: ["products"] }
-);
+  const [options, setOptions] = useState([]);
+  const [selDate, setSelDate] = useState("");
+  const [selWindow, setSelWindow] = useState("");
 
-export async function getProductById(id) {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*, product_sizes(*), categories(name, kind)")
-    .eq("id", id)
-    .eq("is_active", true)
-    .single();
-  if (error) return null;
-  return {
-    ...data,
-    product_sizes: byPrice(data.product_sizes),
-  };
-}
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState("");
+  const [done, setDone] = useState(null);
 
-export const getAllProductIds = unstable_cache(
-  async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("id")
-      .eq("is_active", true);
-    if (error) throw new Error(error.message);
-    return (data || []).map((p) => p.id);
-  },
-  ["product-ids"],
-  { revalidate: CACHE_SECONDS, tags: ["products"] }
-);
+  // טעינת ימי וחלונות המסירה כשנבחרה שיטה
+  useEffect(() => {
+    if (!method) return;
+    let alive = true;
+    getDeliveryOptions(10).then((opts) => {
+      if (!alive) return;
+      setOptions(opts);
+      if (opts.length) {
+        setSelDate(opts[0].date);
+        setSelWindow(opts[0].windows[0] || "");
+      }
+    }).catch(() => setOptions([]));
+    return () => { alive = false; };
+  }, [method]);
 
-// תוספות של מוצר: לפי המחלקה שלו, מקובצות לפי מחלקת מקור וממוינות לפי מחיר עולה
-export async function getAddonsForCategory(categoryId) {
-  const { data, error } = await supabase
-    .from("category_addons")
-    .select("product:products(*, product_sizes(*), categories(name, position))")
-    .eq("category_id", categoryId);
-  if (error) return [];
+  const currentDay = options.find((o) => o.date === selDate);
 
-  // שליפת המוצרים, סינון פעילים ובמלאי בלבד (אזל לא מופיע)
-  const products = (data || [])
-    .map((r) => r.product)
-    .filter((p) => p && p.is_active && p.in_stock)
-    .map((p) => ({ ...p, product_sizes: byPrice(p.product_sizes) }));
+  if (!ready) return null;
 
-  // חישוב מחיר התחלתי לכל מוצר
-  const withStart = products.map((p) => {
-    const start = p.has_sizes && p.product_sizes?.length
-      ? Number(p.product_sizes[0].price)
-      : (p.single_price != null ? Number(p.single_price) : 0);
-    return { ...p, _start: start };
-  });
-
-  // קיבוץ לפי מחלקת מקור
-  const groupsMap = {};
-  for (const p of withStart) {
-    const gid = p.category_id;
-    if (!groupsMap[gid]) {
-      groupsMap[gid] = {
-        category_id: gid,
-        category_name: p.categories?.name || "",
-        category_position: p.categories?.position ?? 999,
-        items: [],
-      };
-    }
-    groupsMap[gid].items.push(p);
+  if (done) {
+    const msg = `שלום, ביצעתי הזמנה במשתלת העיר. מספר הזמנה ${done}. שמי ${cName}.`;
+    const waUrl = `https://wa.me/${BUSINESS_WA}?text=${encodeURIComponent(msg)}`;
+    return (
+      <main style={{ maxWidth: 600, margin: "0 auto", padding: "64px 20px", textAlign: "center" }}>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>🌿</div>
+        <h1 style={{ fontSize: 30, fontWeight: 800, marginBottom: 10 }}>ההזמנה נשלחה!</h1>
+        <p style={{ color: "var(--muted)", fontSize: 17, marginBottom: 6 }}>מספר הזמנה: <b>#{done}</b></p>
+        <p style={{ color: "var(--muted)", fontSize: 16, marginBottom: 32 }}>ניצור איתך קשר טלפוני לאישור הפרטים והתשלום.</p>
+        <a href={waUrl} target="_blank" rel="noreferrer" style={{ display: "block", background: "#25D366", color: "#fff", fontSize: 17, fontWeight: 700, padding: "14px", borderRadius: 12, marginBottom: 12 }}>
+          שליחת אישור בוואטסאפ
+        </a>
+        <Link href="/" style={{ display: "block", color: "var(--green)", fontWeight: 600 }}>חזרה לקטלוג</Link>
+      </main>
+    );
   }
 
-  // מיון פריטים בכל קבוצה לפי מחיר עולה
-  const groups = Object.values(groupsMap).map((g) => ({
-    ...g,
-    items: g.items.sort((a, b) => a._start - b._start),
-    min_price: Math.min(...g.items.map((i) => i._start)),
-  }));
+  if (count === 0) {
+    return (
+      <main style={{ maxWidth: 600, margin: "0 auto", padding: "64px 20px", textAlign: "center", color: "var(--muted)" }}>
+        העגלה ריקה.{" "}
+        <Link href="/" style={{ color: "var(--green)", fontWeight: 600 }}>לקטלוג המשתלה</Link>
+      </main>
+    );
+  }
 
-  // מיון הקבוצות לפי המחיר ההתחלתי הזול ביותר, שובר שוויון לפי סדר המחלקות
-  groups.sort((a, b) => {
-    if (a.min_price !== b.min_price) return a.min_price - b.min_price;
-    return a.category_position - b.category_position;
-  });
+  async function handleSubmit() {
+    setErr("");
+    if (!method) { setErr("יש לבחור איסוף עצמי או שליחת מתנה."); return; }
+    if (!cName.trim() || !cPhone.trim()) { setErr("יש למלא שם וטלפון."); return; }
+    if (method === "gift" && (!rName.trim() || !rPhone.trim() || !rAddr.trim())) {
+      setErr("במשלוח מתנה יש למלא שם, טלפון וכתובת של המקבל."); return;
+    }
+    if (!selDate || !selWindow) { setErr("יש לבחור מועד."); return; }
 
-  return groups;
-}
-
-// עבודות גינון לפי מחלקה — עם מטמון
-export const getGardenWorks = unstable_cache(
-  async (categoryId) => {
-    const { data, error } = await supabase
-      .from("garden_works")
-      .select("*")
-      .eq("category_id", categoryId)
-      .order("position", { ascending: true });
-    if (error) throw new Error(error.message);
-    return data || [];
-  },
-  ["garden-works"],
-  { revalidate: CACHE_SECONDS, tags: ["garden-works"] }
-);
-
-// =====================================================================
-// הגדרות מסירה — קריאה בצד האתר, וחישוב חלונות זמינים לתאריך
-// =====================================================================
-const WINDOWS_KEY = -1;
-const DEFAULT_WINDOWS = ["10-12", "12-14", "14-16", "16-18", "18-20"];
-
-// קריאת ההגדרות הגולמיות מהטבלה
-async function readDeliveryRows() {
-  const { data, error } = await supabase.from("delivery_settings").select("*");
-  if (error) return { windows: DEFAULT_WINDOWS, base: {}, overrides: {} };
-  const rows = data || [];
-
-  const winRow = rows.find((r) => r.day_of_week === WINDOWS_KEY);
-  const windows = winRow && Array.isArray(winRow.windows) && winRow.windows.length
-    ? winRow.windows : DEFAULT_WINDOWS;
-
-  const base = {};
-  for (let d = 0; d <= 6; d++) base[d] = { open: "09:00", close: "18:00", state: "open" };
-  for (const r of rows) {
-    if (r.day_of_week != null && r.day_of_week >= 0 && r.day_of_week <= 6 && !r.the_date) {
-      base[r.day_of_week] = { open: r.open_time || "09:00", close: r.close_time || "18:00", state: r.state || "open" };
+    setSubmitting(true);
+    try {
+      const isGift = method === "gift";
+      const orderNumber = await createOrder({
+        customer_name: cName.trim(),
+        customer_phone: cPhone.trim(),
+        customer_address: "",
+        is_gift: isGift,
+        recipient_name: isGift ? rName.trim() : "",
+        recipient_phone: isGift ? rPhone.trim() : "",
+        recipient_address: isGift ? rAddr.trim() : "",
+        notes: notes.trim(),
+        fulfillment_type: method === "pickup" ? "pickup" : "delivery",
+        delivery_date: selDate,
+        delivery_window: selWindow,
+        greeting: greeting.trim(),
+      }, items);
+      clear();
+      setDone(orderNumber);
+    } catch (e) {
+      setErr(e.message || "אירעה שגיאה בשליחה. נסו שוב.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  const overrides = {};
-  for (const r of rows) {
-    if (r.the_date) {
-      overrides[r.the_date] = { open: r.open_time || "09:00", close: r.close_time || "18:00", state: r.state || "open" };
-    }
-  }
-  return { windows, base, overrides };
-}
+  const methodBtn = (val, label) => (
+    <button
+      onClick={() => setMethod(val)}
+      style={{
+        flex: 1, padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer",
+        background: method === val ? "var(--green)" : "#fff",
+        color: method === val ? "#fff" : "var(--ink)",
+        border: method === val ? "1px solid var(--green)" : "1px solid var(--line)",
+      }}
+    >
+      {label}
+    </button>
+  );
 
-// המצב האפקטיבי ליום מסוים (חריג לתאריך גובר על הבסיס)
-function effectiveDay(dateObj, settings) {
-  const iso = dateObj.toISOString().slice(0, 10);
-  if (settings.overrides[iso]) return settings.overrides[iso];
-  return settings.base[dateObj.getDay()] || { open: "09:00", close: "18:00", state: "open" };
-}
+  return (
+    <main style={{ maxWidth: 600, margin: "0 auto", padding: "40px 20px" }}>
+      <Link href="/cart" style={{ color: "var(--muted)", fontSize: 14, display: "inline-block", marginBottom: 20 }}>› חזרה לעגלה</Link>
+      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>פרטי הזמנה</h1>
+      <p style={{ color: "var(--muted)", marginBottom: 24 }}>{count} פריטים · סה"כ ₪{total.toFixed(0)}</p>
 
-// המרת "HH:MM" לדקות
-function toMinutes(hhmm) {
-  const [h, m] = (hhmm || "0:0").split(":").map((x) => parseInt(x));
-  return h * 60 + (m || 0);
-}
+      {/* בחירת שיטה */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        {methodBtn("pickup", "איסוף עצמי")}
+        {methodBtn("gift", "שליחת מתנה / כתובת אחרת")}
+      </div>
 
-// חלון "10-12" -> {start:600, end:720, startH:10, endH:12}
-function parseWindow(w) {
-  const [s, e] = w.split("-").map((x) => parseInt(x));
-  return { startH: s, endH: e, start: s * 60, end: e * 60 };
-}
+      {method ? (
+        <>
+          <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, marginBottom: 18 }}>
+            <p style={{ fontWeight: 700, marginBottom: 12 }}>הפרטים שלך</p>
+            {field("שם מלא *", cName, setCName, { placeholder: "שם" })}
+            {field("טלפון *", cPhone, setCPhone, { type: "tel", inputMode: "tel", placeholder: "05X-XXXXXXX" })}
+          </div>
 
-// מחזיר את החלונות הזמינים לתאריך נתון, בהתחשב בשעות היום, בסגירה, ובשעה הנוכחית
-export async function getAvailableWindows(dateObj, nowMinutesIfToday) {
-  const settings = await readDeliveryRows();
-  const day = effectiveDay(dateObj, settings);
-  if (day.state === "closed") return [];
+          {method === "gift" ? (
+            <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, marginBottom: 18 }}>
+              <p style={{ fontWeight: 700, marginBottom: 12 }}>פרטי המקבל</p>
+              {field("שם המקבל *", rName, setRName, { placeholder: "שם המקבל" })}
+              {field("טלפון המקבל *", rPhone, setRPhone, { type: "tel", inputMode: "tel", placeholder: "05X-XXXXXXX" })}
+              {field("כתובת המקבל *", rAddr, setRAddr, { placeholder: "רחוב, עיר" })}
+            </div>
+          ) : null}
 
-  const openM = toMinutes(day.open);
-  const closeM = toMinutes(day.close);
+          {/* ברכה — בשתי השיטות */}
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>ברכה לכרטיס (אופציונלי)</label>
+            <textarea
+              value={greeting}
+              onChange={(e) => setGreeting(e.target.value.slice(0, 100))}
+              rows={2}
+              maxLength={100}
+              style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }}
+              placeholder="הברכה שתודפס על הכרטיס"
+            />
+            <p style={{ textAlign: "left", color: "var(--muted)", fontSize: 12, marginTop: 4 }}>{greeting.length}/100</p>
+          </div>
 
-  const result = [];
-  for (const w of settings.windows) {
-    const pw = parseWindow(w);
-    // החלון חייב להיכנס בשעות הפעילות: מתחיל אחרי/עם הפתיחה, ומתחיל לפני הסגירה
-    if (pw.start < openM) continue;
-    if (pw.start >= closeM) continue;
-    // חיתוך הזנב לפי הסגירה: אם החלון חורג מהסגירה, מקצרים את סופו
-    const endM = Math.min(pw.end, closeM);
-    // כלל הבלוק הנוכחי: אם היום הוא היום ויש שעה נוכחית, החלון שהיא בתוכו וכל מה שלפניו חסומים
-    if (nowMinutesIfToday != null && pw.end <= nowMinutesIfToday + 0) {
-      // חלון שכבר הסתיים — חסום
-      continue;
-    }
-    if (nowMinutesIfToday != null && pw.start <= nowMinutesIfToday && nowMinutesIfToday < pw.end) {
-      // השעה הנוכחית בתוך החלון — חסום, החלון הבא הוא הראשון הזמין
-      continue;
-    }
-    const label = endM === pw.end ? w : `${pw.startH}-${Math.floor(endM / 60)}`;
-    result.push(label);
-  }
-  return result;
-}
+          {/* מועד */}
+          <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, marginBottom: 18 }}>
+            <p style={{ fontWeight: 700, marginBottom: 12 }}>{method === "pickup" ? "מועד איסוף" : "מועד מסירה"}</p>
+            {options.length === 0 ? (
+              <p style={{ color: "var(--muted)", fontSize: 14 }}>אין מועדים זמינים כרגע. ניצור קשר לתיאום.</p>
+            ) : (
+              <>
+                <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>יום</label>
+                <select
+                  value={selDate}
+                  onChange={(e) => {
+                    setSelDate(e.target.value);
+                    const day = options.find((o) => o.date === e.target.value);
+                    setSelWindow(day?.windows[0] || "");
+                  }}
+                  style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15, marginBottom: 14, background: "#fff" }}
+                >
+                  {options.map((o) => <option key={o.date} value={o.date}>{o.label}</option>)}
+                </select>
 
-// מחזיר רשימת ימים זמינים קדימה (בלי ימים סגורים), עם החלונות של כל יום
-export async function getDeliveryOptions(daysAhead = 7) {
-  const settings = await readDeliveryRows();
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const out = [];
+                <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>שעה</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {(currentDay?.windows || []).map((w) => (
+                    <button
+                      key={w}
+                      onClick={() => setSelWindow(w)}
+                      style={{
+                        padding: "9px 16px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                        background: selWindow === w ? "var(--green)" : "#fff",
+                        color: selWindow === w ? "#fff" : "var(--ink)",
+                        border: selWindow === w ? "1px solid var(--green)" : "1px solid var(--line)",
+                      }}
+                    >
+                      {w}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
-  for (let i = 0; i < daysAhead; i++) {
-    const d = new Date(now);
-    d.setDate(now.getDate() + i);
-    const day = effectiveDay(d, settings);
-    if (day.state === "closed") continue;
+          {/* הערות */}
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>הערות למשתלה (אופציונלי)</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }} />
+          </div>
 
-    const isToday = i === 0;
-    const windows = await computeWindows(d, day, settings.windows, isToday ? nowMinutes : null);
-    if (windows.length === 0) continue;
+          {method === "gift" ? (
+            <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 14 }}>
+              ייתכנו דמי משלוח בהתאם להזמנה, שיימסרו טלפונית עם אישור ההזמנה.
+            </p>
+          ) : null}
 
-    out.push({
-      date: d.toISOString().slice(0, 10),
-      label: hebDayLabel(d, i),
-      windows,
-    });
-  }
-  return out;
-}
+          {err ? <p style={{ color: "#b3261e", fontSize: 14, marginBottom: 14 }}>{err}</p> : null}
 
-// חישוב חלונות ליום נתון (משמש את getDeliveryOptions)
-function computeWindows(dateObj, day, allWindows, nowMinutesIfToday) {
-  const openM = toMinutes(day.open);
-  const closeM = toMinutes(day.close);
-  const result = [];
-  for (const w of allWindows) {
-    const pw = parseWindow(w);
-    if (pw.start < openM) continue;
-    if (pw.start >= closeM) continue;
-    const endM = Math.min(pw.end, closeM);
-    if (nowMinutesIfToday != null && pw.end <= nowMinutesIfToday) continue;
-    if (nowMinutesIfToday != null && pw.start <= nowMinutesIfToday && nowMinutesIfToday < pw.end) continue;
-    const label = endM === pw.end ? w : `${pw.startH}-${Math.floor(endM / 60)}`;
-    result.push(label);
-  }
-  return result;
-}
-
-function hebDayLabel(dateObj, index) {
-  const names = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-  const dd = dateObj.getDate();
-  const mm = dateObj.getMonth() + 1;
-  const dayName = names[dateObj.getDay()];
-  if (index === 0) return `היום · ${dayName} ${dd}.${mm}`;
-  if (index === 1) return `מחר · ${dayName} ${dd}.${mm}`;
-  return `${dayName} ${dd}.${mm}`;
-}
-
-export function sizeLabel(s) {
-  if (!s) return "";
-  if (s.size_label) return s.size_label;
-  const parts = [];
-  if (s.liters != null) parts.push(`${s.liters} ליטר`);
-  const cm = [];
-  if (s.height_cm != null) cm.push(`גובה ${s.height_cm}`);
-  if (s.length_cm != null) cm.push(`אורך ${s.length_cm}`);
-  if (s.width_cm != null) cm.push(`רוחב ${s.width_cm}`);
-  if (s.diameter_cm != null) cm.push(`קוטר ${s.diameter_cm}`);
-  if (cm.length) parts.push(cm.join(", ") + ' ס"מ');
-  return parts.join(" · ");
-}
-export function defaultSize(product) {
-  if (!product.has_sizes || !product.product_sizes?.length) return null;
-  return product.product_sizes[0];
-}
-export function cardPrice(product) {
-  if (product.has_sizes && product.product_sizes?.length) {
-    return Number(product.product_sizes[0].price);
-  }
-  return product.single_price != null ? Number(product.single_price) : null;
-}
-export function cardImage(product) {
-  if (product.has_sizes && product.product_sizes?.length) {
-    const withImg = product.product_sizes.find((s) => s.image_url);
-    return product.product_sizes[0].image_url || withImg?.image_url || null;
-  }
-  return product.image_url || null;
-}
-export function cardSizeText(product) {
-  if (product.has_sizes && product.product_sizes?.length) {
-    return sizeLabel(product.product_sizes[0]);
-  }
-  return product.single_size || "";
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 17, fontWeight: 700, padding: "15px", borderRadius: 12, border: "none", cursor: "pointer", opacity: submitting ? 0.6 : 1 }}
+          >
+            {submitting ? "שולח..." : "שליחת הזמנה"}
+          </button>
+          <p style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", marginTop: 12 }}>
+            אין תשלום באתר — ניצור קשר טלפוני לאישור וחיוב.
+          </p>
+        </>
+      ) : (
+        <p style={{ color: "var(--muted)", fontSize: 14, textAlign: "center", padding: "20px 0" }}>
+          בחרו איסוף עצמי או שליחת מתנה כדי להמשיך.
+        </p>
+      )}
+    </main>
+  );
 }
