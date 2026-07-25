@@ -9,10 +9,11 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
   const { addItem } = useCart();
   const [openGroup, setOpenGroup] = useState(null);   // מחלקה שנפתחה (שכבה שנייה)
   const [sizePickFor, setSizePickFor] = useState(null); // מוצר שנבחרת לו מידה
+  const [addedKeys, setAddedKeys] = useState(() => new Set()); // פריטים שכבר נוספו, כל עוד החלון פתוח
 
   // איפוס בכל פתיחה מחדש של החלון
   useEffect(() => {
-    if (open) { setOpenGroup(null); setSizePickFor(null); }
+    if (open) { setOpenGroup(null); setSizePickFor(null); setAddedKeys(new Set()); }
   }, [open]);
 
   // "חזור" בטלפון: סוגר לפי סדר — קודם בחירת גודל, אז שכבת פריטים, אז החלון
@@ -36,6 +37,10 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
     else onClose();
   }
 
+  function markAdded(key) {
+    setAddedKeys((prev) => new Set(prev).add(key));
+  }
+
   function addSimple(product) {
     const price = product.has_sizes && product.product_sizes?.length
       ? Number(product.product_sizes[0].price)
@@ -49,6 +54,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
       image: cardImageOf(product),
       parentKey,
     }, 1);
+    markAdded(product.id);
   }
 
   function addWithSize(product, size) {
@@ -61,6 +67,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
       image: size.image_url || cardImageOf(product),
       parentKey,
     }, 1);
+    markAdded(product.id);
     setSizePickFor(null);
   }
 
@@ -96,7 +103,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
             // שכבה שנייה: פריטי המחלקה
             <div style={cardGrid}>
               {openGroup.items.map((p) => (
-                <AddonCard key={p.id} product={p} onAdd={() => handleAdd(p)} />
+                <AddonCard key={p.id} product={p} added={addedKeys.has(p.id)} onAdd={() => handleAdd(p)} />
               ))}
             </div>
           ) : (
@@ -157,21 +164,12 @@ function GroupCard({ group, onOpen }) {
 }
 
 // כרטיס פריט (שכבה שנייה)
-function AddonCard({ product, onAdd }) {
-  const [added, setAdded] = useState(false);
+function AddonCard({ product, added, onAdd }) {
   const multi = product.has_sizes && product.product_sizes?.length > 1;
   const price = product.has_sizes && product.product_sizes?.length
     ? Number(product.product_sizes[0].price)
     : Number(product.single_price);
   const img = cardImageOf(product);
-
-  function click() {
-    onAdd();
-    if (!multi) {
-      setAdded(true);
-      setTimeout(() => setAdded(false), 1200);
-    }
-  }
 
   return (
     <div style={card}>
@@ -181,8 +179,8 @@ function AddonCard({ product, onAdd }) {
       <div style={cardBody}>
         <p style={cardName}>{product.name}</p>
         <p style={cardPriceStyle}>{multi ? `החל מ-₪${price}` : `₪${price}`}</p>
-        <button onClick={click} style={{ ...addBtn, background: added ? "#2f6b43" : "var(--green)" }}>
-          {added ? "✓ נוסף" : "הוספה לסל"}
+        <button onClick={onAdd} style={{ ...addBtn, background: added ? "#2f6b43" : "var(--green)" }}>
+          {added ? "✓ בסל · הוספה נוספת" : "הוספה לסל"}
         </button>
       </div>
     </div>
