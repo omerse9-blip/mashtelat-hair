@@ -92,8 +92,8 @@ export default function NurseryCatalog({ categories, productsByCat }) {
                 style={{ width: 108, height: 108, objectFit: "contain" }}
               />
             </div>
-            <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 40, fontWeight: 400, lineHeight: 1.15, marginBottom: 14 }}>
-              כל הצמחים, במקום אחד.
+            <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 40, fontWeight: 400, lineHeight: 1.2, marginBottom: 14 }}>
+              כל הצמחים,<br />במקום אחד.
             </h1>
             <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto 28px" }}>
               עצים, שיחים, צמחי נוי, כדים וכלי גינון — בחרו מחלקה והתחילו.
