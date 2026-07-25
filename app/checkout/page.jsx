@@ -7,6 +7,13 @@ import { createOrder, getDeliveryOptions } from "../../lib/siteData";
 
 const BUSINESS_WA = "972533669089";
 
+function digitsOf(s) {
+  return (s || "").replace(/[^0-9]/g, "");
+}
+function validPhone(s) {
+  return digitsOf(s).length >= 9;
+}
+
 function field(label, value, onChange, props = {}) {
   return (
     <div style={{ marginBottom: 14 }}>
@@ -94,9 +101,14 @@ export default function CheckoutPage() {
   async function handleSubmit() {
     setErr("");
     if (!method) { setErr("יש לבחור איסוף עצמי או שליחת מתנה."); return; }
-    if (!cName.trim() || !cPhone.trim()) { setErr("יש למלא שם וטלפון."); return; }
-    if (method === "gift" && (!rName.trim() || !rPhone.trim() || !rAddr.trim())) {
-      setErr("במשלוח מתנה יש למלא שם, טלפון וכתובת של המקבל."); return;
+    if (!cName.trim()) { setErr("יש למלא שם מלא."); return; }
+    if (!cPhone.trim()) { setErr("יש למלא מספר טלפון — שדה חובה."); return; }
+    if (!validPhone(cPhone)) { setErr("מספר הטלפון אינו תקין — יש להזין מספר מלא."); return; }
+    if (method === "gift") {
+      if (!rName.trim()) { setErr("יש למלא את שם המקבל."); return; }
+      if (!rPhone.trim()) { setErr("יש למלא את טלפון המקבל — שדה חובה."); return; }
+      if (!validPhone(rPhone)) { setErr("טלפון המקבל אינו תקין — יש להזין מספר מלא."); return; }
+      if (!rAddr.trim()) { setErr("יש למלא את כתובת המקבל."); return; }
     }
     if (!selDate || !selWindow) { setErr("יש לבחור מועד."); return; }
 
@@ -140,6 +152,9 @@ export default function CheckoutPage() {
     </button>
   );
 
+  const cPhoneBad = cPhone.trim() !== "" && !validPhone(cPhone);
+  const rPhoneBad = rPhone.trim() !== "" && !validPhone(rPhone);
+
   return (
     <main style={{ maxWidth: 600, margin: "0 auto", padding: "40px 20px" }}>
       <Link href="/cart" style={{ color: "var(--muted)", fontSize: 14, display: "inline-block", marginBottom: 20 }}>› חזרה לעגלה</Link>
@@ -157,14 +172,32 @@ export default function CheckoutPage() {
           <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, marginBottom: 18 }}>
             <p style={{ fontWeight: 700, marginBottom: 12 }}>הפרטים שלך</p>
             {field("שם מלא *", cName, setCName, { placeholder: "שם" })}
-            {field("טלפון *", cPhone, setCPhone, { type: "tel", inputMode: "tel", placeholder: "05X-XXXXXXX" })}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>טלפון *</label>
+              <input
+                value={cPhone}
+                onChange={(e) => setCPhone(e.target.value)}
+                type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
+                style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${cPhoneBad ? "#b3261e" : "var(--line)"}`, fontSize: 15 }}
+              />
+              {cPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון מלא.</p> : null}
+            </div>
           </div>
 
           {method === "gift" ? (
             <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, marginBottom: 18 }}>
               <p style={{ fontWeight: 700, marginBottom: 12 }}>פרטי המקבל</p>
               {field("שם המקבל *", rName, setRName, { placeholder: "שם המקבל" })}
-              {field("טלפון המקבל *", rPhone, setRPhone, { type: "tel", inputMode: "tel", placeholder: "05X-XXXXXXX" })}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>טלפון המקבל *</label>
+                <input
+                  value={rPhone}
+                  onChange={(e) => setRPhone(e.target.value)}
+                  type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
+                  style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${rPhoneBad ? "#b3261e" : "var(--line)"}`, fontSize: 15 }}
+                />
+                {rPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון מלא.</p> : null}
+              </div>
               {field("כתובת המקבל *", rAddr, setRAddr, { placeholder: "רחוב, עיר" })}
             </div>
           ) : null}
