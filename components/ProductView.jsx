@@ -6,6 +6,8 @@ import { sizeLabel } from "../lib/siteData";
 import { useCart } from "./CartProvider";
 import AddonsPopup from "./AddonsPopup";
 
+const DEFAULT_DISCLAIMER = "• התמונה להמחשה בלבד.";
+
 export default function ProductView({ product, addonGroups }) {
   const hasSizes = product.has_sizes && product.product_sizes?.length > 0;
   const [sel, setSel] = useState(0);
@@ -17,7 +19,7 @@ export default function ProductView({ product, addonGroups }) {
   const { addItem } = useCart();
 
   const hasAddons = addonGroups && addonGroups.length > 0;
-  const disclaimer = product.categories?.disclaimer || "";
+  const disclaimer = product.categories?.disclaimer || DEFAULT_DISCLAIMER;
 
   const sizes = product.product_sizes || [];
   const current = hasSizes ? sizes[sel] : null;
