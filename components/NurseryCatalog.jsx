@@ -20,7 +20,6 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   const initialCat = findCat(catFromUrl);
   const [activeId, setActiveId] = useState(initialCat ? initialCat.id : (homeCat ? homeCat.id : null));
 
-  const [zoomImg, setZoomImg] = useState(null);
   const [focusId, setFocusId] = useState(null);
 
   useEffect(() => {
@@ -55,22 +54,6 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   const activeCat = activeId != null ? findCat(activeId) : null;
   const products = activeId != null ? (productsByCat[activeId] || productsByCat[String(activeId)] || []) : [];
 
-  useEffect(() => {
-    if (!zoomImg) return;
-    window.history.pushState({ zoom: true }, "");
-    const onPop = () => setZoomImg(null);
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, [zoomImg]);
-
-  function closeZoom() {
-    if (window.history.state && window.history.state.zoom) {
-      window.history.back();
-    } else {
-      setZoomImg(null);
-    }
-  }
-
   if (!categories.length) {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px", border: "1px dashed var(--line)", borderRadius: 16, color: "var(--muted)" }}>
@@ -101,7 +84,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
               עצים, שיחים, צמחי נוי, כדים וכלי גינון — בחרו מחלקה והתחילו.
             </p>
             {activeCat ? (
-              <h2 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", paddingTop: 8, borderTop: "1px solid var(--line)", maxWidth: 280, margin: "0 auto", paddingTop: 22 }}>
+              <h2 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", borderTop: "1px solid var(--line)", maxWidth: 280, margin: "0 auto", paddingTop: 22 }}>
                 {activeCat.name}
               </h2>
             ) : null}
@@ -121,30 +104,9 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </div>
       ) : (
         <div className="catalog-grid">
-          {products.map((p) => <ProductCard key={p.id} product={p} activeId={activeId} onZoom={setZoomImg} highlight={String(p.id) === focusId} />)}
+          {products.map((p) => <ProductCard key={p.id} product={p} activeId={activeId} highlight={String(p.id) === focusId} />)}
         </div>
       )}
-
-      {zoomImg ? (
-        <div
-          onClick={closeZoom}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}
-        >
-          <img
-            src={zoomImg}
-            alt=""
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "92vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
-          />
-          <button
-            onClick={closeZoom}
-            style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 40, height: 40, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
-            aria-label="סגירה"
-          >
-            ✕
-          </button>
-        </div>
-      ) : null}
 
       <style>{`
         .catalog-grid {
@@ -163,7 +125,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   );
 }
 
-function ProductCard({ product, activeId, onZoom, highlight }) {
+function ProductCard({ product, activeId, highlight }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -200,9 +162,9 @@ function ProductCard({ product, activeId, onZoom, highlight }) {
         transition: "box-shadow 0.4s ease, border-color 0.4s ease",
       }}
     >
-      <div
-        onClick={() => img && onZoom(img)}
-        style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "var(--green-soft)", overflow: "hidden", cursor: img ? "zoom-in" : "default" }}
+      <Link
+        href={productHref}
+        style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "var(--green-soft)", overflow: "hidden", cursor: "pointer", display: "block" }}
       >
         {img ? (
           <Image
@@ -220,7 +182,7 @@ function ProductCard({ product, activeId, onZoom, highlight }) {
             אזל מהמלאי
           </span>
         ) : null}
-      </div>
+      </Link>
 
       <div className="product-body" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
         <Link href={productHref} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
