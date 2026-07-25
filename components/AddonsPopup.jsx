@@ -60,7 +60,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
         <div style={sheetHeader}>
           <button onClick={onClose} aria-label="סגירה" style={closeBtn}>✕</button>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontWeight: 700, fontSize: 18 }}>רוצה להוסיף?</p>
+            <p style={{ fontWeight: 700, fontSize: 18 }}>תוספות למתנה המושלמת</p>
             {parentName ? <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 2 }}>ל{parentName}</p> : null}
           </div>
           <span style={{ width: 32 }} />
@@ -73,7 +73,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
             groups.map((g) => (
               <div key={g.category_id} style={{ marginBottom: 18 }}>
                 <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{g.category_name}</p>
-                <div style={cardRow}>
+                <div style={cardGrid}>
                   {g.items.map((p) => (
                     <AddonCard key={p.id} product={p} onAdd={() => handleAdd(p)} />
                   ))}
@@ -143,7 +143,7 @@ function AddonCard({ product, onAdd }) {
       <p style={cardName}>{product.name}</p>
       <p style={cardPriceStyle}>{multi ? `החל מ-₪${price}` : `₪${price}`}</p>
       <button onClick={click} style={{ ...addBtn, background: added ? "#2f6b43" : "var(--green)" }}>
-        {added ? "✓ נוסף" : "הוספה"}
+        {added ? "✓ נוסף" : "הוספה לסל"}
       </button>
     </div>
   );
@@ -166,13 +166,13 @@ const sheetFooter = { display: "flex", gap: 10, padding: "12px 16px", borderTop:
 const goCartBtn = { flex: 1, textAlign: "center", padding: "12px", borderRadius: 10, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" };
 const continueBtn = { flex: 1, padding: "12px", borderRadius: 10, border: "1px solid var(--line)", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 600, cursor: "pointer" };
 
-const cardRow = { display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 };
-const card = { flexShrink: 0, width: 130, border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column" };
+const cardGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 };
+const card = { border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", display: "flex", flexDirection: "column" };
 const cardImg = { width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4" };
 const cardImgEmpty = { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, color: "var(--muted)" };
-const cardName = { fontWeight: 600, fontSize: 13, padding: "8px 8px 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
-const cardPriceStyle = { color: "var(--green)", fontWeight: 700, fontSize: 14, padding: "0 8px 8px" };
-const addBtn = { margin: "0 8px 8px", padding: "7px", borderRadius: 8, border: "none", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" };
+const cardName = { fontWeight: 600, fontSize: 14, padding: "8px 10px 2px", textAlign: "center" };
+const cardPriceStyle = { color: "var(--green)", fontWeight: 700, fontSize: 15, padding: "0 10px 8px", textAlign: "center" };
+const addBtn = { margin: "0 10px 10px", padding: "9px", borderRadius: 8, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" };
 
 const sizeOverlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 320, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 };
 const sizeBox = { background: "#fff", borderRadius: 14, padding: 18, width: "100%", maxWidth: 320 };
