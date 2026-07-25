@@ -56,7 +56,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
 
   return (
     <div style={overlay} onClick={onClose}>
-      <div style={sheet} className="addons-sheet" onClick={(e) => e.stopPropagation()}>
+      <div style={sheet} onClick={(e) => e.stopPropagation()}>
         <div style={sheetHeader}>
           <button onClick={onClose} aria-label="סגירה" style={closeBtn}>✕</button>
           <div style={{ textAlign: "center" }}>
@@ -109,15 +109,6 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
           </div>
         </div>
       )}
-
-      <style>{`
-        @media (min-width: 721px) {
-          .addons-sheet {
-            border-radius: 18px !important;
-            max-height: 80vh !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
@@ -162,8 +153,8 @@ function cardImageOf(product) {
   return product.image_url || null;
 }
 
-const overlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" };
-const sheet = { background: "#fff", width: "100%", maxWidth: 560, maxHeight: "82vh", borderRadius: "18px 18px 0 0", display: "flex", flexDirection: "column", overflow: "hidden", marginTop: "auto" };
+const overlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
+const sheet = { background: "#fff", width: "100%", maxWidth: 480, maxHeight: "85vh", borderRadius: 18, display: "flex", flexDirection: "column", overflow: "hidden" };
 const sheetHeader = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid var(--line)", flexShrink: 0 };
 const closeBtn = { width: 32, height: 32, borderRadius: 999, border: "none", background: "#f2f2f0", fontSize: 16, cursor: "pointer" };
 const sheetBody = { padding: "16px", overflowY: "auto", flex: 1 };
