@@ -90,7 +90,10 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
       </div>
 
       {sizePickFor && (
-        <div style={sizeOverlay} onClick={() => setSizePickFor(null)}>
+        <div
+          style={sizeOverlay}
+          onClick={(e) => { e.stopPropagation(); setSizePickFor(null); }}
+        >
           <div style={sizeBox} onClick={(e) => e.stopPropagation()}>
             <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 4, textAlign: "center" }}>{sizePickFor.name}</p>
             <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 12, textAlign: "center" }}>בחירת גודל</p>
@@ -102,7 +105,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
                 </button>
               ))}
             </div>
-            <button onClick={() => setSizePickFor(null)} style={sizeCancel}>ביטול</button>
+            <button onClick={(e) => { e.stopPropagation(); setSizePickFor(null); }} style={sizeCancel}>ביטול</button>
           </div>
         </div>
       )}
