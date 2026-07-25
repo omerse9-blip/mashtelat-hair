@@ -41,16 +41,18 @@ export default async function ProductPage({ params }) {
 
   return (
     <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
-      <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)" }}>
+      <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)", display: "flex", flexWrap: "wrap", gap: 8 }}>
         <Link href="/" style={{ color: "var(--muted)" }}>דף הבית</Link>
         {catName ? (
           <>
-            <span style={{ margin: "0 8px" }}>/</span>
+            <span>/</span>
             <Link href={`/?cat=${encodeURIComponent(product.category_id)}`} style={{ color: "var(--green)", fontWeight: 600 }}>
               {catName}
             </Link>
           </>
         ) : null}
+        <span>/</span>
+        <span style={{ color: "var(--ink)" }}>{product.name}</span>
       </nav>
       <ProductView product={product} addonGroups={addonGroups} />
     </main>
