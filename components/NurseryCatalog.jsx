@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCart } from "./CartProvider";
+import { getDeliveryNotices } from "../lib/siteData";
 
 export default function NurseryCatalog({ categories, productsByCat }) {
   const router = useRouter();
@@ -21,6 +22,14 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   const [activeId, setActiveId] = useState(initialCat ? initialCat.id : (homeCat ? homeCat.id : null));
 
   const [focusId, setFocusId] = useState(null);
+  const [notices, setNotices] = useState([]);
+
+  // עדכוני שעות פעילות חריגות — באנר בראש הדף
+  useEffect(() => {
+    let alive = true;
+    getDeliveryNotices(14).then((n) => { if (alive) setNotices(n || []); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     const fromUrl = searchParams.get("cat");
@@ -64,6 +73,16 @@ export default function NurseryCatalog({ categories, productsByCat }) {
 
   return (
     <div>
+      {notices.length > 0 ? (
+        <div style={{ background: "#FBF3E4", border: "1px solid #E8D9B8", borderRadius: 12, padding: "12px 16px", marginBottom: 22 }}>
+          {notices.map((t, i) => (
+            <p key={i} style={{ color: "#7A5B1E", fontSize: 14, fontWeight: 600, lineHeight: 1.6, marginBottom: i === notices.length - 1 ? 0 : 4 }}>
+              {t}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
       <section style={{ textAlign: "center", marginBottom: 36 }}>
         {isHome ? (
           <>
