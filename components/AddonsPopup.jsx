@@ -84,7 +84,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
       <div style={sheet} onClick={(e) => e.stopPropagation()}>
         <div style={sheetHeader}>
           {inGroup ? (
-            <button onClick={() => setOpenGroup(null)} aria-label="חזרה" style={closeBtn}>›</button>
+            <button onClick={() => setOpenGroup(null)} aria-label="חזרה" style={closeBtn}>‹</button>
           ) : (
             <button onClick={onClose} aria-label="סגירה" style={closeBtn}>✕</button>
           )}
