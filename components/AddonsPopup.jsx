@@ -83,9 +83,8 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
           )}
           <div style={{ textAlign: "center" }}>
             <p style={{ fontWeight: 700, fontSize: 18 }}>
-              {inGroup ? openGroup.category_name : "תוספות למתנה המושלמת"}
+              {inGroup ? openGroup.category_name : "תוספת מושלמת"}
             </p>
-            {!inGroup && parentName ? <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 2 }}>ל{parentName}</p> : null}
           </div>
           <span style={{ width: 32 }} />
         </div>
@@ -101,7 +100,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
               ))}
             </div>
           ) : (
-            // שכבה ראשונה: כרטיס לכל מחלקה, תמונת הפריט הזול
+            // שכבה ראשונה: כרטיס לכל מחלקה — תמונה ושם בלבד
             <div style={cardGrid}>
               {groups.map((g) => (
                 <GroupCard key={g.category_id} group={g} onOpen={() => setOpenGroup(g)} />
@@ -140,11 +139,10 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
   );
 }
 
-// כרטיס מחלקה (שכבה ראשונה)
+// כרטיס מחלקה (שכבה ראשונה) — תמונה ושם בלבד
 function GroupCard({ group, onOpen }) {
   const cheapest = group.items[0]; // כבר ממוין לפי מחיר עולה
   const img = cheapest ? cardImageOf(cheapest) : null;
-  const from = group.min_price;
   return (
     <button style={{ ...card, cursor: "pointer", textAlign: "inherit" }} onClick={onOpen}>
       <div style={cardImg}>
@@ -152,7 +150,6 @@ function GroupCard({ group, onOpen }) {
       </div>
       <div style={cardBody}>
         <p style={cardName}>{group.category_name}</p>
-        <p style={cardPriceStyle}>החל מ-₪{from}</p>
         <span style={{ ...addBtn, background: "var(--green)", display: "block", textAlign: "center" }}>לבחירה ›</span>
       </div>
     </button>
@@ -214,7 +211,7 @@ const card = { border: "1px solid var(--line)", borderRadius: 12, overflow: "hid
 const cardImg = { width: "100%", aspectRatio: "1 / 1", background: "#f4f6f4", flexShrink: 0 };
 const cardImgEmpty = { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, color: "var(--muted)" };
 const cardBody = { display: "flex", flexDirection: "column", flex: 1, padding: "8px 10px 10px" };
-const cardName = { fontWeight: 600, fontSize: 14, textAlign: "center", marginBottom: 2 };
+const cardName = { fontWeight: 600, fontSize: 14, textAlign: "center", marginBottom: 8 };
 const cardPriceStyle = { color: "var(--green)", fontWeight: 700, fontSize: 15, textAlign: "center", marginBottom: 8 };
 const addBtn = { marginTop: "auto", padding: "9px", borderRadius: 8, border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" };
 
