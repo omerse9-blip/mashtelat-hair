@@ -65,17 +65,17 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
   }
 
   function goToCategory(catId) {
-    const targetId = `cat-${catId}`;
+    const targetId = "cat-" + catId;
     const onBasePage = pathname === baseHref;
     closeMenu();
     if (onBasePage) {
-      setTimeout(() => {
+      setTimeout(function () {
         const el = document.getElementById(targetId);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 320);
     } else {
       router.push(baseHref);
-      setTimeout(() => {
+      setTimeout(function () {
         const el = document.getElementById(targetId);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 450);
@@ -86,7 +86,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
     const onBasePage = pathname === baseHref;
     closeMenu();
     if (onBasePage) {
-      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 320);
+      setTimeout(function () { window.scrollTo({ top: 0, behavior: "smooth" }); }, 320);
     } else {
       router.push(baseHref);
     }
@@ -162,7 +162,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           <button
             onClick={() => setMenuOpen(true)}
             aria-label="תפריט"
-            style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5, width: 42, height: 42, borderRadius: 12, border: `1px solid ${BTN_BORDER}`, background: BTN_BG, boxShadow: BTN_SHADOW, cursor: "pointer", padding: 0 }}
+            style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5, width: 42, height: 42, borderRadius: 12, border: "1px solid " + BTN_BORDER, background: BTN_BG, boxShadow: BTN_SHADOW, cursor: "pointer", padding: 0 }}
           >
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
@@ -178,15 +178,15 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, flex: 1, minWidth: 0 }}>
           
-            href={`https://wa.me/${BUSINESS_WA}`}
+            href={"https://wa.me/" + BUSINESS_WA}
             target="_blank"
             rel="noreferrer"
             aria-label="וואטסאפ"
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: `1.5px solid ${WHATSAPP_GREEN}`, background: "#fff", boxShadow: BTN_SHADOW }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1.5px solid " + WHATSAPP_GREEN, background: "#fff", boxShadow: BTN_SHADOW }}
           >
             <WhatsAppIcon />
           </a>
-          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: `1px solid ${BTN_BORDER}`, background: BTN_BG, boxShadow: BTN_SHADOW }} aria-label="עגלה">
+          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid " + BTN_BORDER, background: BTN_BG, boxShadow: BTN_SHADOW }} aria-label="עגלה">
             <CartIcon />
             {count > 0 ? (
               <span style={{ position: "absolute", top: -4, insetInlineEnd: -4, minWidth: 20, height: 20, padding: "0 5px", borderRadius: 999, background: "var(--green)", color: "#fff", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -219,7 +219,7 @@ function NavTab({ href, label, active }) {
         textAlign: "center",
         background: active ? "var(--green)" : BTN_BG,
         color: active ? "#fff" : "var(--green)",
-        border: active ? "1px solid var(--green)" : `1px solid ${BTN_BORDER}`,
+        border: active ? "1px solid var(--green)" : "1px solid " + BTN_BORDER,
         boxShadow: active ? "none" : BTN_SHADOW,
       }}
     >
