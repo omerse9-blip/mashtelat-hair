@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "../../components/CartProvider";
+import { useDelivery } from "../../components/DeliveryProvider";
 import { createOrder, getDeliveryOptions } from "../../lib/siteData";
 
 const BUSINESS_WA = "972533669089";
@@ -30,6 +31,7 @@ function field(label, value, onChange, props = {}) {
 
 export default function CheckoutPage() {
   const { items, total, count, clear, ready } = useCart();
+  const { delivery, ready: deliveryReady } = useDelivery();
 
   const [method, setMethod] = useState(null); // "pickup" | "gift"
   const [cName, setCName] = useState("");
@@ -47,6 +49,20 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState(null);
+  const [prefilled, setPrefilled] = useState(false);
+
+  // מילוי מוקדם מתוך בחירת המשלוח בעמוד הבית
+  useEffect(() => {
+    if (!deliveryReady || prefilled) return;
+    if (delivery.method) {
+      setMethod(delivery.method === "pickup" ? "pickup" : "gift");
+    }
+    if (delivery.method === "delivery" && (delivery.street || delivery.houseNumber)) {
+      setRAddr(`${delivery.street} ${delivery.houseNumber}`.trim());
+    }
+    setPrefilled(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deliveryReady]);
 
   // טעינת ימי וחלונות המסירה כשנבחרה שיטה
   useEffect(() => {
@@ -56,11 +72,15 @@ export default function CheckoutPage() {
       if (!alive) return;
       setOptions(opts);
       if (opts.length) {
-        setSelDate(opts[0].date);
-        setSelWindow(opts[0].windows[0] || "");
+        const preDate = delivery?.date && opts.find((o) => o.date === delivery.date) ? delivery.date : opts[0].date;
+        setSelDate(preDate);
+        const day = opts.find((o) => o.date === preDate);
+        const preWindow = delivery?.window && day?.windows.includes(delivery.window) ? delivery.window : (day?.windows[0] || "");
+        setSelWindow(preWindow);
       }
     }).catch(() => setOptions([]));
     return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [method]);
 
   // אחרי שההזמנה נשלחה — גלילה לראש הדף כדי להראות את מסך האישור
