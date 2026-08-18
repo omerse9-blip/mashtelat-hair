@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCart } from "./CartProvider";
 import DeliveryPicker from "./DeliveryPicker";
 import { getDeliveryNotices } from "../lib/siteData";
 
@@ -94,7 +93,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         const products = productsByCat[c.id] || productsByCat[String(c.id)] || [];
         return (
           <section key={c.id} id={`cat-${c.id}`} style={{ marginBottom: 52, scrollMarginTop: 90 }}>
-            <h2 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", borderTop: "1px solid var(--line)", maxWidth: 280, margin: "0 auto 24px", paddingTop: 22, textAlign: "center" }}>
+            <h2 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 30, fontWeight: 700, color: "var(--ink)", borderTop: "1px solid var(--line)", maxWidth: 280, margin: "0 auto 24px", paddingTop: 22, textAlign: "center" }}>
               {c.name}
             </h2>
 
@@ -131,34 +130,18 @@ export default function NurseryCatalog({ categories, productsByCat }) {
 }
 
 function ProductCard({ product, activeId, highlight }) {
-  const { addItem } = useCart();
-  const [added, setAdded] = useState(false);
-
   const img = product._image;
   const price = product._price;
   const sizeText = product._sizeText;
   const multi = product._multi;
-  const hasSizes = product._hasSizes;
   const inStock = product.in_stock;
 
   const productHref = `/product/${product.id}?from=${encodeURIComponent(String(activeId))}`;
 
-  function handleAdd() {
-    addItem({
-      key: product.id,
-      productId: product.id,
-      name: product.name,
-      sizeLabel: sizeText || "",
-      price: price,
-      image: img,
-    }, 1);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1400);
-  }
-
   return (
-    <div
+    <Link
       id={`product-${product.id}`}
+      href={productHref}
       className="product-card"
       style={{
         border: highlight ? "1px solid var(--green)" : "1px solid var(--line)",
@@ -167,9 +150,8 @@ function ProductCard({ product, activeId, highlight }) {
         transition: "box-shadow 0.4s ease, border-color 0.4s ease",
       }}
     >
-      <Link
-        href={productHref}
-        style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "var(--green-soft)", overflow: "hidden", cursor: "pointer", display: "block" }}
+      <div
+        style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "var(--green-soft)", overflow: "hidden" }}
       >
         {img ? (
           <Image
@@ -187,44 +169,27 @@ function ProductCard({ product, activeId, highlight }) {
             אזל מהמלאי
           </span>
         ) : null}
-      </Link>
+      </div>
 
-      <div className="product-body" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-        <Link href={productHref} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <p className="product-name" style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{product.name}</p>
-          {sizeText ? <p className="product-size" style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p> : null}
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            {multi ? <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span> : null}
-            <span className="product-price" style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
-              {price != null ? `₪${price}` : "—"}
-            </span>
-          </div>
-        </Link>
-
-        <div style={{ marginTop: "auto" }}>
-          {!inStock ? (
-            <div style={{ textAlign: "center", padding: "8px", borderRadius: 10, background: "var(--green-soft)", color: "var(--muted)", fontSize: 14, fontWeight: 600 }}>אזל מהמלאי</div>
-          ) : hasSizes ? (
-            <Link href={productHref} className="product-cta" style={{ display: "block", textAlign: "center", padding: "9px", borderRadius: 10, border: "1px solid var(--green)", color: "var(--green)", fontSize: 14, fontWeight: 700 }}>
-              בחירת מידה
-            </Link>
-          ) : (
-            <button onClick={handleAdd} className="product-cta" style={{ width: "100%", padding: "9px", borderRadius: 10, border: "none", background: added ? "var(--green-dark)" : "var(--green)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-              {added ? "✓ נוסף לסל" : "הוספה לסל"}
-            </button>
-          )}
+      <div className="product-body" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+        <p className="product-name" style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{product.name}</p>
+        {sizeText ? <p className="product-size" style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p> : null}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: "auto" }}>
+          {multi ? <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span> : null}
+          <span className="product-price" style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
+            {price != null ? `₪${price}` : "—"}
+          </span>
         </div>
       </div>
 
       <style>{`
         @media (max-width: 640px) {
-          .product-card .product-body { padding: 9px 10px !important; gap: 5px !important; }
+          .product-card .product-body { padding: 9px 10px !important; gap: 3px !important; }
           .product-card .product-name { font-size: 14px !important; }
           .product-card .product-size { font-size: 12px !important; }
           .product-card .product-price { font-size: 16px !important; }
-          .product-card .product-cta { padding: 8px !important; font-size: 13px !important; }
         }
       `}</style>
-    </div>
+    </Link>
   );
 }
