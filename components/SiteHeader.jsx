@@ -10,7 +10,7 @@ const BTN_BG = "#fbf8f1";
 const BTN_BORDER = "#ece3d4";
 const BTN_SHADOW = "0 1px 2px rgba(91,70,40,0.06)";
 const WHATSAPP_GREEN = "#25D366";
-const BUSINESS_WA = "972533669089";
+const WA_LINK = "https://wa.me/972533669089";
 
 function CartIcon() {
   return (
@@ -108,7 +108,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
           <button
             onClick={closeMenu}
-            aria-label="סגירה"
+            aria-label="Close"
             style={{ width: 36, height: 36, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             ✕
@@ -161,7 +161,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
         <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
           <button
             onClick={() => setMenuOpen(true)}
-            aria-label="תפריט"
+            aria-label="Menu"
             style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5, width: 42, height: 42, borderRadius: 12, border: "1px solid " + BTN_BORDER, background: BTN_BG, boxShadow: BTN_SHADOW, cursor: "pointer", padding: 0 }}
           >
             <span style={{ display: "block", width: 20, height: 2, background: "var(--ink)", margin: "0 auto", borderRadius: 2 }} />
@@ -177,16 +177,10 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
         </div>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, flex: 1, minWidth: 0 }}>
-          
-            href={"https://wa.me/" + BUSINESS_WA}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="וואטסאפ"
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1.5px solid " + WHATSAPP_GREEN, background: "#fff", boxShadow: BTN_SHADOW }}
-          >
+          <a href={WA_LINK} target="_blank" rel="noreferrer" aria-label="WhatsApp" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1.5px solid " + WHATSAPP_GREEN, background: "#fff", boxShadow: BTN_SHADOW }}>
             <WhatsAppIcon />
           </a>
-          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid " + BTN_BORDER, background: BTN_BG, boxShadow: BTN_SHADOW }} aria-label="עגלה">
+          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: "1px solid " + BTN_BORDER, background: BTN_BG, boxShadow: BTN_SHADOW }} aria-label="Cart">
             <CartIcon />
             {count > 0 ? (
               <span style={{ position: "absolute", top: -4, insetInlineEnd: -4, minWidth: 20, height: 20, padding: "0 5px", borderRadius: 999, background: "var(--green)", color: "#fff", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
