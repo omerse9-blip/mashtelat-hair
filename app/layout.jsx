@@ -2,13 +2,12 @@ import "./globals.css";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { CartProvider } from "../components/CartProvider";
+import { DeliveryProvider } from "../components/DeliveryProvider";
 import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
-
 export const metadata = {
   title: "משתלת העיר",
   description: "משתלה איכותית באילת — עצים, שיחים, צמחי נוי, כדים וכלי גינון.",
 };
-
 async function buildSearchIndex(nurseryCats, gardenCats) {
   const nursery = [];
   try {
@@ -46,7 +45,6 @@ async function buildSearchIndex(nurseryCats, gardenCats) {
   } catch (e) { /* התעלמות */ }
   return { nursery, garden };
 }
-
 export default async function RootLayout({ children }) {
   let nurseryCategories = [];
   let gardenCategories = [];
@@ -66,9 +64,11 @@ export default async function RootLayout({ children }) {
       </head>
       <body>
         <CartProvider>
-          <SiteHeader searchIndex={searchIndex} nurseryCategories={nurseryCategories} gardenCategories={gardenCategories} />
-          <div style={{ minHeight: "60vh" }}>{children}</div>
-          <SiteFooter />
+          <DeliveryProvider>
+            <SiteHeader searchIndex={searchIndex} nurseryCategories={nurseryCategories} gardenCategories={gardenCategories} />
+            <div style={{ minHeight: "60vh" }}>{children}</div>
+            <SiteFooter />
+          </DeliveryProvider>
         </CartProvider>
       </body>
     </html>
