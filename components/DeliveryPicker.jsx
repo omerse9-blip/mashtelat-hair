@@ -139,17 +139,20 @@ export default function DeliveryPicker({ scrollTargetId }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "100%", maxWidth: 480, maxHeight: "88vh", overflowY: "auto",
+          width: "100%", maxWidth: 480, minHeight: "52vh", maxHeight: "88vh", overflowY: "auto",
           background: "#f7f2e9", borderRadius: "20px 20px 0 0", boxShadow: "0 0 50px rgba(0,0,0,0.25)",
-          padding: "20px 20px 28px",
+          padding: "20px 20px 28px", display: "flex", flexDirection: "column",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <span style={{ fontWeight: 700, fontSize: 19, color: "var(--green)" }}>כתובת ותאריך למשלוח</span>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: 20, color: "var(--green)", marginBottom: 4 }}>אופן אספקת המוצרים</p>
+            <p style={{ fontSize: 14, color: "var(--muted)" }}>בחרו את השיטה הנוחה לכם</p>
+          </div>
           <button
             onClick={closeModal}
             aria-label="סגירה"
-            style={{ width: 34, height: 34, borderRadius: 999, border: "none", background: BTN_BG, color: "var(--ink)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{ width: 34, height: 34, borderRadius: 999, border: "none", background: BTN_BG, color: "var(--ink)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
           >
             ✕
           </button>
