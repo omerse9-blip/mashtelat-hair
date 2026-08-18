@@ -24,7 +24,6 @@ function StorePinIcon({ color = "#111" }) {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <path d="M3 9.5 12 3l9 6.5" />
       <path d="M5 9.5V20h5v-6h4v6h5V9.5" />
-      <circle cx="12" cy="16" r="0" />
       <path d="M9.5 9.5h5" />
     </svg>
   );
@@ -155,32 +154,32 @@ export default function DeliveryPicker({ scrollTargetId }) {
           padding: "20px 20px 28px", display: "flex", flexDirection: "column",
         }}
       >
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
-          <div>
+        <div style={{ position: "relative", marginBottom: 24 }}>
+          <div style={{ textAlign: "center" }}>
             <p style={{ fontWeight: 700, fontSize: 20, color: "var(--green)", marginBottom: 4 }}>אופן אספקת המוצרים</p>
             <p style={{ fontSize: 14, color: "var(--muted)" }}>בחרו את השיטה הנוחה לכם</p>
           </div>
           <button
             onClick={closeModal}
-            aria-label="סגירה"
-            style={{ width: 34, height: 34, borderRadius: 999, border: "none", background: BTN_BG, color: "var(--ink)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+            aria-label="Close"
+            style={{ position: "absolute", top: 0, right: 0, width: 34, height: 34, borderRadius: 999, border: "none", background: BTN_BG, color: "var(--ink)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             ✕
           </button>
         </div>
 
         {step === "method" ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
             <button
               onClick={() => pickMethod("delivery")}
-              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", gap: 10, padding: "16px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "delivery" ? "var(--green)" : "#fff", color: tMethod === "delivery" ? "#fff" : "var(--ink)", border: tMethod === "delivery" ? "1px solid var(--green)" : "1px solid var(--line)" }}
+              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 10, minWidth: 190, padding: "16px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "delivery" ? "var(--green)" : "#fff", color: tMethod === "delivery" ? "#fff" : "var(--ink)", border: tMethod === "delivery" ? "1px solid var(--green)" : "1px solid var(--line)" }}
             >
               <TruckIcon color={tMethod === "delivery" ? "#fff" : "#111"} />
               <span>משלוח על ידי שליח</span>
             </button>
             <button
               onClick={() => pickMethod("pickup")}
-              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", gap: 10, padding: "16px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "pickup" ? "var(--green)" : "#fff", color: tMethod === "pickup" ? "#fff" : "var(--ink)", border: tMethod === "pickup" ? "1px solid var(--green)" : "1px solid var(--line)" }}
+              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 10, minWidth: 190, padding: "16px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "pickup" ? "var(--green)" : "#fff", color: tMethod === "pickup" ? "#fff" : "var(--ink)", border: tMethod === "pickup" ? "1px solid var(--green)" : "1px solid var(--line)" }}
             >
               <StorePinIcon color={tMethod === "pickup" ? "#fff" : "#111"} />
               <span>איסוף עצמי</span>
