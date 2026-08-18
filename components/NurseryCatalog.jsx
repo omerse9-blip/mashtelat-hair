@@ -132,7 +132,6 @@ export default function NurseryCatalog({ categories, productsByCat }) {
 function ProductCard({ product, activeId, highlight }) {
   const img = product._image;
   const price = product._price;
-  const sizeText = product._sizeText;
   const multi = product._multi;
   const inStock = product.in_stock;
 
@@ -172,8 +171,7 @@ function ProductCard({ product, activeId, highlight }) {
       </div>
 
       <div className="product-body" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-        <p className="product-name" style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{product.name}</p>
-        {sizeText ? <p className="product-size" style={{ color: "var(--muted)", fontSize: 13 }}>{sizeText}</p> : null}
+        <p className="product-name" style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 700, fontSize: 20, color: "var(--ink)" }}>{product.name}</p>
         <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: "auto" }}>
           {multi ? <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span> : null}
           <span className="product-price" style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
@@ -185,8 +183,7 @@ function ProductCard({ product, activeId, highlight }) {
       <style>{`
         @media (max-width: 640px) {
           .product-card .product-body { padding: 9px 10px !important; gap: 3px !important; }
-          .product-card .product-name { font-size: 14px !important; }
-          .product-card .product-size { font-size: 12px !important; }
+          .product-card .product-name { font-size: 17px !important; }
           .product-card .product-price { font-size: 16px !important; }
         }
       `}</style>
