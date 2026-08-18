@@ -4,9 +4,14 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-const BTN_BG = "#fbf8f1";
-const BTN_BORDER = "#ece3d4";
-const BTN_SHADOW = "0 1px 2px rgba(91,70,40,0.06)";
+function SearchIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m21 21-4.35-4.35" />
+    </svg>
+  );
+}
 
 export default function SearchOverlay({ index }) {
   const [open, setOpen] = useState(false);
@@ -76,10 +81,10 @@ export default function SearchOverlay({ index }) {
     <>
       <button
         onClick={openSearch}
-        aria-label="חיפוש"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 42, borderRadius: 999, border: `1px solid ${BTN_BORDER}`, background: BTN_BG, boxShadow: BTN_SHADOW, fontSize: 18, cursor: "pointer" }}
+        aria-label="Search"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "transparent", cursor: "pointer", padding: 0 }}
       >
-        🔍
+        <SearchIcon />
       </button>
 
       {open ? (
