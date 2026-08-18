@@ -8,6 +8,17 @@ const BTN_BG = "#fbf8f1";
 const BTN_BORDER = "#ece3d4";
 const QUICK_LABELS = ["היום", "מחר", "מחרתיים"];
 
+function TruckIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 3h13v13H1z" />
+      <path d="M14 8h4l3 3v5h-7V8z" />
+      <circle cx="5.5" cy="18.5" r="1.8" />
+      <circle cx="17.5" cy="18.5" r="1.8" />
+    </svg>
+  );
+}
+
 export default function DeliveryPicker({ scrollTargetId }) {
   const { delivery, setDelivery, ready } = useDelivery();
   const [open, setOpen] = useState(false);
@@ -265,17 +276,17 @@ export default function DeliveryPicker({ scrollTargetId }) {
   );
 
   return (
-    <div style={{ marginBottom: 8 }}>
+    <div style={{ display: "flex", justifyContent: "center" }}>
       <button
         onClick={openModal}
         style={{
-          width: "100%", textAlign: "start", display: "flex", alignItems: "center", justifyContent: "space-between",
-          gap: 10, padding: "16px 18px", borderRadius: 16, border: `1px solid ${BTN_BORDER}`, background: BTN_BG,
-          boxShadow: "0 1px 2px rgba(91,70,40,0.06)", cursor: "pointer",
+          display: "inline-flex", alignItems: "center", gap: 8, maxWidth: "100%",
+          padding: "11px 18px", borderRadius: 999, border: "none", background: "var(--green)",
+          boxShadow: "0 2px 6px rgba(63,122,82,0.25)", cursor: "pointer",
         }}
       >
-        <span style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{summary}</span>
-        <span style={{ color: "var(--green)", fontSize: 20 }}>🚚</span>
+        <TruckIcon />
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{summary}</span>
       </button>
 
       {open && mounted ? createPortal(modal, document.body) : null}
