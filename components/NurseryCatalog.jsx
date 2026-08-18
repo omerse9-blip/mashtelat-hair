@@ -64,20 +64,16 @@ export default function NurseryCatalog({ categories, productsByCat }) {
       ) : null}
 
       <section style={{ textAlign: "center", marginBottom: 32 }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 10 }}>
           <Image
             src="/logo-mashtela.png"
             alt="משתלת העיר"
-            width={108}
-            height={108}
+            width={280}
+            height={280}
             priority
-            style={{ width: 108, height: 108, objectFit: "contain" }}
+            style={{ width: "min(78vw, 280px)", height: "auto", objectFit: "contain" }}
           />
         </div>
-        <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 40, fontWeight: 400, lineHeight: 1.2, marginBottom: 14, maxWidth: 320, marginInline: "auto" }}>
-          <span style={{ display: "block", textAlign: "right", paddingInlineStart: "8%" }}>כל הצמחים,</span>
-          <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "8%" }}>במקום אחד.</span>
-        </h1>
         <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 32 }}>
           עצים, שיחים, צמחי נוי, כדים וכלי גינון — גללו וגלו את כל המחלקות.
         </p>
