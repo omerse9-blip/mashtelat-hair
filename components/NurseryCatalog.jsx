@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCart } from "./CartProvider";
+import DeliveryPicker from "./DeliveryPicker";
 import { getDeliveryNotices } from "../lib/siteData";
 
 export default function NurseryCatalog({ categories, productsByCat }) {
@@ -21,7 +22,6 @@ export default function NurseryCatalog({ categories, productsByCat }) {
     return () => { alive = false; };
   }, []);
 
-  // הגעה ממסך החיפוש: גלילה אל המוצר הרלוונטי והדגשה קצרה
   useEffect(() => {
     const f = searchParams.get("focus");
     if (!f) return;
@@ -38,7 +38,6 @@ export default function NurseryCatalog({ categories, productsByCat }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // גלילה לקטגוריה ספציפית לפי עוגן בכתובת (הגעה מההמבורגר מעמוד אחר)
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash) return;
@@ -65,7 +64,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </p>
       ) : null}
 
-      <section style={{ textAlign: "center", marginBottom: 44 }}>
+      <section style={{ textAlign: "center", marginBottom: 32 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
           <Image
             src="/logo-mashtela.png"
@@ -80,10 +79,16 @@ export default function NurseryCatalog({ categories, productsByCat }) {
           <span style={{ display: "block", textAlign: "right", paddingInlineStart: "8%" }}>כל הצמחים,</span>
           <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "8%" }}>במקום אחד.</span>
         </h1>
-        <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto" }}>
+        <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 32 }}>
           עצים, שיחים, צמחי נוי, כדים וכלי גינון — גללו וגלו את כל המחלקות.
         </p>
       </section>
+
+      <div style={{ maxWidth: 420, margin: "0 auto 44px" }}>
+        <DeliveryPicker scrollTargetId="categories-start" />
+      </div>
+
+      <div id="categories-start" />
 
       {categories.map((c) => {
         const products = productsByCat[c.id] || productsByCat[String(c.id)] || [];
