@@ -44,23 +44,33 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
     }
   }
 
-  function goToCategory(catId) {
-    const url = `${baseHref}?cat=${catId}`;
-    closeMenu();
+  function scrollToId(targetId, delay) {
     setTimeout(() => {
-      router.push(url);
-      router.refresh();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 50);
+      const el = document.getElementById(targetId);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, delay);
+  }
+
+  function goToCategory(catId) {
+    const targetId = `cat-${catId}`;
+    const onBasePage = pathname === baseHref;
+    closeMenu();
+    if (onBasePage) {
+      scrollToId(targetId, 320);
+    } else {
+      router.push(baseHref);
+      scrollToId(targetId, 450);
+    }
   }
 
   function goHome() {
+    const onBasePage = pathname === baseHref;
     closeMenu();
-    setTimeout(() => {
+    if (onBasePage) {
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 320);
+    } else {
       router.push(baseHref);
-      router.refresh();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 50);
+    }
   }
 
   const menuOverlay = (
