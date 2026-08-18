@@ -11,7 +11,7 @@ const WA_LINK = "https://wa.me/972533669089";
 
 function CartIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="9" cy="21" r="1" />
       <circle cx="19" cy="21" r="1" />
       <path d="M1 1h3l2.4 13.2a2 2 0 0 0 2 1.6h9.2a2 2 0 0 0 2-1.6L21.6 6H5.2" />
@@ -161,9 +161,9 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
             aria-label="Menu"
             style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5, width: 26, height: 22, border: "none", background: "transparent", cursor: "pointer", padding: 0 }}
           >
-            <span style={{ display: "block", width: "100%", height: 2, background: "var(--ink)", borderRadius: 2 }} />
-            <span style={{ display: "block", width: "100%", height: 2, background: "var(--ink)", borderRadius: 2 }} />
-            <span style={{ display: "block", width: "100%", height: 2, background: "var(--ink)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
           </button>
           <SearchOverlay index={searchIndex} />
         </div>
