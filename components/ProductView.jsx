@@ -108,7 +108,7 @@ export default function ProductView({ product, addonGroups }) {
       </div>
 
       <div className="product-info">
-        <h1 className="product-title" style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>{product.name}</h1>
+        <h1 className="product-title" style={{ fontFamily: "'Rubik', sans-serif", fontSize: 36, fontWeight: 700, marginBottom: 8 }}>{product.name}</h1>
 
         {singleText ? (
           <p className="product-sizetext" style={{ color: "var(--muted)", fontSize: 16, marginBottom: 16 }}>{singleText}</p>
@@ -176,7 +176,7 @@ export default function ProductView({ product, addonGroups }) {
         ) : null}
 
         {product.description ? (
-          <p style={{ color: "var(--ink)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{product.description}</p>
+          <p style={{ fontFamily: "'Rubik', sans-serif", color: "var(--ink)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{product.description}</p>
         ) : null}
       </div>
 
@@ -213,7 +213,7 @@ export default function ProductView({ product, addonGroups }) {
             max-height: 40vh;
           }
           .product-disclaimer { font-size: 12px !important; margin-top: 8px !important; }
-          .product-title { font-size: 24px !important; margin-bottom: 4px !important; }
+          .product-title { font-size: 28px !important; margin-bottom: 4px !important; }
           .product-sizetext { font-size: 14px !important; margin-bottom: 8px !important; }
           .product-price { font-size: 24px !important; margin-bottom: 14px !important; }
           .product-sizes { margin-bottom: 14px !important; }
