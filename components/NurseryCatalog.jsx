@@ -12,37 +12,16 @@ export default function NurseryCatalog({ categories, productsByCat }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  function findCat(idStr) {
-    return categories.find((c) => String(c.id) === String(idStr)) || null;
-  }
-
-  const homeCat = categories[0] || null;
-  const catFromUrl = searchParams.get("cat");
-  const initialCat = findCat(catFromUrl);
-  const [activeId, setActiveId] = useState(initialCat ? initialCat.id : (homeCat ? homeCat.id : null));
-
   const [focusId, setFocusId] = useState(null);
   const [notices, setNotices] = useState([]);
 
-  // עדכוני שעות פעילות חריגות — הודעה עדינה בראש הדף
   useEffect(() => {
     let alive = true;
     getDeliveryNotices(14).then((n) => { if (alive) setNotices(n || []); }).catch(() => {});
     return () => { alive = false; };
   }, []);
 
-  useEffect(() => {
-    const fromUrl = searchParams.get("cat");
-    const match = findCat(fromUrl);
-    if (match) {
-      setActiveId(match.id);
-    } else if (homeCat) {
-      setActiveId(homeCat.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  // הגעה ממסך החיפוש: גלילה אל המוצר במחלקה והדגשה קצרה
+  // הגעה ממסך החיפוש: גלילה אל המוצר הרלוונטי והדגשה קצרה
   useEffect(() => {
     const f = searchParams.get("focus");
     if (!f) return;
@@ -59,9 +38,16 @@ export default function NurseryCatalog({ categories, productsByCat }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const isHome = !catFromUrl;
-  const activeCat = activeId != null ? findCat(activeId) : null;
-  const products = activeId != null ? (productsByCat[activeId] || productsByCat[String(activeId)] || []) : [];
+  // גלילה לקטגוריה ספציפית לפי עוגן בכתובת (הגעה מההמבורגר מעמוד אחר)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById(hash.slice(1));
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => clearTimeout(t);
+  }, []);
 
   if (!categories.length) {
     return (
@@ -79,50 +65,48 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </p>
       ) : null}
 
-      <section style={{ textAlign: "center", marginBottom: 36 }}>
-        {isHome ? (
-          <>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
-              <Image
-                src="/logo-mashtela.png"
-                alt="משתלת העיר"
-                width={108}
-                height={108}
-                priority
-                style={{ width: 108, height: 108, objectFit: "contain" }}
-              />
-            </div>
-            <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 40, fontWeight: 400, lineHeight: 1.2, marginBottom: 14, maxWidth: 320, marginInline: "auto" }}>
-              <span style={{ display: "block", textAlign: "right", paddingInlineStart: "8%" }}>כל הצמחים,</span>
-              <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "8%" }}>במקום אחד.</span>
-            </h1>
-            <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto 28px" }}>
-              עצים, שיחים, צמחי נוי, כדים וכלי גינון — בחרו מחלקה והתחילו.
-            </p>
-            {activeCat ? (
-              <h2 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", borderTop: "1px solid var(--line)", maxWidth: 280, margin: "0 auto", paddingTop: 22 }}>
-                {activeCat.name}
-              </h2>
-            ) : null}
-          </>
-        ) : (
-          activeCat ? (
-            <h1 style={{ fontSize: 40, fontWeight: 700, lineHeight: 1.12 }}>
-              {activeCat.name}
-            </h1>
-          ) : null
-        )}
+      <section style={{ textAlign: "center", marginBottom: 44 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
+          <Image
+            src="/logo-mashtela.png"
+            alt="משתלת העיר"
+            width={108}
+            height={108}
+            priority
+            style={{ width: 108, height: 108, objectFit: "contain" }}
+          />
+        </div>
+        <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 40, fontWeight: 400, lineHeight: 1.2, marginBottom: 14, maxWidth: 320, marginInline: "auto" }}>
+          <span style={{ display: "block", textAlign: "right", paddingInlineStart: "8%" }}>כל הצמחים,</span>
+          <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "8%" }}>במקום אחד.</span>
+        </h1>
+        <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto" }}>
+          עצים, שיחים, צמחי נוי, כדים וכלי גינון — גללו וגלו את כל המחלקות.
+        </p>
       </section>
 
-      {products.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px", border: "1px dashed var(--line)", borderRadius: 16, color: "var(--muted)" }}>
-          אין מוצרים במחלקה זו עדיין.
-        </div>
-      ) : (
-        <div className="catalog-grid">
-          {products.map((p) => <ProductCard key={p.id} product={p} activeId={activeId} highlight={String(p.id) === focusId} />)}
-        </div>
-      )}
+      {categories.map((c) => {
+        const products = productsByCat[c.id] || productsByCat[String(c.id)] || [];
+        return (
+          <section key={c.id} id={`cat-${c.id}`} style={{ marginBottom: 52, scrollMarginTop: 90 }}>
+            <h2 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink)", borderTop: "1px solid var(--line)", maxWidth: 280, margin: "0 auto 24px", paddingTop: 22, textAlign: "center" }}>
+              {c.name}
+            </h2>
+
+            {products.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 20px", border: "1px dashed var(--line)", borderRadius: 16, color: "var(--muted)" }}>
+                אין מוצרים במחלקה זו עדיין.
+              </div>
+            ) : (
+              <div className="catalog-grid">
+                {products.map((p) => (
+                  <ProductCard key={p.id} product={p} activeId={c.id} highlight={String(p.id) === focusId} />
+                ))}
+              </div>
+            )}
+          </section>
+        );
+      })}
 
       <style>{`
         .catalog-grid {
