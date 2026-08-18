@@ -8,13 +8,24 @@ const BTN_BG = "#fbf8f1";
 const BTN_BORDER = "#ece3d4";
 const QUICK_LABELS = ["היום", "מחר", "מחרתיים"];
 
-function TruckIcon() {
+function TruckIcon({ color = "#111" }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "scaleX(-1)", flexShrink: 0 }}>
       <path d="M1 3h13v13H1z" />
       <path d="M14 8h4l3 3v5h-7V8z" />
       <circle cx="5.5" cy="18.5" r="1.8" />
       <circle cx="17.5" cy="18.5" r="1.8" />
+    </svg>
+  );
+}
+
+function StorePinIcon({ color = "#111" }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M3 9.5 12 3l9 6.5" />
+      <path d="M5 9.5V20h5v-6h4v6h5V9.5" />
+      <circle cx="12" cy="16" r="0" />
+      <path d="M9.5 9.5h5" />
     </svg>
   );
 }
@@ -162,15 +173,17 @@ export default function DeliveryPicker({ scrollTargetId }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <button
               onClick={() => pickMethod("delivery")}
-              style={{ padding: "16px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "delivery" ? "var(--green)" : "#fff", color: tMethod === "delivery" ? "#fff" : "var(--ink)", border: tMethod === "delivery" ? "1px solid var(--green)" : "1px solid var(--line)" }}
+              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", gap: 10, padding: "16px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "delivery" ? "var(--green)" : "#fff", color: tMethod === "delivery" ? "#fff" : "var(--ink)", border: tMethod === "delivery" ? "1px solid var(--green)" : "1px solid var(--line)" }}
             >
-              משלוח על ידי שליח
+              <TruckIcon color={tMethod === "delivery" ? "#fff" : "#111"} />
+              <span>משלוח על ידי שליח</span>
             </button>
             <button
               onClick={() => pickMethod("pickup")}
-              style={{ padding: "16px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "pickup" ? "var(--green)" : "#fff", color: tMethod === "pickup" ? "#fff" : "var(--ink)", border: tMethod === "pickup" ? "1px solid var(--green)" : "1px solid var(--line)" }}
+              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", gap: 10, padding: "16px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "pickup" ? "var(--green)" : "#fff", color: tMethod === "pickup" ? "#fff" : "var(--ink)", border: tMethod === "pickup" ? "1px solid var(--green)" : "1px solid var(--line)" }}
             >
-              איסוף עצמי
+              <StorePinIcon color={tMethod === "pickup" ? "#fff" : "#111"} />
+              <span>איסוף עצמי</span>
             </button>
           </div>
         ) : null}
@@ -283,12 +296,11 @@ export default function DeliveryPicker({ scrollTargetId }) {
       <button
         onClick={openModal}
         style={{
-          display: "inline-flex", alignItems: "center", gap: 8, maxWidth: "100%",
+          display: "inline-flex", alignItems: "center", maxWidth: "100%",
           padding: "11px 18px", borderRadius: 999, border: "none", background: "var(--green)",
           boxShadow: "0 2px 6px rgba(63,122,82,0.25)", cursor: "pointer",
         }}
       >
-        <TruckIcon />
         <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{summary}</span>
       </button>
 
