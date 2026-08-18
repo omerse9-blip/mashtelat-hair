@@ -7,6 +7,7 @@ import { getDeliveryOptions } from "../lib/siteData";
 const BTN_BG = "#fbf8f1";
 const BTN_BORDER = "#ece3d4";
 const QUICK_LABELS = ["היום", "מחר", "מחרתיים"];
+const METHOD_BTN_WIDTH = 220;
 
 function TruckIcon({ color = "#111" }) {
   return (
@@ -172,14 +173,14 @@ export default function DeliveryPicker({ scrollTargetId }) {
           <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
             <button
               onClick={() => pickMethod("delivery")}
-              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 10, minWidth: 190, padding: "16px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "delivery" ? "var(--green)" : "#fff", color: tMethod === "delivery" ? "#fff" : "var(--ink)", border: tMethod === "delivery" ? "1px solid var(--green)" : "1px solid var(--line)" }}
+              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 10, width: METHOD_BTN_WIDTH, padding: "16px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "delivery" ? "var(--green)" : "#fff", color: tMethod === "delivery" ? "#fff" : "var(--ink)", border: tMethod === "delivery" ? "1px solid var(--green)" : "1px solid var(--line)" }}
             >
               <TruckIcon color={tMethod === "delivery" ? "#fff" : "#111"} />
               <span>משלוח על ידי שליח</span>
             </button>
             <button
               onClick={() => pickMethod("pickup")}
-              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 10, minWidth: 190, padding: "16px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "pickup" ? "var(--green)" : "#fff", color: tMethod === "pickup" ? "#fff" : "var(--ink)", border: tMethod === "pickup" ? "1px solid var(--green)" : "1px solid var(--line)" }}
+              style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 10, width: METHOD_BTN_WIDTH, padding: "16px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "pickup" ? "var(--green)" : "#fff", color: tMethod === "pickup" ? "#fff" : "var(--ink)", border: tMethod === "pickup" ? "1px solid var(--green)" : "1px solid var(--line)" }}
             >
               <StorePinIcon color={tMethod === "pickup" ? "#fff" : "#111"} />
               <span>איסוף עצמי</span>
