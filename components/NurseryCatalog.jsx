@@ -63,15 +63,15 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </p>
       ) : null}
 
-      <section style={{ textAlign: "center", marginBottom: 32 }}>
+      <section style={{ textAlign: "center", marginBottom: 32, marginTop: -12 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 10 }}>
           <Image
             src="/logo-mashtela.png"
             alt="משתלת העיר"
-            width={280}
-            height={280}
+            width={194}
+            height={194}
             priority
-            style={{ width: "min(78vw, 280px)", height: "auto", objectFit: "contain" }}
+            style={{ width: "min(58vw, 194px)", height: "auto", objectFit: "contain" }}
           />
         </div>
         <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 32 }}>
