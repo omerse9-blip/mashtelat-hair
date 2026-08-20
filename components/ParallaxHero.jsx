@@ -59,9 +59,9 @@ export default function ParallaxHero({ children }) {
       <style>{`
         .parallax-hero {
           position: relative;
-          left: 50%;
           width: 100vw;
-          transform: translateX(-50%);
+          margin-left: calc(50% - 50vw);
+          margin-right: calc(50% - 50vw);
           height: min(58vh, 480px);
           min-height: 340px;
           overflow: hidden;
