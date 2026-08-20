@@ -10,13 +10,13 @@ export const metadata = {
   openGraph: {
     title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
     description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
-    url: "https://mashtelat-hair.vercel.app",
+    url: "https://mashtelathair.co.il",
     siteName: "משתלת העיר",
     locale: "he_IL",
     type: "website",
     images: [
       {
-        url: "https://mashtelat-hair.vercel.app/logo-mashtela.png",
+        url: "https://mashtelathair.co.il/logo-mashtela.png",
         alt: "משתלת העיר",
       },
     ],
@@ -27,7 +27,7 @@ const businessSchema = {
   "@context": "https://schema.org",
   "@type": "GardenStore",
   name: "משתלת העיר",
-  image: "https://mashtelat-hair.vercel.app/logo-mashtela.png",
+  image: "https://mashtelathair.co.il/logo-mashtela.png",
   telephone: "+972533669089",
   address: {
     "@type": "PostalAddress",
@@ -49,7 +49,7 @@ const businessSchema = {
       closes: "15:00",
     },
   ],
-  url: "https://mashtelat-hair.vercel.app",
+  url: "https://mashtelathair.co.il",
 };
 async function buildSearchIndex(nurseryCats, gardenCats) {
   const nursery = [];
