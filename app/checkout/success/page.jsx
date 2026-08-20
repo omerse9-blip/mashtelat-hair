@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useCart } from "../../../components/CartProvider";
 
 const BUSINESS_WA = "972533669089";
+const FORM_STORAGE_KEY = "mashtela_checkout_form_v1";
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
@@ -14,6 +15,7 @@ export default function CheckoutSuccessPage() {
 
   useEffect(() => {
     clear();
+    try { localStorage.removeItem(FORM_STORAGE_KEY); } catch { /* התעלמות */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
