@@ -1,4 +1,4 @@
-const BASE_URL = "https://mashtelat-hair.vercel.app";
+const BASE_URL = "https://mashtelathair.co.il";
 
 export default function robots() {
   return {
