@@ -64,13 +64,14 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
   function goToCategory(catId) {
     const targetId = "cat-" + catId;
     const onBasePage = pathname === baseHref;
-    closeMenu();
     if (onBasePage) {
+      closeMenu();
       setTimeout(function () {
         const el = document.getElementById(targetId);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 320);
     } else {
+      setMenuOpen(false);
       router.push(baseHref);
       setTimeout(function () {
         const el = document.getElementById(targetId);
@@ -81,10 +82,11 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
 
   function goHome() {
     const onBasePage = pathname === baseHref;
-    closeMenu();
     if (onBasePage) {
+      closeMenu();
       setTimeout(function () { window.scrollTo({ top: 0, behavior: "smooth" }); }, 320);
     } else {
+      setMenuOpen(false);
       router.push(baseHref);
     }
   }
