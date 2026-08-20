@@ -1,9 +1,22 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useCart } from "../../../components/CartProvider";
 
 const BUSINESS_WA = "972533669089";
 
-export default function CheckoutSuccessPage({ searchParams }) {
-  const order = searchParams?.order || "";
+export default function CheckoutSuccessPage() {
+  const searchParams = useSearchParams();
+  const order = searchParams.get("order") || "";
+  const { clear } = useCart();
+
+  useEffect(() => {
+    clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const msg = `שלום, ביצעתי הזמנה ותשלום במשתלת העיר. מספר הזמנה ${order}.`;
   const waUrl = `https://wa.me/${BUSINESS_WA}?text=${encodeURIComponent(msg)}`;
 
