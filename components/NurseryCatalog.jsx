@@ -68,10 +68,10 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         <Image
           src="/logo-mashtela.png"
           alt="משתלת העיר"
-          width={108}
-          height={108}
+          width={124}
+          height={124}
           priority
-          style={{ width: 108, height: 108, objectFit: "contain", margin: "0 auto" }}
+          style={{ width: 124, height: 124, objectFit: "contain", margin: "0 auto" }}
         />
       </ParallaxHero>
 
