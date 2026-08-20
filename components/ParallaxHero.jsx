@@ -55,9 +55,7 @@ export default function ParallaxHero({ children }) {
         style={{ backgroundImage: "url(/hero-nursery.jpg)" }}
       />
       <div className="parallax-hero-scrim" />
-      <div className="parallax-hero-content">
-        <div className="parallax-hero-card">{children}</div>
-      </div>
+      <div className="parallax-hero-content">{children}</div>
 
       <style>{`
         .parallax-hero {
@@ -100,30 +98,9 @@ export default function ParallaxHero({ children }) {
           justify-content: center;
           padding: 24px;
         }
-        .parallax-hero-card {
-          background: rgba(247, 242, 233, 0.92);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          border-radius: 22px;
-          padding: 31px 36px 27px;
-          box-shadow: 0 12px 40px rgba(31, 42, 36, 0.2);
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 14px;
-          transform: scale(0.9);
-        }
         @media (max-width: 640px) {
           .parallax-hero {
             height: min(58vh, 460px);
-          }
-          .parallax-hero-card {
-            padding: 23px 22px 20px;
-            border-radius: 16px;
-            gap: 9px;
-            background: rgba(247, 242, 233, 0.75);
-            transform: scale(1.17);
           }
         }
       `}</style>
