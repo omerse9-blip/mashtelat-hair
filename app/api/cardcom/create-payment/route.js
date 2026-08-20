@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { getSupabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { cardcomConfig, createLowProfile } from "../../../../lib/cardcom";
 
 export async function POST(req) {
+  const supabaseAdmin = getSupabaseAdmin();
   const body = await req.json();
   const { details, items } = body || {};
 
