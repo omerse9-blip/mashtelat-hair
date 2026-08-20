@@ -5,8 +5,8 @@ import { CartProvider } from "../components/CartProvider";
 import { DeliveryProvider } from "../components/DeliveryProvider";
 import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
 export const metadata = {
-  title: "משתלת העיר",
-  description: "משתלה איכותית באילת — עצים, שיחים, צמחי נוי, כדים וכלי גינון.",
+  title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
+  description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
 };
 async function buildSearchIndex(nurseryCats, gardenCats) {
   const nursery = [];
