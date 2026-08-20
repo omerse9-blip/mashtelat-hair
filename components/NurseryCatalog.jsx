@@ -73,9 +73,9 @@ export default function NurseryCatalog({ categories, productsByCat }) {
           priority
           style={{ width: "min(34vw, 140px)", height: "auto", objectFit: "contain", margin: "0 auto" }}
         />
-        <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 38, fontWeight: 400, lineHeight: 1.5, maxWidth: 340, marginInline: "auto" }}>
-          <span style={{ display: "block", textAlign: "right", paddingInlineStart: "8%" }}>כל הצמחים,</span>
-          <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "8%" }}>במקום אחד.</span>
+        <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 36, fontWeight: 400, lineHeight: 1.55, whiteSpace: "nowrap" }}>
+          <span style={{ display: "block" }}>כל הצמחים,</span>
+          <span style={{ display: "block" }}>במקום אחד.</span>
         </h1>
       </ParallaxHero>
 
