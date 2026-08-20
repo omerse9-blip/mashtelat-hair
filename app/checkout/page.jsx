@@ -6,6 +6,8 @@ import { useCart } from "../../components/CartProvider";
 import { useDelivery } from "../../components/DeliveryProvider";
 import { getDeliveryOptions } from "../../lib/siteData";
 
+const FORM_STORAGE_KEY = "mashtela_checkout_form_v1";
+
 function digitsOf(s) {
   return (s || "").replace(/[^0-9]/g, "");
 }
@@ -47,8 +49,41 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
   const [prefilled, setPrefilled] = useState(false);
+  const [formReady, setFormReady] = useState(false);
 
-  // מילוי מוקדם מתוך בחירת המשלוח בעמוד הבית
+  // טעינת טופס שמור (למשל אחרי חזרה מתשלום שנכשל)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FORM_STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.method) setMethod(saved.method);
+        setCName(saved.cName || "");
+        setCPhone(saved.cPhone || "");
+        setRName(saved.rName || "");
+        setRPhone(saved.rPhone || "");
+        setRAddr(saved.rAddr || "");
+        setGreeting(saved.greeting || "");
+        setNotes(saved.notes || "");
+        setSelDate(saved.selDate || "");
+        setSelWindow(saved.selWindow || "");
+        if (saved.method) setPrefilled(true);
+      }
+    } catch { /* התעלמות */ }
+    setFormReady(true);
+  }, []);
+
+  // שמירת הטופס בכל שינוי
+  useEffect(() => {
+    if (!formReady) return;
+    try {
+      localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify({
+        method, cName, cPhone, rName, rPhone, rAddr, greeting, notes, selDate, selWindow,
+      }));
+    } catch { /* התעלמות */ }
+  }, [formReady, method, cName, cPhone, rName, rPhone, rAddr, greeting, notes, selDate, selWindow]);
+
+  // מילוי מוקדם מתוך בחירת המשלוח בעמוד הבית (רק אם אין טופס שמור)
   useEffect(() => {
     if (!deliveryReady || prefilled) return;
     if (delivery.method) {
@@ -69,10 +104,10 @@ export default function CheckoutPage() {
       if (!alive) return;
       setOptions(opts);
       if (opts.length) {
-        const preDate = delivery?.date && opts.find((o) => o.date === delivery.date) ? delivery.date : opts[0].date;
+        const preDate = selDate && opts.find((o) => o.date === selDate) ? selDate : opts[0].date;
         setSelDate(preDate);
         const day = opts.find((o) => o.date === preDate);
-        const preWindow = delivery?.window && day?.windows.includes(delivery.window) ? delivery.window : (day?.windows[0] || "");
+        const preWindow = selWindow && day?.windows.includes(selWindow) ? selWindow : (day?.windows[0] || "");
         setSelWindow(preWindow);
       }
     }).catch(() => setOptions([]));
