@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "../../../components/CartProvider";
@@ -8,7 +8,7 @@ import { useCart } from "../../../components/CartProvider";
 const BUSINESS_WA = "972533669089";
 const FORM_STORAGE_KEY = "mashtela_checkout_form_v1";
 
-export default function CheckoutSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const order = searchParams.get("order") || "";
   const { clear } = useCart();
@@ -33,5 +33,13 @@ export default function CheckoutSuccessPage() {
       </a>
       <Link href="/" style={{ display: "block", color: "var(--green)", fontWeight: 600 }}>חזרה לקטלוג</Link>
     </main>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={null}>
+      <SuccessContent />
+    </Suspense>
   );
 }
