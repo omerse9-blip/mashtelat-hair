@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { getSupabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { cardcomConfig, getLpResult } from "../../../../lib/cardcom";
 
 export async function POST(req) {
+  const supabaseAdmin = getSupabaseAdmin();
   let body;
   try {
     body = await req.json();
