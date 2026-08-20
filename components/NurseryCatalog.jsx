@@ -73,10 +73,15 @@ export default function NurseryCatalog({ categories, productsByCat }) {
           priority
           style={{ width: "min(34vw, 140px)", height: "auto", objectFit: "contain", margin: "0 auto" }}
         />
-        <h1 style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 36, fontWeight: 400, lineHeight: 1.55, whiteSpace: "nowrap" }}>
+        <h1 className="hero-heading" style={{ fontFamily: "'Gveret Levin', cursive", fontSize: 36, fontWeight: 400, lineHeight: 1.55, whiteSpace: "nowrap" }}>
           <span style={{ display: "block", transform: "translateX(8px)" }}>כל הצמחים,</span>
           <span style={{ display: "block", transform: "translateX(-8px)" }}>במקום אחד.</span>
         </h1>
+        <style>{`
+          @media (max-width: 640px) {
+            .hero-heading { font-size: 26px !important; }
+          }
+        `}</style>
       </ParallaxHero>
 
       <section style={{ textAlign: "center", marginBottom: 32, marginTop: 28 }}>
