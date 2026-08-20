@@ -79,7 +79,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </h1>
         <style>{`
           @media (max-width: 640px) {
-            .hero-heading { font-size: 26px !important; }
+            .hero-heading { font-size: 20px !important; }
           }
         `}</style>
       </ParallaxHero>
