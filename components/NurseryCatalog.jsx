@@ -8,7 +8,7 @@ import DeliveryPicker from "./DeliveryPicker";
 import ParallaxHero from "./ParallaxHero";
 import { getDeliveryNotices } from "../lib/siteData";
 
-export default function NurseryCatalog({ categories, productsByCat }) {
+export default function NurseryCatalog({ categories, productsByCat, heroImageUrl }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -64,7 +64,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </p>
       ) : null}
 
-      <ParallaxHero />
+      <ParallaxHero imageUrl={heroImageUrl} />
 
       <section style={{ textAlign: "center", marginBottom: 32, marginTop: 28 }}>
         <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 32 }}>
