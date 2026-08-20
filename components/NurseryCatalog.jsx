@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import DeliveryPicker from "./DeliveryPicker";
+import ParallaxHero from "./ParallaxHero";
 import { getDeliveryNotices } from "../lib/siteData";
 
 export default function NurseryCatalog({ categories, productsByCat }) {
@@ -63,7 +64,7 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </p>
       ) : null}
 
-      <section style={{ textAlign: "center", marginBottom: 32, marginTop: -24 }}>
+      <ParallaxHero>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 4 }}>
           <Image
             src="/logo-mashtela.png"
@@ -78,6 +79,9 @@ export default function NurseryCatalog({ categories, productsByCat }) {
           <span style={{ display: "block", textAlign: "right", paddingInlineStart: "8%" }}>כל הצמחים,</span>
           <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "8%" }}>במקום אחד.</span>
         </h1>
+      </ParallaxHero>
+
+      <section style={{ textAlign: "center", marginBottom: 32 }}>
         <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 32 }}>
           עצים, שיחים, צמחי נוי, כדים וכלי גינון — גללו וגלו את כל המחלקות.
         </p>
