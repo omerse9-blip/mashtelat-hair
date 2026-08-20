@@ -4,12 +4,12 @@ import { useEffect, useRef } from "react";
 
 export default function ParallaxHero({ children }) {
   const outerRef = useRef(null);
-  const bgRef = useRef(null);
+  const layerRef = useRef(null);
 
   useEffect(() => {
     const outer = outerRef.current;
-    const bg = bgRef.current;
-    if (!outer || !bg) return;
+    const layer = layerRef.current;
+    if (!outer || !layer) return;
 
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -17,14 +17,14 @@ export default function ParallaxHero({ children }) {
 
     const update = () => {
       const rect = outer.getBoundingClientRect();
-      const scrolledPast = -rect.top; // חיובי ברגע שהחלק העליון של ה-hero חצה את חלק המסך
+      const scrolledPast = -rect.top;
       const offset = scrolledPast * 0.35;
-      bg.style.transform = `translate3d(0, ${offset}px, 0)`;
+      layer.style.transform = `translate3d(0, ${offset}px, 0)`;
       ticking = false;
     };
 
     if (prefersReduced) {
-      bg.style.transform = "none";
+      layer.style.transform = "none";
       return;
     }
 
@@ -46,11 +46,16 @@ export default function ParallaxHero({ children }) {
 
   return (
     <div ref={outerRef} className="parallax-hero">
-      <div
-        ref={bgRef}
-        className="parallax-hero-bg"
-        style={{ backgroundImage: "url(/hero-nursery.jpg)" }}
-      />
+      <div ref={layerRef} className="parallax-hero-layer">
+        <div
+          className="parallax-hero-blur"
+          style={{ backgroundImage: "url(/hero-nursery.jpg)" }}
+        />
+        <div
+          className="parallax-hero-sharp"
+          style={{ backgroundImage: "url(/hero-nursery.jpg)" }}
+        />
+      </div>
       <div className="parallax-hero-scrim" />
       <div className="parallax-hero-content">
         <div className="parallax-hero-card">{children}</div>
@@ -66,21 +71,35 @@ export default function ParallaxHero({ children }) {
           min-height: 400px;
           overflow: hidden;
           margin-top: -36px;
+          background: #2c352e;
         }
-        .parallax-hero-bg {
+        .parallax-hero-layer {
           position: absolute;
           inset: -35% 0;
+          will-change: transform;
+        }
+        .parallax-hero-blur {
+          position: absolute;
+          inset: 0;
           background-size: cover;
           background-position: center 35%;
           background-repeat: no-repeat;
-          will-change: transform;
+          filter: blur(50px) saturate(1.15) brightness(0.9);
+          transform: scale(1.25);
+        }
+        .parallax-hero-sharp {
+          position: absolute;
+          inset: 0;
+          background-size: contain;
+          background-position: center 35%;
+          background-repeat: no-repeat;
         }
         .parallax-hero-scrim {
           position: absolute;
           inset: 0;
           background: linear-gradient(
             to bottom,
-            rgba(31, 42, 36, 0.12) 0%,
+            rgba(31, 42, 36, 0.1) 0%,
             rgba(31, 42, 36, 0) 40%,
             rgba(31, 42, 36, 0) 68%,
             var(--bg) 100%
@@ -101,22 +120,25 @@ export default function ParallaxHero({ children }) {
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
           border-radius: 24px;
-          padding: 36px 52px 32px;
-          box-shadow: 0 12px 40px rgba(31, 42, 36, 0.2);
+          padding: 34px 40px 30px;
+          box-shadow: 0 12px 40px rgba(31, 42, 36, 0.25);
           text-align: center;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 14px;
+          gap: 16px;
+          min-width: min(78vw, 300px);
+          max-width: 380px;
         }
         @media (max-width: 640px) {
           .parallax-hero {
             height: min(58vh, 460px);
           }
           .parallax-hero-card {
-            padding: 22px 28px 20px;
+            padding: 26px 24px 22px;
             border-radius: 18px;
-            gap: 8px;
+            gap: 10px;
+            min-width: min(84vw, 280px);
           }
         }
       `}</style>
