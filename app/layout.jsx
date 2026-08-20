@@ -7,6 +7,20 @@ import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from
 export const metadata = {
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
   description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
+  openGraph: {
+    title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
+    description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
+    url: "https://mashtelat-hair.vercel.app",
+    siteName: "משתלת העיר",
+    locale: "he_IL",
+    type: "website",
+    images: [
+      {
+        url: "https://mashtelat-hair.vercel.app/logo-mashtela.png",
+        alt: "משתלת העיר",
+      },
+    ],
+  },
 };
 
 const businessSchema = {
