@@ -84,7 +84,7 @@ export default function ParallaxHero({ children, imageUrl }) {
             to bottom,
             rgba(31, 42, 36, 0.12) 0%,
             rgba(31, 42, 36, 0) 40%,
-            rgba(31, 42, 36, 0) 68%,
+            rgba(31, 42, 36, 0) 78%,
             var(--bg) 100%
           );
           pointer-events: none;
