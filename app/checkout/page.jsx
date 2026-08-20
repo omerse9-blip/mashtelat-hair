@@ -28,7 +28,7 @@ function field(label, value, onChange, props = {}) {
 }
 
 export default function CheckoutPage() {
-  const { items, total, count, clear, ready } = useCart();
+  const { items, total, count, ready } = useCart();
   const { delivery, ready: deliveryReady } = useDelivery();
 
   const [method, setMethod] = useState(null); // "pickup" | "gift"
@@ -139,7 +139,6 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "אירעה שגיאה בשליחה. נסו שוב.");
-      clear();
       window.location.href = data.url;
     } catch (e) {
       setErr(e.message || "אירעה שגיאה בשליחה. נסו שוב.");
