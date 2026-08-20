@@ -8,6 +8,35 @@ export const metadata = {
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
   description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
 };
+
+const businessSchema = {
+  "@context": "https://schema.org",
+  "@type": "GardenStore",
+  name: "משתלת העיר",
+  image: "https://mashtelat-hair.vercel.app/logo-mashtela.png",
+  telephone: "+972533669089",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "יוזמה 6, אזור התעשייה",
+    addressLocality: "אילת",
+    addressCountry: "IL",
+  },
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+      opens: "09:00",
+      closes: "18:00",
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: "Friday",
+      opens: "09:00",
+      closes: "15:00",
+    },
+  ],
+  url: "https://mashtelat-hair.vercel.app",
+};
 async function buildSearchIndex(nurseryCats, gardenCats) {
   const nursery = [];
   try {
@@ -61,6 +90,10 @@ export default async function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Gveret+Levin&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }}
+        />
       </head>
       <body>
         <CartProvider>
