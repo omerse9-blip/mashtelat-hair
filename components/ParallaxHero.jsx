@@ -63,8 +63,8 @@ export default function ParallaxHero({ children }) {
           width: 100vw;
           margin-left: calc(50% - 50vw);
           margin-right: calc(50% - 50vw);
-          height: min(66vh, 576px);
-          min-height: 360px;
+          height: min(64vh, 557px);
+          min-height: 348px;
           overflow: hidden;
           margin-top: -36px;
         }
@@ -100,7 +100,7 @@ export default function ParallaxHero({ children }) {
         }
         @media (max-width: 640px) {
           .parallax-hero {
-            height: min(52vh, 414px);
+            height: min(50vh, 400px);
           }
         }
       `}</style>
