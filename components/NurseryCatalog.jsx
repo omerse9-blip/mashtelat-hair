@@ -64,7 +64,9 @@ export default function NurseryCatalog({ categories, productsByCat }) {
         </p>
       ) : null}
 
-      <ParallaxHero>
+      <ParallaxHero />
+
+      <section style={{ textAlign: "center", marginBottom: 32, marginTop: 4 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 4 }}>
           <Image
             src="/logo-mashtela.png"
@@ -79,9 +81,6 @@ export default function NurseryCatalog({ categories, productsByCat }) {
           <span style={{ display: "block", textAlign: "right", paddingInlineStart: "8%" }}>כל הצמחים,</span>
           <span style={{ display: "block", textAlign: "left", paddingInlineEnd: "8%" }}>במקום אחד.</span>
         </h1>
-      </ParallaxHero>
-
-      <section style={{ textAlign: "center", marginBottom: 32 }}>
         <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 32 }}>
           עצים, שיחים, צמחי נוי, כדים וכלי גינון — גללו וגלו את כל המחלקות.
         </p>
