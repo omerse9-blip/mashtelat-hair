@@ -70,9 +70,9 @@ export default function ParallaxHero({ children, imageUrl }) {
         }
         .parallax-hero-bg {
           position: absolute;
-          inset: -35% 0;
+          inset: -10% 0;
           background-size: cover;
-          background-position: center 35%;
+          background-position: center center;
           background-repeat: no-repeat;
           will-change: transform;
           opacity: 0.9;
