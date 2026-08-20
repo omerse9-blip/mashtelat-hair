@@ -1,31 +1,32 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Image from "next/image";
 
-export default function ParallaxHero() {
+export default function ParallaxHero({ children }) {
   const outerRef = useRef(null);
-  const imgWrapRef = useRef(null);
+  const bgRef = useRef(null);
 
   useEffect(() => {
     const outer = outerRef.current;
-    const imgWrap = imgWrapRef.current;
-    if (!outer || !imgWrap) return;
+    const bg = bgRef.current;
+    if (!outer || !bg) return;
 
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) return;
 
     let ticking = false;
 
     const update = () => {
       const rect = outer.getBoundingClientRect();
-      // כשה-hero גולל אל מחוץ למסך כלפי מעלה, rect.top הופך לשלילי.
-      // מזיזים את התמונה כלפי מטה ביחס לתוכן ב-40% מהמהירות, כדי שתיראה "נגררת מאחור".
-      const scrolledPast = Math.max(0, -rect.top);
-      const offset = scrolledPast * 0.4;
-      imgWrap.style.transform = `translate3d(0, ${offset}px, 0)`;
+      const scrolledPast = -rect.top; // חיובי ברגע שהחלק העליון של ה-hero חצה את חלק המסך
+      const offset = scrolledPast * 0.35;
+      bg.style.transform = `translate3d(0, ${offset}px, 0)`;
       ticking = false;
     };
+
+    if (prefersReduced) {
+      bg.style.transform = "none";
+      return;
+    }
 
     const onScroll = () => {
       if (!ticking) {
@@ -45,42 +46,69 @@ export default function ParallaxHero() {
 
   return (
     <div ref={outerRef} className="parallax-hero">
-      <div ref={imgWrapRef} className="parallax-hero-img">
-        <Image
-          src="/hero-nursery.jpg"
-          alt="צמחים במשתלת העיר"
-          fill
-          priority
-          sizes="100vw"
-          style={{ objectFit: "cover", objectPosition: "center 30%" }}
-        />
+      <div
+        ref={bgRef}
+        className="parallax-hero-bg"
+        style={{ backgroundImage: "url(/hero-nursery.jpg)" }}
+      />
+      <div className="parallax-hero-scrim" />
+      <div className="parallax-hero-content">
+        <div className="parallax-hero-card">{children}</div>
       </div>
-      <div className="parallax-hero-fade" />
 
       <style>{`
         .parallax-hero {
           position: relative;
           width: 100%;
-          height: min(48vh, 380px);
-          min-height: 240px;
+          height: min(58vh, 480px);
+          min-height: 340px;
           overflow: hidden;
           margin-top: -24px;
         }
-        .parallax-hero-img {
+        .parallax-hero-bg {
           position: absolute;
-          inset: -30% 0;
+          inset: -35% 0;
+          background-size: cover;
+          background-position: center 35%;
+          background-repeat: no-repeat;
           will-change: transform;
         }
-        .parallax-hero-fade {
+        .parallax-hero-scrim {
           position: absolute;
           inset: 0;
           background: linear-gradient(
             to bottom,
-            rgba(31, 42, 36, 0.12) 0%,
-            rgba(31, 42, 36, 0) 55%,
-            var(--bg) 100%
+            rgba(31, 42, 36, 0.15) 0%,
+            rgba(31, 42, 36, 0.05) 55%,
+            rgba(31, 42, 36, 0.22) 100%
           );
           pointer-events: none;
+        }
+        .parallax-hero-content {
+          position: relative;
+          z-index: 1;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+        }
+        .parallax-hero-card {
+          background: rgba(247, 242, 233, 0.88);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          border-radius: 20px;
+          padding: 22px 32px 20px;
+          box-shadow: 0 8px 30px rgba(31, 42, 36, 0.18);
+          text-align: center;
+        }
+        @media (max-width: 640px) {
+          .parallax-hero {
+            height: min(50vh, 400px);
+          }
+          .parallax-hero-card {
+            padding: 16px 22px 14px;
+          }
         }
       `}</style>
     </div>
