@@ -13,6 +13,7 @@ html, body {
   color: var(--ink);
   font-family: "Assistant", "Heebo", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
