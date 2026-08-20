@@ -15,10 +15,13 @@ export default function ParallaxHero({ children }) {
 
     let ticking = false;
 
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    const speedFactor = isMobile ? 0.25 : 0.5;
+
     const update = () => {
       const rect = outer.getBoundingClientRect();
       const scrolledPast = -rect.top;
-      const offset = scrolledPast * 0.35;
+      const offset = scrolledPast * speedFactor;
       bg.style.transform = `translate3d(0, ${offset}px, 0)`;
       ticking = false;
     };
@@ -119,6 +122,7 @@ export default function ParallaxHero({ children }) {
             padding: 23px 22px 20px;
             border-radius: 16px;
             gap: 9px;
+            background: rgba(247, 242, 233, 0.83);
           }
         }
       `}</style>
