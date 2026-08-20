@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "../../components/CartProvider";
 import { useDelivery } from "../../components/DeliveryProvider";
-import { createOrder, getDeliveryOptions } from "../../lib/siteData";
-
-const BUSINESS_WA = "972533669089";
+import { getDeliveryOptions } from "../../lib/siteData";
 
 function digitsOf(s) {
   return (s || "").replace(/[^0-9]/g, "");
@@ -48,7 +46,6 @@ export default function CheckoutPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
-  const [done, setDone] = useState(null);
   const [prefilled, setPrefilled] = useState(false);
 
   // מילוי מוקדם מתוך בחירת המשלוח בעמוד הבית
@@ -83,31 +80,9 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [method]);
 
-  // אחרי שההזמנה נשלחה — גלילה לראש הדף כדי להראות את מסך האישור
-  useEffect(() => {
-    if (done) window.scrollTo({ top: 0, behavior: "auto" });
-  }, [done]);
-
   const currentDay = options.find((o) => o.date === selDate);
 
   if (!ready) return null;
-
-  if (done) {
-    const msg = `שלום, ביצעתי הזמנה במשתלת העיר. מספר הזמנה ${done}. שמי ${cName}.`;
-    const waUrl = `https://wa.me/${BUSINESS_WA}?text=${encodeURIComponent(msg)}`;
-    return (
-      <main style={{ maxWidth: 600, margin: "0 auto", padding: "64px 20px", textAlign: "center" }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>🌿</div>
-        <h1 style={{ fontSize: 30, fontWeight: 800, marginBottom: 10 }}>ההזמנה נשלחה!</h1>
-        <p style={{ color: "var(--muted)", fontSize: 17, marginBottom: 6 }}>מספר הזמנה: <b>#{done}</b></p>
-        <p style={{ color: "var(--muted)", fontSize: 16, marginBottom: 32 }}>ניצור איתך קשר טלפוני לאישור הפרטים והתשלום.</p>
-        <a href={waUrl} target="_blank" rel="noreferrer" style={{ display: "block", background: "#25D366", color: "#fff", fontSize: 17, fontWeight: 700, padding: "14px", borderRadius: 12, marginBottom: 12 }}>
-          שליחת אישור בוואטסאפ
-        </a>
-        <Link href="/" style={{ display: "block", color: "var(--green)", fontWeight: 600 }}>חזרה לקטלוג</Link>
-      </main>
-    );
-  }
 
   if (count === 0) {
     return (
@@ -135,25 +110,39 @@ export default function CheckoutPage() {
     setSubmitting(true);
     try {
       const isGift = method === "gift";
-      const orderNumber = await createOrder({
-        customer_name: cName.trim(),
-        customer_phone: cPhone.trim(),
-        customer_address: "",
-        is_gift: isGift,
-        recipient_name: isGift ? rName.trim() : "",
-        recipient_phone: isGift ? rPhone.trim() : "",
-        recipient_address: isGift ? rAddr.trim() : "",
-        notes: notes.trim(),
-        fulfillment_type: method === "pickup" ? "pickup" : "delivery",
-        delivery_date: selDate,
-        delivery_window: selWindow,
-        greeting: greeting.trim(),
-      }, items);
+      const payloadItems = items.map((it) => ({
+        name: it.name,
+        sizeLabel: it.sizeLabel || "",
+        price: Number(it.price),
+        quantity: it.quantity,
+      }));
+      const res = await fetch("/api/cardcom/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          details: {
+            customer_name: cName.trim(),
+            customer_phone: cPhone.trim(),
+            customer_address: "",
+            is_gift: isGift,
+            recipient_name: isGift ? rName.trim() : "",
+            recipient_phone: isGift ? rPhone.trim() : "",
+            recipient_address: isGift ? rAddr.trim() : "",
+            notes: notes.trim(),
+            fulfillment_type: method === "pickup" ? "pickup" : "delivery",
+            delivery_date: selDate,
+            delivery_window: selWindow,
+            greeting: greeting.trim(),
+          },
+          items: payloadItems,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "אירעה שגיאה בשליחה. נסו שוב.");
       clear();
-      setDone(orderNumber);
+      window.location.href = data.url;
     } catch (e) {
       setErr(e.message || "אירעה שגיאה בשליחה. נסו שוב.");
-    } finally {
       setSubmitting(false);
     }
   }
@@ -296,11 +285,8 @@ export default function CheckoutPage() {
             disabled={submitting}
             style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 17, fontWeight: 700, padding: "15px", borderRadius: 12, border: "none", cursor: "pointer", opacity: submitting ? 0.6 : 1 }}
           >
-            {submitting ? "שולח..." : "שליחת הזמנה"}
+            {submitting ? "מעביר לתשלום..." : "מעבר לתשלום מאובטח"}
           </button>
-          <p style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", marginTop: 12 }}>
-            אין תשלום באתר — ניצור קשר טלפוני לאישור וחיוב.
-          </p>
         </>
       ) : (
         <p style={{ color: "var(--muted)", fontSize: 14, textAlign: "center", padding: "20px 0" }}>
