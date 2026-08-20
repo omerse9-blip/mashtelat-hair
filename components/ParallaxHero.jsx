@@ -94,9 +94,9 @@ export default function ParallaxHero({ children }) {
           z-index: 1;
           height: 100%;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
-          padding: 24px;
+          padding: 36px 24px 24px;
         }
         @media (max-width: 640px) {
           .parallax-hero {
