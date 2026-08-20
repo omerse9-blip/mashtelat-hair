@@ -122,7 +122,8 @@ export default function ParallaxHero({ children }) {
             padding: 23px 22px 20px;
             border-radius: 16px;
             gap: 9px;
-            background: rgba(247, 242, 233, 0.6);
+            background: rgba(247, 242, 233, 0.75);
+            transform: scale(1.17);
           }
         }
       `}</style>
