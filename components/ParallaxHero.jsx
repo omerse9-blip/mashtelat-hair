@@ -62,8 +62,8 @@ export default function ParallaxHero({ children }) {
           width: 100vw;
           margin-left: calc(50% - 50vw);
           margin-right: calc(50% - 50vw);
-          height: min(58vh, 480px);
-          min-height: 340px;
+          height: min(74vh, 640px);
+          min-height: 400px;
           overflow: hidden;
           margin-top: -36px;
         }
@@ -80,9 +80,10 @@ export default function ParallaxHero({ children }) {
           inset: 0;
           background: linear-gradient(
             to bottom,
-            rgba(31, 42, 36, 0.15) 0%,
-            rgba(31, 42, 36, 0.05) 55%,
-            rgba(31, 42, 36, 0.22) 100%
+            rgba(31, 42, 36, 0.12) 0%,
+            rgba(31, 42, 36, 0) 40%,
+            rgba(31, 42, 36, 0) 68%,
+            var(--bg) 100%
           );
           pointer-events: none;
         }
@@ -96,20 +97,26 @@ export default function ParallaxHero({ children }) {
           padding: 24px;
         }
         .parallax-hero-card {
-          background: rgba(247, 242, 233, 0.88);
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
-          border-radius: 20px;
-          padding: 22px 32px 20px;
-          box-shadow: 0 8px 30px rgba(31, 42, 36, 0.18);
+          background: rgba(247, 242, 233, 0.92);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border-radius: 24px;
+          padding: 36px 52px 32px;
+          box-shadow: 0 12px 40px rgba(31, 42, 36, 0.2);
           text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 14px;
         }
         @media (max-width: 640px) {
           .parallax-hero {
-            height: min(50vh, 400px);
+            height: min(58vh, 460px);
           }
           .parallax-hero-card {
-            padding: 16px 22px 14px;
+            padding: 22px 28px 20px;
+            border-radius: 18px;
+            gap: 8px;
           }
         }
       `}</style>
