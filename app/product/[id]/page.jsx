@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getProductById, getAllProductIds, getAddonsForCategory, cardPrice } from "../../../lib/siteData";
+import { getProductById, getAllProductIds, getAddonsForCategory, cardPrice, cardImage } from "../../../lib/siteData";
 import ProductView from "../../../components/ProductView";
 
 export const revalidate = 0;
@@ -18,11 +18,23 @@ export async function generateMetadata({ params }) {
   if (!product) return { title: "מוצר לא נמצא — משתלת העיר" };
   const cat = product.categories?.name || "";
   const price = cardPrice(product);
+  const title = `${product.name}${cat ? ` — ${cat}` : ""} | משתלת העיר אילת`;
+  const description = product.description
+    ? product.description.slice(0, 150)
+    : `${product.name} למכירה במשתלת העיר אילת${price != null ? `. החל מ-₪${price}` : ""}.`;
+  const image = cardImage(product);
   return {
-    title: `${product.name}${cat ? ` — ${cat}` : ""} | משתלת העיר אילת`,
-    description: product.description
-      ? product.description.slice(0, 150)
-      : `${product.name} למכירה במשתלת העיר אילת${price != null ? `. החל מ-₪${price}` : ""}.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://mashtelat-hair.vercel.app/product/${params.id}`,
+      siteName: "משתלת העיר",
+      locale: "he_IL",
+      type: "website",
+      images: image ? [{ url: image, alt: product.name }] : undefined,
+    },
   };
 }
 
