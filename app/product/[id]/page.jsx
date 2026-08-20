@@ -29,7 +29,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title,
       description,
-      url: `https://mashtelat-hair.vercel.app/product/${params.id}`,
+      url: `https://mashtelathair.co.il/product/${params.id}`,
       siteName: "משתלת העיר",
       locale: "he_IL",
       type: "website",
