@@ -59,11 +59,13 @@ export default function ParallaxHero({ children }) {
       <style>{`
         .parallax-hero {
           position: relative;
-          width: 100%;
+          left: 50%;
+          width: 100vw;
+          transform: translateX(-50%);
           height: min(58vh, 480px);
           min-height: 340px;
           overflow: hidden;
-          margin-top: -24px;
+          margin-top: -36px;
         }
         .parallax-hero-bg {
           position: absolute;
