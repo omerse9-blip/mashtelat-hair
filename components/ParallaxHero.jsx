@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-export default function ParallaxHero({ children, imageUrl }) {
+export default function ParallaxHero({ children, imageUrl, mediaType = "image" }) {
   const outerRef = useRef(null);
   const bgRef = useRef(null);
 
@@ -49,11 +49,23 @@ export default function ParallaxHero({ children, imageUrl }) {
 
   return (
     <div ref={outerRef} className="parallax-hero">
-      <div
-        ref={bgRef}
-        className="parallax-hero-bg"
-        style={{ backgroundImage: `url(${imageUrl})` }}
-      />
+      {mediaType === "video" ? (
+        <video
+          ref={bgRef}
+          className="parallax-hero-bg parallax-hero-video"
+          src={imageUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+      ) : (
+        <div
+          ref={bgRef}
+          className="parallax-hero-bg"
+          style={{ backgroundImage: `url(${imageUrl})` }}
+        />
+      )}
       <div className="parallax-hero-scrim" />
       <div className="parallax-hero-content">{children}</div>
 
@@ -76,6 +88,12 @@ export default function ParallaxHero({ children, imageUrl }) {
           background-repeat: no-repeat;
           will-change: transform;
           opacity: 0.9;
+        }
+        .parallax-hero-video {
+          width: 100%;
+          height: 120%;
+          object-fit: cover;
+          object-position: center center;
         }
         .parallax-hero-scrim {
           position: absolute;
