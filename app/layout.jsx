@@ -16,7 +16,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "https://mashtelathair.co.il/logo-mashtela.png",
+        url: "https://mashtelathair.co.il/mashtela-og.png",
         alt: "משתלת העיר",
       },
     ],
@@ -27,7 +27,7 @@ const businessSchema = {
   "@context": "https://schema.org",
   "@type": "GardenStore",
   name: "משתלת העיר",
-  image: "https://mashtelathair.co.il/logo-mashtela.png",
+  image: "https://mashtelathair.co.il/mashtela-og.png",
   telephone: "+972533669089",
   address: {
     "@type": "PostalAddress",
