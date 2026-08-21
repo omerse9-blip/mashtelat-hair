@@ -142,8 +142,6 @@ export default function SearchOverlay({ index, categories = [], baseHref = "/", 
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(3, 1fr)",
-                      gridTemplateRows: `repeat(${Math.ceil(categories.length / 3)}, auto)`,
-                      gridAutoFlow: "column",
                       gap: 8,
                       marginTop: 8,
                     }}
