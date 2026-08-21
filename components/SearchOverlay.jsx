@@ -50,7 +50,7 @@ export default function SearchOverlay({ index }) {
   function goTo(href) {
     setOpen(false);
     setQ("");
-    router.push(href);
+    router.push(href, { scroll: false });
   }
 
   function norm(s) {
