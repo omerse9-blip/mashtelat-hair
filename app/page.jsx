@@ -24,6 +24,7 @@ export default async function NurseryPage() {
   let categories = [];
   const productsByCat = {};
   let heroImageUrl = "/hero-nursery.jpg";
+  let heroMediaType = "image";
   try {
     categories = await getCategories("nursery");
     for (const c of categories) {
@@ -36,14 +37,16 @@ export default async function NurseryPage() {
     categories = [];
   }
   try {
-    heroImageUrl = await getActiveHeroImage();
+    const hero = await getActiveHeroImage();
+    heroImageUrl = hero.url;
+    heroMediaType = hero.mediaType;
   } catch (e) {
     // נשאר עם ברירת המחדל
   }
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px 56px" }}>
       <Suspense fallback={null}>
-        <NurseryCatalog categories={categories} productsByCat={productsByCat} heroImageUrl={heroImageUrl} />
+        <NurseryCatalog categories={categories} productsByCat={productsByCat} heroImageUrl={heroImageUrl} heroMediaType={heroMediaType} />
       </Suspense>
     </main>
   );
