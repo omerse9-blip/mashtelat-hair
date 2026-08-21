@@ -31,8 +31,9 @@ export default async function NurseryPage() {
       const products = c.is_featured
         ? await getFeaturedProducts()
         : await getProducts(c.id);
-      productsByCat[c.id] = products.map(toCard);
+      productsByCat[c.id] = products.map(toCard).filter((p) => !!p._image);
     }
+    categories = categories.filter((c) => (productsByCat[c.id] || []).length > 0);
   } catch (e) {
     categories = [];
   }
