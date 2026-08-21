@@ -36,11 +36,11 @@ export default function GardenGallery({ categories, worksByCat }) {
     const scrollT = setTimeout(() => {
       const el = document.getElementById(`work-${f}`);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const params = new URLSearchParams(window.location.search);
+      params.delete("focus");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }, 150);
     const clearT = setTimeout(() => setFocusId(null), 2200);
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("focus");
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     return () => { clearTimeout(scrollT); clearTimeout(clearT); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
