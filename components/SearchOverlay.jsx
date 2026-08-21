@@ -48,7 +48,7 @@ export default function SearchOverlay({ index }) {
   }
 
   function goTo(href) {
-    closeSearch();
+    setOpen(false);
     setQ("");
     router.push(href);
   }
