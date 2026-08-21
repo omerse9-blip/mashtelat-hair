@@ -13,7 +13,7 @@ function SearchIcon() {
   );
 }
 
-export default function SearchOverlay({ index }) {
+export default function SearchOverlay({ index, categories = [], baseHref = "/", pathname = "/" }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const inputRef = useRef(null);
@@ -51,6 +51,25 @@ export default function SearchOverlay({ index }) {
     setOpen(false);
     setQ("");
     router.push(href, { scroll: false });
+  }
+
+  function goToCategory(catId) {
+    const targetId = "cat-" + catId;
+    const onBasePage = pathname === baseHref;
+    setOpen(false);
+    setQ("");
+    if (onBasePage) {
+      setTimeout(() => {
+        const el = document.getElementById(targetId);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 320);
+    } else {
+      router.push(baseHref, { scroll: false });
+      setTimeout(() => {
+        const el = document.getElementById(targetId);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 450);
+    }
   }
 
   function norm(s) {
@@ -118,7 +137,41 @@ export default function SearchOverlay({ index }) {
 
             <div style={{ overflowY: "auto", flex: 1, minHeight: 0 }}>
               {!term ? (
-                <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>התחילו להקליד כדי לחפש</p>
+                categories.length > 0 ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gridTemplateRows: `repeat(${Math.ceil(categories.length / 3)}, auto)`,
+                      gridAutoFlow: "column",
+                      gap: 8,
+                      marginTop: 8,
+                    }}
+                  >
+                    {categories.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => goToCategory(c.id)}
+                        style={{
+                          padding: "10px 8px",
+                          borderRadius: 10,
+                          border: "1px solid var(--line)",
+                          background: "#fff",
+                          color: "var(--ink)",
+                          fontSize: 13.5,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textAlign: "center",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>התחילו להקליד כדי לחפש</p>
+                )
               ) : total === 0 ? (
                 <p style={{ color: "var(--muted)", textAlign: "center", marginTop: 40 }}>לא נמצאו תוצאות עבור {`"${q.trim()}"`}</p>
               ) : (
