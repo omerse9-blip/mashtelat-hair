@@ -132,9 +132,9 @@ function ProductCard({ product, activeId, highlight }) {
       href={productHref}
       className="product-card"
       style={{
-        border: highlight ? "1px solid var(--green)" : "1px solid var(--line)",
+        border: highlight ? "2px solid var(--green)" : "1px solid var(--line)",
         borderRadius: 14, overflow: "hidden", background: "var(--card)", display: "flex", flexDirection: "column",
-        boxShadow: highlight ? "0 0 0 3px rgba(47,93,66,0.35)" : "none",
+        boxShadow: highlight ? "0 0 0 4px rgba(47,93,66,0.45)" : "none",
         transition: "box-shadow 0.4s ease, border-color 0.4s ease",
       }}
     >
