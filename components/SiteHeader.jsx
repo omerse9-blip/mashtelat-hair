@@ -167,7 +167,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
             <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
             <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
           </button>
-          <SearchOverlay index={searchIndex} />
+          <SearchOverlay index={searchIndex} categories={categories} baseHref={baseHref} pathname={pathname} />
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
