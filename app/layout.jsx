@@ -57,11 +57,13 @@ async function buildSearchIndex(nurseryCats, gardenCats) {
     for (const c of nurseryCats) {
       const products = await getProducts(c.id);
       for (const p of products) {
+        const image = cardImage(p);
+        if (!image) continue;
         nursery.push({
           id: p.id,
           name: p.name || "",
           desc: p.description || "",
-          image: cardImage(p),
+          image,
           price: cardPrice(p),
           multi: !!(p.has_sizes && p.product_sizes && p.product_sizes.length > 1),
           categoryId: c.id,
@@ -98,6 +100,8 @@ export default async function RootLayout({ children }) {
     gardenCategories = await getCategories("garden");
   } catch (e) { /* התעלמות */ }
   const searchIndex = await buildSearchIndex(nurseryCategories, gardenCategories);
+  const nurseryCatIdsWithProducts = new Set(searchIndex.nursery.map((p) => String(p.categoryId)));
+  const visibleNurseryCategories = nurseryCategories.filter((c) => nurseryCatIdsWithProducts.has(String(c.id)));
   return (
     <html lang="he" dir="rtl">
       <head>
@@ -112,7 +116,7 @@ export default async function RootLayout({ children }) {
       <body>
         <CartProvider>
           <DeliveryProvider>
-            <SiteHeader searchIndex={searchIndex} nurseryCategories={nurseryCategories} gardenCategories={gardenCategories} />
+            <SiteHeader searchIndex={searchIndex} nurseryCategories={visibleNurseryCategories} gardenCategories={gardenCategories} />
             <div style={{ minHeight: "60vh" }}>{children}</div>
             <SiteFooter />
           </DeliveryProvider>
