@@ -4,9 +4,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "../../components/CartProvider";
 import { useDelivery } from "../../components/DeliveryProvider";
-import { getDeliveryOptions } from "../../lib/siteData";
+import { getDeliveryOptions, getDeliveryFees, createOrder } from "../../lib/siteData";
 
 const FORM_STORAGE_KEY = "mashtela_checkout_form_v1";
+const SUB_TYPES = [
+  { key: "city", label: "משלוח בעיר" },
+  { key: "hotel", label: "משלוח למלון" },
+];
 
 function digitsOf(s) {
   return (s || "").replace(/[^0-9]/g, "");
@@ -30,10 +34,11 @@ function field(label, value, onChange, props = {}) {
 }
 
 export default function CheckoutPage() {
-  const { items, total, count, ready } = useCart();
+  const { items, total, count, ready, allOnlinePayable } = useCart();
   const { delivery, ready: deliveryReady } = useDelivery();
 
   const [method, setMethod] = useState(null); // "pickup" | "gift"
+  const [subType, setSubType] = useState(""); // "city" | "hotel" — רק כשיטת המשלוח היא gift/כתובת
   const [cName, setCName] = useState("");
   const [cPhone, setCPhone] = useState("");
   const [rName, setRName] = useState("");
@@ -45,11 +50,13 @@ export default function CheckoutPage() {
   const [options, setOptions] = useState([]);
   const [selDate, setSelDate] = useState("");
   const [selWindow, setSelWindow] = useState("");
+  const [fees, setFees] = useState({ city: 30, hotel: 50 });
 
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
   const [prefilled, setPrefilled] = useState(false);
   const [formReady, setFormReady] = useState(false);
+  const [orderSent, setOrderSent] = useState(null); // מספר הזמנה, כשנשלחה בלי תשלום
 
   // טעינת טופס שמור (למשל אחרי חזרה מתשלום שנכשל)
   useEffect(() => {
@@ -58,6 +65,7 @@ export default function CheckoutPage() {
       if (raw) {
         const saved = JSON.parse(raw);
         if (saved.method) setMethod(saved.method);
+        setSubType(saved.subType || "");
         setCName(saved.cName || "");
         setCPhone(saved.cPhone || "");
         setRName(saved.rName || "");
@@ -78,10 +86,10 @@ export default function CheckoutPage() {
     if (!formReady) return;
     try {
       localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify({
-        method, cName, cPhone, rName, rPhone, rAddr, greeting, notes, selDate, selWindow,
+        method, subType, cName, cPhone, rName, rPhone, rAddr, greeting, notes, selDate, selWindow,
       }));
     } catch { /* התעלמות */ }
-  }, [formReady, method, cName, cPhone, rName, rPhone, rAddr, greeting, notes, selDate, selWindow]);
+  }, [formReady, method, subType, cName, cPhone, rName, rPhone, rAddr, greeting, notes, selDate, selWindow]);
 
   // מילוי מוקדם מתוך בחירת המשלוח בעמוד הבית (רק אם אין טופס שמור)
   useEffect(() => {
@@ -89,12 +97,20 @@ export default function CheckoutPage() {
     if (delivery.method) {
       setMethod(delivery.method === "pickup" ? "pickup" : "gift");
     }
-    if (delivery.method === "delivery" && (delivery.street || delivery.houseNumber)) {
-      setRAddr(`${delivery.street} ${delivery.houseNumber}`.trim());
+    if (delivery.method === "delivery") {
+      if (delivery.subType) setSubType(delivery.subType);
+      if (delivery.street || delivery.houseNumber) {
+        setRAddr(`${delivery.street} ${delivery.houseNumber}`.trim());
+      }
     }
     setPrefilled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deliveryReady]);
+
+  // דמי המשלוח המוגדרים
+  useEffect(() => {
+    getDeliveryFees().then(setFees).catch(() => {});
+  }, []);
 
   // טעינת ימי וחלונות המסירה כשנבחרה שיטה
   useEffect(() => {
@@ -116,6 +132,8 @@ export default function CheckoutPage() {
   }, [method]);
 
   const currentDay = options.find((o) => o.date === selDate);
+  const deliveryFee = method === "gift" && subType ? Number(fees[subType] || 0) : 0;
+  const grandTotal = total + deliveryFee;
 
   if (!ready) return null;
 
@@ -128,9 +146,27 @@ export default function CheckoutPage() {
     );
   }
 
+  if (orderSent) {
+    return (
+      <main style={{ maxWidth: 560, margin: "0 auto", padding: "64px 20px", textAlign: "center" }}>
+        <div style={{ fontSize: 44, marginBottom: 12 }}>📞</div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 10 }}>ההזמנה שלך נשלחה</h1>
+        <p style={{ color: "var(--muted)", fontSize: 16, marginBottom: 6 }}>מספר הזמנה #{orderSent}</p>
+        <p style={{ color: "var(--ink)", fontSize: 16, lineHeight: 1.7 }}>
+          חלק מהפריטים בהזמנה דורשים תיאום, ולכן היא נשלחה בלי חיוב.
+          ניצור איתך קשר טלפוני בהקדם לתיאום פרטי המשלוח והתשלום.
+        </p>
+        <Link href="/" style={{ display: "inline-block", marginTop: 24, color: "var(--green)", fontWeight: 700 }}>
+          חזרה לקטלוג המשתלה
+        </Link>
+      </main>
+    );
+  }
+
   async function handleSubmit() {
     setErr("");
     if (!method) { setErr("יש לבחור איסוף עצמי או שליחת מתנה."); return; }
+    if (method === "gift" && !subType) { setErr("יש לבחור משלוח בעיר או למלון."); return; }
     if (!cName.trim()) { setErr("יש למלא שם מלא."); return; }
     if (!cPhone.trim()) { setErr("יש למלא מספר טלפון — שדה חובה."); return; }
     if (!validPhone(cPhone)) { setErr("מספר הטלפון אינו תקין — יש להזין מספר מלא."); return; }
@@ -151,26 +187,48 @@ export default function CheckoutPage() {
         price: Number(it.price),
         quantity: it.quantity,
       }));
+
+      const details = {
+        customer_name: cName.trim(),
+        customer_phone: cPhone.trim(),
+        customer_address: "",
+        is_gift: isGift,
+        recipient_name: isGift ? rName.trim() : "",
+        recipient_phone: isGift ? rPhone.trim() : "",
+        recipient_address: isGift ? rAddr.trim() : "",
+        notes: notes.trim(),
+        fulfillment_type: method === "pickup" ? "pickup" : "delivery",
+        delivery_date: selDate,
+        delivery_window: selWindow,
+        greeting: greeting.trim(),
+        delivery_sub_type: isGift ? subType : null,
+        delivery_fee: deliveryFee,
+      };
+
+      if (!allOnlinePayable) {
+        // חלק מהפריטים לא ניתנים לתשלום מקוון — נשלחת הזמנה בלי חיוב
+        const orderNumber = await createOrder(details, items);
+        try { localStorage.removeItem(FORM_STORAGE_KEY); } catch { /* התעלמות */ }
+        setOrderSent(orderNumber);
+        setSubmitting(false);
+        return;
+      }
+
+      // כל הפריטים ניתנים לתשלום מקוון — מעבר לקארדקום, כולל דמי המשלוח כשורה נוספת
+      const cardcomItems = [...payloadItems];
+      if (deliveryFee > 0) {
+        cardcomItems.push({
+          name: subType === "hotel" ? "דמי משלוח למלון" : "דמי משלוח בעיר",
+          sizeLabel: "",
+          price: deliveryFee,
+          quantity: 1,
+        });
+      }
+
       const res = await fetch("/api/cardcom/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          details: {
-            customer_name: cName.trim(),
-            customer_phone: cPhone.trim(),
-            customer_address: "",
-            is_gift: isGift,
-            recipient_name: isGift ? rName.trim() : "",
-            recipient_phone: isGift ? rPhone.trim() : "",
-            recipient_address: isGift ? rAddr.trim() : "",
-            notes: notes.trim(),
-            fulfillment_type: method === "pickup" ? "pickup" : "delivery",
-            delivery_date: selDate,
-            delivery_window: selWindow,
-            greeting: greeting.trim(),
-          },
-          items: payloadItems,
-        }),
+        body: JSON.stringify({ details, items: cardcomItems }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "אירעה שגיאה בשליחה. נסו שוב.");
@@ -202,7 +260,7 @@ export default function CheckoutPage() {
     <main style={{ maxWidth: 600, margin: "0 auto", padding: "40px 20px" }}>
       <Link href="/cart" style={{ color: "var(--muted)", fontSize: 14, display: "inline-block", marginBottom: 20 }}>› חזרה לעגלה</Link>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>פרטי הזמנה</h1>
-      <p style={{ color: "var(--muted)", marginBottom: 24 }}>{count} פריטים · סה"כ ₪{total.toFixed(0)}</p>
+      <p style={{ color: "var(--muted)", marginBottom: 24 }}>{count} פריטים · סה"כ ₪{grandTotal.toFixed(0)}</p>
 
       {/* בחירת שיטה */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
@@ -210,7 +268,27 @@ export default function CheckoutPage() {
         {methodBtn("gift", "שליחת מתנה / כתובת אחרת")}
       </div>
 
-      {method ? (
+      {/* בחירת תת-סוג משלוח */}
+      {method === "gift" ? (
+        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+          {SUB_TYPES.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => setSubType(s.key)}
+              style={{
+                flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                background: subType === s.key ? "var(--green)" : "#fff",
+                color: subType === s.key ? "#fff" : "var(--ink)",
+                border: subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)",
+              }}
+            >
+              {s.label} · ₪{fees[s.key] ?? ""}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {method && (method === "pickup" || subType) ? (
         <>
           <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, marginBottom: 18 }}>
             <p style={{ fontWeight: 700, marginBottom: 12 }}>הפרטים שלך</p>
@@ -306,9 +384,13 @@ export default function CheckoutPage() {
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }} />
           </div>
 
-          {method === "gift" ? (
+          {!allOnlinePayable ? (
             <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 14 }}>
-              ייתכנו דמי משלוח בהתאם להזמנה, שיימסרו טלפונית עם אישור ההזמנה.
+              חלק מפריטי ההזמנה דורשים תיאום מחיר משלוח, ולכן ההזמנה תישלח בלי חיוב — ניצור איתך קשר טלפוני להשלמת התשלום.
+            </p>
+          ) : deliveryFee > 0 ? (
+            <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 14 }}>
+              דמי המשלוח (₪{deliveryFee.toFixed(0)}) נכללים בסכום לתשלום.
             </p>
           ) : null}
 
@@ -319,12 +401,14 @@ export default function CheckoutPage() {
             disabled={submitting}
             style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 17, fontWeight: 700, padding: "15px", borderRadius: 12, border: "none", cursor: "pointer", opacity: submitting ? 0.6 : 1 }}
           >
-            {submitting ? "מעביר לתשלום..." : "מעבר לתשלום מאובטח"}
+            {submitting
+              ? (allOnlinePayable ? "מעביר לתשלום..." : "שולח הזמנה...")
+              : (allOnlinePayable ? "מעבר לתשלום מאובטח" : "שליחת ההזמנה")}
           </button>
         </>
       ) : (
         <p style={{ color: "var(--muted)", fontSize: 14, textAlign: "center", padding: "20px 0" }}>
-          בחרו איסוף עצמי או שליחת מתנה כדי להמשיך.
+          {method === "gift" ? "בחרו משלוח בעיר או למלון כדי להמשיך." : "בחרו איסוף עצמי או שליחת מתנה כדי להמשיך."}
         </p>
       )}
     </main>
