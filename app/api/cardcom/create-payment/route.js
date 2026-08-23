@@ -28,6 +28,8 @@ export async function POST(req) {
     p_delivery_date: details.delivery_date || null,
     p_delivery_window: details.delivery_window || "",
     p_greeting: details.greeting || "",
+    p_delivery_sub_type: details.delivery_sub_type || null,
+    p_delivery_fee: details.delivery_fee || 0,
   });
   if (orderErr) {
     console.error("[cardcom] order creation failed", orderErr);
