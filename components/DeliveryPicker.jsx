@@ -30,6 +30,11 @@ function StorePinIcon({ color = "#111" }) {
   );
 }
 
+const SUB_TYPES = [
+  { key: "city", label: "משלוח בעיר" },
+  { key: "hotel", label: "משלוח למלון" },
+];
+
 export default function DeliveryPicker({ scrollTargetId }) {
   const { delivery, setDelivery, ready } = useDelivery();
   const [open, setOpen] = useState(false);
@@ -37,6 +42,7 @@ export default function DeliveryPicker({ scrollTargetId }) {
   const [step, setStep] = useState("method");
 
   const [tMethod, setTMethod] = useState(null);
+  const [tSubType, setTSubType] = useState("");
   const [tDate, setTDate] = useState("");
   const [tWindow, setTWindow] = useState("");
   const [tDateLabel, setTDateLabel] = useState("");
@@ -64,6 +70,7 @@ export default function DeliveryPicker({ scrollTargetId }) {
 
   function openModal() {
     setTMethod(delivery.method || null);
+    setTSubType(delivery.subType || "");
     setTDate(delivery.date || "");
     setTWindow(delivery.window || "");
     setTDateLabel(delivery.dateLabel || "");
@@ -85,6 +92,16 @@ export default function DeliveryPicker({ scrollTargetId }) {
 
   function pickMethod(val) {
     setTMethod(val);
+    if (val === "delivery") {
+      setStep("subtype");
+    } else {
+      setTSubType("");
+      setStep("date");
+    }
+  }
+
+  function pickSubType(val) {
+    setTSubType(val);
     setStep("date");
   }
 
@@ -118,6 +135,7 @@ export default function DeliveryPicker({ scrollTargetId }) {
     }
     setDelivery({
       method: tMethod,
+      subType: tMethod === "delivery" ? tSubType : "",
       date: tDate,
       window: tWindow,
       dateLabel: tDateLabel,
@@ -134,12 +152,13 @@ export default function DeliveryPicker({ scrollTargetId }) {
   if (!ready) return null;
 
   const currentDay = options.find((o) => o.date === tDate);
+  const subTypeLabel = (v) => SUB_TYPES.find((s) => s.key === v)?.label || "";
 
   let summary = "בחרו כתובת ותאריך למשלוח";
   if (delivery.method === "pickup") {
     summary = `איסוף עצמי · ${delivery.dateLabel || delivery.date} · ${delivery.window ? delivery.window.replace("-", ":00-") + ":00" : ""}`;
   } else if (delivery.method === "delivery") {
-    summary = `משלוח · ${delivery.dateLabel || delivery.date} · ${delivery.window ? delivery.window.replace("-", ":00-") + ":00" : ""} · ${delivery.street} ${delivery.houseNumber}`;
+    summary = `${subTypeLabel(delivery.subType) || "משלוח"} · ${delivery.dateLabel || delivery.date} · ${delivery.window ? delivery.window.replace("-", ":00-") + ":00" : ""} · ${delivery.street} ${delivery.houseNumber}`;
   }
 
   const modal = (
@@ -185,6 +204,23 @@ export default function DeliveryPicker({ scrollTargetId }) {
               <StorePinIcon color={tMethod === "pickup" ? "#fff" : "#111"} />
               <span>איסוף עצמי</span>
             </button>
+          </div>
+        ) : null}
+
+        {step === "subtype" ? (
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, textAlign: "center", color: "var(--ink)" }}>איזה סוג משלוח?</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {SUB_TYPES.map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => pickSubType(s.key)}
+                  style={{ width: "100%", padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tSubType === s.key ? "var(--green)" : "#fff", color: tSubType === s.key ? "#fff" : "var(--ink)", border: tSubType === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
 
