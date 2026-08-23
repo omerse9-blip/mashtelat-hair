@@ -57,6 +57,8 @@ export default function ProductView({ product, addonGroups }) {
     addItem({
       key,
       productId: product.id,
+      categoryId: product.category_id,
+      onlinePaymentEnabled: !!product.categories?.online_payment_enabled,
       name: product.name,
       sizeLabel: hasSizes ? sizeLabel(current) : singleText,
       price: price,
