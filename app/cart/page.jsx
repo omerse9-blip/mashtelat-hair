@@ -2,13 +2,23 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useCart } from "../../components/CartProvider";
+import { useDelivery } from "../../components/DeliveryProvider";
+import { getDeliveryFees } from "../../lib/siteData";
+
+const SUB_TYPE_LABELS = { city: "משלוח בעיר", hotel: "משלוח למלון" };
 
 export default function CartPage() {
   const { items, count, total, removeItem, addItem, setQuantity, clear, ready } = useCart();
+  const { delivery, ready: deliveryReady } = useDelivery();
   const [undo, setUndo] = useState(null); // { items: [...], label }
+  const [fees, setFees] = useState({ city: 30, hotel: 50 });
   const timerRef = useRef(null);
 
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  useEffect(() => {
+    getDeliveryFees().then(setFees).catch(() => {});
+  }, []);
 
   if (!ready) return null;
 
@@ -16,6 +26,11 @@ export default function CartPage() {
   const parents = items.filter((it) => !it.parentKey);
   const addonsOf = (key) => items.filter((it) => it.parentKey === key);
   const orphanAddons = items.filter((it) => it.parentKey && !parents.some((p) => p.key === it.parentKey));
+
+  const deliveryFee = deliveryReady && delivery.method === "delivery" && delivery.subType
+    ? Number(fees[delivery.subType] || 0)
+    : 0;
+  const grandTotal = total + deliveryFee;
 
   function startUndo(removed, label) {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -87,9 +102,19 @@ export default function CartPage() {
           </div>
 
           <div style={{ borderTop: "1px solid var(--line)", paddingTop: 18 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18 }}>
-              <span style={{ fontSize: 18, fontWeight: 700 }}>סה"כ ({count} פריטים)</span>
-              <span style={{ fontSize: 24, fontWeight: 800, color: "var(--green)" }}>₪{total.toFixed(0)}</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+              <span style={{ fontSize: 15, color: "var(--muted)" }}>סה"כ פריטים ({count})</span>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>₪{total.toFixed(0)}</span>
+            </div>
+            {deliveryFee > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                <span style={{ fontSize: 15, color: "var(--muted)" }}>{SUB_TYPE_LABELS[delivery.subType] || "דמי משלוח"}</span>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>₪{deliveryFee.toFixed(0)}</span>
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18, marginTop: 8, paddingTop: 8, borderTop: "1px dashed var(--line)" }}>
+              <span style={{ fontSize: 18, fontWeight: 700 }}>סה"כ לתשלום</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: "var(--green)" }}>₪{grandTotal.toFixed(0)}</span>
             </div>
             <Link href="/checkout" style={{ display: "block", textAlign: "center", background: "var(--green)", color: "#fff", fontSize: 17, fontWeight: 700, padding: "14px", borderRadius: 12 }}>
               המשך להזמנה
