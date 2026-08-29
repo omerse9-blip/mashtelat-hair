@@ -5,7 +5,7 @@ import { CartProvider } from "../components/CartProvider";
 import { DeliveryProvider } from "../components/DeliveryProvider";
 import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
 export const metadata = {
-  metadataBase: new URL("https://www.mashtelathair.co.il"),
+  metadataBase: new URL("https://mashtelathair.co.il"),
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
   description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
   alternates: {
@@ -14,13 +14,13 @@ export const metadata = {
   openGraph: {
     title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
     description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
-    url: "https://www.mashtelathair.co.il",
+    url: "https://mashtelathair.co.il",
     siteName: "משתלת העיר",
     locale: "he_IL",
     type: "website",
     images: [
       {
-        url: "https://www.mashtelathair.co.il/mashtela-og.png",
+        url: "https://mashtelathair.co.il/mashtela-og.png",
         alt: "משתלת העיר",
       },
     ],
@@ -31,7 +31,7 @@ const businessSchema = {
   "@context": "https://schema.org",
   "@type": "GardenStore",
   name: "משתלת העיר",
-  image: "https://www.mashtelathair.co.il/mashtela-og.png",
+  image: "https://mashtelathair.co.il/mashtela-og.png",
   telephone: "+972533669089",
   address: {
     "@type": "PostalAddress",
@@ -53,7 +53,7 @@ const businessSchema = {
       closes: "15:00",
     },
   ],
-  url: "https://www.mashtelathair.co.il",
+  url: "https://mashtelathair.co.il",
 };
 async function buildSearchIndex(nurseryCats, gardenCats) {
   const nursery = [];
