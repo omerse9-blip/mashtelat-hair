@@ -130,10 +130,23 @@ function formatDate(d) {
   return `${d.getDate()}.${d.getMonth() + 1}`;
 }
 
+function isoDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function nextMonthFirstLabel() {
   const today = new Date();
   const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
   return `1.${next.getMonth() + 1}.${String(next.getFullYear()).slice(2)}`;
+}
+
+function nextMonthFirstIso() {
+  const today = new Date();
+  const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  return isoDate(next);
 }
 
 function ceilTo(n, step) {
@@ -167,6 +180,7 @@ const EMPTY_FORM = {
   notes: "",
   greeting: "",
   pendingAction: "",
+  createdSubscriptionId: "",
 };
 
 export default function SubscriptionProductView({ product, discounts, windowOptions, pool, deliveryFees }) {
@@ -174,6 +188,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
+  const [creatingSubscription, setCreatingSubscription] = useState(false);
 
   useEffect(() => {
     try {
@@ -314,8 +329,56 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
     }
   }
 
-  function runPayment() {
-    alert("חיבור התשלום עדיין בבנייה - ייפתח בקרוב.");
+  // יוצר את רשומת המנוי בטבלה, בסטטוס "ממתין לתשלום" - לפני שהחיוב בפועל רץ
+  async function createPendingSubscription(currentSession) {
+    if (form.createdSubscriptionId) return form.createdSubscriptionId;
+
+    setCreatingSubscription(true);
+    try {
+      const nextBillingDate = form.billingChoice === "now" && hasRemaining
+        ? null
+        : nextMonthFirstIso();
+
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .insert({
+          customer_name: form.customerName,
+          customer_phone: form.customerPhone,
+          customer_address: form.isGift ? null : form.customerAddress,
+          is_gift: form.isGift,
+          recipient_name: form.isGift ? form.recipientName : null,
+          recipient_phone: form.isGift ? form.recipientPhone : null,
+          recipient_address: form.isGift ? form.recipientAddress : null,
+          frequency: form.frequency,
+          monthly_week: form.frequency === "monthly" ? form.monthlyWeek : null,
+          size: form.size,
+          preferred_bouquet_ids: form.surpriseMe ? [] : form.chosenIds,
+          surprise_me: form.surpriseMe,
+          delivery_day: form.deliveryDay,
+          delivery_sub_type: form.subType,
+          status: "pending_payment",
+          auth_user_id: currentSession?.user?.id || null,
+          customer_email: currentSession?.user?.email || null,
+          next_billing_date: nextBillingDate,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw new Error(error.message);
+      setField("createdSubscriptionId", data.id);
+      return data.id;
+    } catch (e) {
+      alert("שגיאה ביצירת המנוי: " + (e.message || "נסי שוב"));
+      return null;
+    } finally {
+      setCreatingSubscription(false);
+    }
+  }
+
+  async function runPayment(currentSession) {
+    const subId = await createPendingSubscription(currentSession);
+    if (!subId) return;
+    alert("המנוי נשמר. חיבור התשלום עדיין בבנייה - ייפתח בקרוב.");
   }
   function runAddToCart() {
     alert("חיבור לסל עדיין בבנייה - ייפתח בקרוב.");
@@ -328,7 +391,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
       signInWithGoogle();
       return;
     }
-    runPayment();
+    runPayment(session);
   }
   function handleCartClick() {
     if (payDisabled) return;
@@ -344,7 +407,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
     if (checkingSession || !session || !form.pendingAction) return;
     const action = form.pendingAction;
     setField("pendingAction", "");
-    if (action === "pay") runPayment();
+    if (action === "pay") runPayment(session);
     else if (action === "cart") runAddToCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, checkingSession, form.pendingAction]);
@@ -352,6 +415,16 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
   const step = form.step;
   const chosenFlowers = (pool || []).filter((p) => form.chosenIds.includes(p.id));
   const thumbClass = step === 3 ? "sub-chosen-thumb-summary" : "sub-chosen-thumb";
+  const payBusy = creatingSubscription || signingIn;
+
+  function selectionSummaryText() {
+    const parts = [];
+    if (form.frequency) parts.push(FREQ_LABEL_BY_KEY[form.frequency]);
+    if (form.size) parts.push(SIZES.find((s) => s.key === form.size)?.label);
+    if (form.deliveryDay) parts.push(DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label);
+    if (form.deliveryWindow) parts.push(form.deliveryWindow.replace("-", ":00-") + ":00");
+    return parts.join(" · ");
+  }
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto" }}>
@@ -638,12 +711,12 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
             ניתן לבטל בכל עת.
           </p>
 
-          <button onClick={handlePayClick} disabled={payDisabled || signingIn} className="sub-primary-btn"
-            style={{ width: "100%", background: "var(--green)", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer", marginBottom: 8, opacity: (payDisabled || signingIn) ? 0.5 : 1 }}>
-            {signingIn ? "מעבירה..." : "מעבר לתשלום"}
+          <button onClick={handlePayClick} disabled={payDisabled || payBusy} className="sub-primary-btn"
+            style={{ width: "100%", background: "var(--green)", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer", marginBottom: 8, opacity: (payDisabled || payBusy) ? 0.5 : 1 }}>
+            {signingIn ? "מעבירה..." : creatingSubscription ? "שומרת..." : "מעבר לתשלום"}
           </button>
-          <button onClick={handleCartClick} disabled={payDisabled || signingIn} className="sub-secondary-btn"
-            style={{ width: "100%", background: "#fff", color: "var(--ink)", fontWeight: 600, border: "1px solid var(--line)", cursor: "pointer", opacity: (payDisabled || signingIn) ? 0.5 : 1 }}>
+          <button onClick={handleCartClick} disabled={payDisabled || payBusy} className="sub-secondary-btn"
+            style={{ width: "100%", background: "#fff", color: "var(--ink)", fontWeight: 600, border: "1px solid var(--line)", cursor: "pointer", opacity: (payDisabled || payBusy) ? 0.5 : 1 }}>
             הוספה לסל וקנייה נוספת
           </button>
 
