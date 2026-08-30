@@ -133,7 +133,6 @@ const EMPTY_FORM = {
   customerAddress: "",
   notes: "",
   greeting: "",
-  accountName: "",
 };
 
 export default function SubscriptionProductView({ product, minPrices, discounts, windowOptions, pool, deliveryFees }) {
@@ -202,6 +201,14 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     return () => { alive = false; listener?.subscription?.unsubscribe(); };
   }, []);
 
+  // ברגע שיש session פעיל בשלב ההתחברות - ממשיכים אוטומטית לסיכום, בלי מסך שם נפרד
+  useEffect(() => {
+    if (form.step === 4 && session && !checkingSession) {
+      goToStep(5);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.step, session, checkingSession]);
+
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -224,11 +231,8 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
   const windowsForDay = form.deliveryDay ? (windowOptions?.[form.deliveryDay] || []) : [];
   const step1Complete = form.frequency && form.size && form.deliveryDay && form.deliveryWindow && (form.frequency !== "monthly" || form.monthlyWeek);
 
-  // שלב 1 -> 2
   function goToStep2() { if (!step1Complete) return; goToStep(2); }
-  // שלב 2 -> 3
   function goToStep3() { if (!form.surpriseMe && form.chosenIds.length === 0) return; goToStep(3); }
-  // שלב 3 -> 4
   function goToStep4() {
     if (!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)) return;
     goToStep(4);
@@ -247,12 +251,6 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     }
   }
 
-  // שלב 4 -> 5
-  function goToStep5() {
-    if (!form.accountName.trim()) return;
-    goToStep(5);
-  }
-
   const selectedDayInfo = DAY_OPTIONS.find((d) => d.key === form.deliveryDay);
   let remainingDates = [];
   if (selectedDayInfo && form.frequency) {
@@ -261,6 +259,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     else remainingDates = remainingWeekdayDatesThisMonth(selectedDayInfo.dow);
   }
   const hasRemaining = remainingDates.length > 0;
+  const firstDateLabel = hasRemaining ? formatDate(remainingDates[0]) : "";
 
   const rawFlowerPrice = !form.surpriseMe && form.chosenIds.length > 0
     ? (maxPriceForChosen(pool || [], form.size, form.chosenIds) || minPrices?.[form.size] || 0)
@@ -503,7 +502,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
         <div>
           {checkingSession ? (
             <p style={{ textAlign: "center", color: "var(--muted)" }}>בודקת חיבור...</p>
-          ) : !session ? (
+          ) : (
             <>
               <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 14, textAlign: "center" }}>
                 כדי לנהל את המנוי בהמשך, צריך להתחבר
@@ -520,14 +519,6 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
                   חזרה
                 </button>
               </div>
-            </>
-          ) : (
-            <>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>איך לקרוא לך?</p>
-              <Field label="שם">
-                <input value={form.accountName} onChange={(e) => setField("accountName", e.target.value)} style={inputStyle} placeholder="השם שבו נפנה אליך" />
-              </Field>
-              <StepNav onBack={() => goToStep(3)} onNext={goToStep5} disabled={!form.accountName.trim()} />
             </>
           )}
         </div>
@@ -556,23 +547,19 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           {hasRemaining ? (
             <div style={{ marginBottom: 14 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
-                {form.frequency === "monthly"
-                  ? "יש עוד תאריך מתאים החודש. איך רוצה להתחיל?"
-                  : `נשארו ${remainingDates.length} משלוחים החודש (${remainingDates.map(formatDate).join(", ")}). איך רוצה להתחיל?`}
+                המשלוח הראשון האפשרי: {firstDateLabel}. איך רוצה להתחיל?
               </p>
-              {form.frequency !== "monthly" && (
-                <button onClick={() => setField("billingChoice", "now")}
-                  style={{ width: "100%", padding: "11px 14px", borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: "pointer",
-                    background: form.billingChoice === "now" ? "var(--green)" : "#fff", color: form.billingChoice === "now" ? "#fff" : "var(--ink)",
-                    border: form.billingChoice === "now" ? "1px solid var(--green)" : "1px solid var(--line)", textAlign: "start", marginBottom: 8 }}>
-                  <div>התחל עכשיו · ₪{partialPrice} ({remainingDates.length} זרים)</div>
-                </button>
-              )}
+              <button onClick={() => setField("billingChoice", "now")}
+                style={{ width: "100%", padding: "11px 14px", borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                  background: form.billingChoice === "now" ? "var(--green)" : "#fff", color: form.billingChoice === "now" ? "#fff" : "var(--ink)",
+                  border: form.billingChoice === "now" ? "1px solid var(--green)" : "1px solid var(--line)", textAlign: "start", marginBottom: 8 }}>
+                <div>עכשיו ({firstDateLabel}) · ₪{partialPrice}</div>
+              </button>
               <button onClick={() => setField("billingChoice", "next")}
                 style={{ width: "100%", padding: "11px 14px", borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: "pointer",
                   background: form.billingChoice === "next" ? "var(--green)" : "#fff", color: form.billingChoice === "next" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "next" ? "1px solid var(--green)" : "1px solid var(--line)", textAlign: "start" }}>
-                <div>{form.frequency === "monthly" ? "התחל החודש" : "התחל מ-1 לחודש הבא"} · ₪{subscriptionMonthlyPrice}</div>
+                <div>מ-1 לחודש הבא · ₪{subscriptionMonthlyPrice}</div>
               </button>
             </div>
           ) : (
