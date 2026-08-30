@@ -55,7 +55,6 @@ function maxPriceForChosen(pool, sizeKey, chosenIds) {
   return max;
 }
 
-// מוצא את הזר הזול ביותר לפי מחיר גודל "קטן" שלו, ומחזיר את שלושת המחירים של אותו זר בדיוק
 function cheapestFlowerPrices(pool) {
   let cheapest = null;
   let cheapestSmall = null;
@@ -125,6 +124,12 @@ function biweeklyRemainingDates(dow) {
 
 function formatDate(d) {
   return `${d.getDate()}.${d.getMonth() + 1}`;
+}
+
+function nextMonthFirstLabel() {
+  const today = new Date();
+  const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  return `1.${next.getMonth() + 1}.${next.getFullYear()}`;
 }
 
 function ceilTo(n, step) {
@@ -262,6 +267,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
   }
   const hasRemaining = remainingDates.length > 0;
   const firstDateLabel = hasRemaining ? formatDate(remainingDates[0]) : "";
+  const nextCycleLabel = nextMonthFirstLabel();
 
   const rawFlowerPrice = !form.surpriseMe && form.chosenIds.length > 0
     ? (maxPriceForChosen(pool || [], form.size, form.chosenIds) || basePrices?.[form.size] || 0)
@@ -596,12 +602,12 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
                 style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start",
                   background: form.billingChoice === "next" ? "var(--green)" : "#fff", color: form.billingChoice === "next" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "next" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-                <div>מ-1 לחודש הבא · ₪{subscriptionMonthlyPrice}</div>
+                <div>מ-{nextCycleLabel} · ₪{subscriptionMonthlyPrice}</div>
               </button>
             </div>
           ) : (
             <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: "18px 0 14px" }}>
-              אין ימי אספקה שנותרו החודש - המנוי יתחיל מהמחזור המלא הבא
+              אין ימי אספקה שנותרו החודש - המנוי יתחיל ב-{nextCycleLabel}
             </p>
           )}
 
