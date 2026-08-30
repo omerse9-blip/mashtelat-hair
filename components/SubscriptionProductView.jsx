@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { getSubscriptionMinPriceForSize, getSubscriptionDiscounts, getDiscountPercent } from "../lib/siteData";
+import { useState } from "react";
 
 const FREQUENCIES = [
   { key: "monthly", label: "חודשי" },
@@ -14,38 +13,21 @@ const SIZES = [
   { key: "large", label: "גדול" },
 ];
 
-export default function SubscriptionProductView({ product }) {
+function getDiscountPercent(discounts, size, frequency) {
+  const row = discounts.find((d) => d.size === size && d.frequency === frequency);
+  return row ? Number(row.discount_percent) : 0;
+}
+
+export default function SubscriptionProductView({ product, minPrices, discounts }) {
   const [step, setStep] = useState(1);
   const [frequency, setFrequency] = useState("");
   const [size, setSize] = useState("");
-  const [discounts, setDiscounts] = useState([]);
-  const [minPrices, setMinPrices] = useState({});
-  const [loadingPrices, setLoadingPrices] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const [d, small, medium, large] = await Promise.all([
-          getSubscriptionDiscounts(),
-          getSubscriptionMinPriceForSize("small"),
-          getSubscriptionMinPriceForSize("medium"),
-          getSubscriptionMinPriceForSize("large"),
-        ]);
-        if (!alive) return;
-        setDiscounts(d);
-        setMinPrices({ small, medium, large });
-      } catch { /* שקט */ }
-      finally { if (alive) setLoadingPrices(false); }
-    })();
-    return () => { alive = false; };
-  }, []);
 
   function priceLabel(sizeKey) {
-    const base = minPrices[sizeKey];
+    const base = minPrices?.[sizeKey];
     if (base == null) return null;
     if (!frequency) return base;
-    const pct = getDiscountPercent(discounts, sizeKey, frequency);
+    const pct = getDiscountPercent(discounts || [], sizeKey, frequency);
     return Math.round(base * (1 - pct / 100));
   }
 
@@ -102,7 +84,7 @@ export default function SubscriptionProductView({ product }) {
                 >
                   <span>{s.label}</span>
                   <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>
-                    {loadingPrices ? "" : p != null ? `החל מ-₪${p}` : ""}
+                    {p != null ? `החל מ-₪${p}` : ""}
                   </span>
                 </button>
               );
