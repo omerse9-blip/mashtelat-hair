@@ -27,6 +27,15 @@ function WhatsAppIcon() {
   );
 }
 
+function AccountIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 3.58-7 8-7s8 3 8 7" />
+    </svg>
+  );
+}
+
 export default function SiteHeader({ searchIndex, nurseryCategories = [], gardenCategories = [] }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -175,11 +184,14 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           <NavTab href="/garden" label="גינון העיר" active={isGarden} />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, flex: 1, minWidth: 0 }}>
-          <a href={WA_LINK} target="_blank" rel="noreferrer" aria-label="WhatsApp" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 14, flex: 1, minWidth: 0 }}>
+          <Link href="/account" aria-label="האזור שלי" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <AccountIcon />
+          </Link>
+          <a href={WA_LINK} target="_blank" rel="noreferrer" aria-label="WhatsApp" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <WhatsAppIcon />
           </a>
-          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Cart">
+          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }} aria-label="Cart">
             <CartIcon />
             {count > 0 ? (
               <span style={{ position: "absolute", top: -6, insetInlineEnd: -8, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: "var(--green)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
