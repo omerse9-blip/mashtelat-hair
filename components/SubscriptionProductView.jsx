@@ -28,8 +28,8 @@ const DAY_OPTIONS = [
   { key: "friday", label: "שישי", dow: 5 },
 ];
 const MONTHLY_WEEK_OPTIONS = [
-  { key: "first", label: "שבוע ראשון בחודש" },
-  { key: "last", label: "שבוע אחרון בחודש" },
+  { key: "first", label: "ראשון בחודש" },
+  { key: "last", label: "אחרון בחודש" },
 ];
 
 const STORAGE_PREFIX = "subscription_form_";
@@ -65,7 +65,6 @@ function flowerImageForSize(product, sizeKey) {
   return product?.image_url || null;
 }
 
-// מוצא את כל תאריכי היום הקבוע שנשארו בחודש הקלנדרי הנוכחי, מהיום עד סוף החודש
 function remainingWeekdayDatesThisMonth(dow) {
   const today = new Date();
   const year = today.getFullYear();
@@ -79,7 +78,6 @@ function remainingWeekdayDatesThisMonth(dow) {
   return dates;
 }
 
-// עבור מנוי חודשי - מוצא את תאריך "השבוע הראשון/אחרון" בחודש הנוכחי, ובודק אם הוא עדיין לפנינו
 function monthlyRemainingDate(dow, monthlyWeek) {
   const today = new Date();
   const year = today.getFullYear();
@@ -96,7 +94,6 @@ function monthlyRemainingDate(dow, monthlyWeek) {
   return d >= todayMidnight ? [d] : [];
 }
 
-// עבור דו שבועי - כל שני מופעים שנשארו בחודש (מתוך כל המופעים), החל מהראשון
 function biweeklyRemainingDates(dow) {
   const all = remainingWeekdayDatesThisMonth(dow);
   return all.filter((_, i) => i % 2 === 0);
@@ -106,14 +103,24 @@ function formatDate(d) {
   return `${d.getDate()}.${d.getMonth() + 1}`;
 }
 
+function ceilTo(n, step) {
+  return Math.ceil(n / step) * step;
+}
+
+function monthlyMultiplier(frequency) {
+  if (frequency === "weekly") return 52 / 12;
+  if (frequency === "biweekly") return 26 / 12;
+  return 1;
+}
+
 const EMPTY_FORM = {
   step: 1,
   frequency: "",
   size: "",
   deliveryDay: "",
   monthlyWeek: "first",
-  billingChoice: "", // "now" | "next"
   deliveryWindow: "",
+  billingChoice: "",
   surpriseMe: false,
   chosenIds: [],
   subType: "",
@@ -199,7 +206,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function priceLabel(sizeKey) {
+  function estPriceForSize(sizeKey) {
     const base = minPrices?.[sizeKey];
     if (base == null) return null;
     if (!form.frequency) return base;
@@ -214,42 +221,14 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     }));
   }
 
-  function goToStep2() { if (!form.frequency || !form.size) return; goToStep(2); }
+  const windowsForDay = form.deliveryDay ? (windowOptions?.[form.deliveryDay] || []) : [];
+  const step1Complete = form.frequency && form.size && form.deliveryDay && form.deliveryWindow && (form.frequency !== "monthly" || form.monthlyWeek);
 
-  function goToBillingChoice() {
-    if (!form.deliveryDay) return;
-    goToStep(3);
-  }
-
-  // חישוב התאריכים שנשארו בחודש הנוכחי, לפי היום שנבחר
-  const selectedDayInfo = DAY_OPTIONS.find((d) => d.key === form.deliveryDay);
-  let remainingDates = [];
-  if (selectedDayInfo) {
-    if (form.frequency === "monthly") remainingDates = monthlyRemainingDate(selectedDayInfo.dow, form.monthlyWeek);
-    else if (form.frequency === "biweekly") remainingDates = biweeklyRemainingDates(selectedDayInfo.dow);
-    else remainingDates = remainingWeekdayDatesThisMonth(selectedDayInfo.dow);
-  }
-  const hasRemaining = remainingDates.length > 0;
-  const perFlowerPrice = priceLabel(form.size) || 0;
-  const partialPrice = perFlowerPrice * remainingDates.length; // הערכה, מבוססת מחיר "החל מ-"
-  const fullMonthlyPrice = form.frequency === "monthly"
-    ? perFlowerPrice
-    : Math.round(perFlowerPrice * (form.frequency === "weekly" ? 52 / 12 : 26 / 12));
-
-  function confirmBillingChoice(choice) {
-    setField("billingChoice", choice);
-    goToStep(4);
-  }
-  function confirmNoRemaining() {
-    setField("billingChoice", "next");
-    goToStep(4);
-  }
-
-  function goToStep5() { if (!form.deliveryWindow) return; goToStep(5); }
-  function goToStep6() { if (!form.surpriseMe && form.chosenIds.length === 0) return; goToStep(6); }
-  function goToStep7() {
+  function goToStep2() { if (!step1Complete) return; goToStep(2); }
+  function goToStep3() { if (!form.surpriseMe && form.chosenIds.length === 0) return; goToStep(3); }
+  function goToStep4() {
     if (!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)) return;
-    goToStep(7);
+    goToStep(4);
   }
 
   async function signInWithGoogle() {
@@ -265,17 +244,43 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     }
   }
 
-  function goToStep8() {
+  function goToStep5() {
     if (!form.accountName.trim()) return;
-    goToStep(8);
+    goToStep(5);
   }
 
-  const windowsForDay = form.deliveryDay ? (windowOptions?.[form.deliveryDay] || []) : [];
-  const finalPrice = !form.surpriseMe && form.chosenIds.length > 0
-    ? Math.round((maxPriceForChosen(pool || [], form.size, form.chosenIds) || 0) * (1 - getDiscountPercent(discounts || [], form.size, form.frequency) / 100))
-    : null;
-  const deliveryFee = form.subType === "city" ? Number(deliveryFees?.city || 30) : form.subType === "hotel" ? Number(deliveryFees?.hotel || 50) : 0;
-  const totalPrice = finalPrice != null ? finalPrice + deliveryFee : null;
+  // חישובי מחיר אמיתיים - לפי הזרים שנבחרו בפועל (או הערכה אם "תפתיעו אותי")
+  const selectedDayInfo = DAY_OPTIONS.find((d) => d.key === form.deliveryDay);
+  let remainingDates = [];
+  if (selectedDayInfo && form.frequency) {
+    if (form.frequency === "monthly") remainingDates = monthlyRemainingDate(selectedDayInfo.dow, form.monthlyWeek);
+    else if (form.frequency === "biweekly") remainingDates = biweeklyRemainingDates(selectedDayInfo.dow);
+    else remainingDates = remainingWeekdayDatesThisMonth(selectedDayInfo.dow);
+  }
+  const hasRemaining = remainingDates.length > 0;
+
+  const rawFlowerPrice = !form.surpriseMe && form.chosenIds.length > 0
+    ? (maxPriceForChosen(pool || [], form.size, form.chosenIds) || minPrices?.[form.size] || 0)
+    : (minPrices?.[form.size] || 0);
+  const discountPct = getDiscountPercent(discounts || [], form.size, form.frequency);
+  const discountedFlowerPrice = rawFlowerPrice * (1 - discountPct / 100);
+  const mult = monthlyMultiplier(form.frequency);
+  const deliveryFeeFull = 30;
+  const deliveryFeeDisc = 15;
+
+  const originalFullPrice = Math.ceil(rawFlowerPrice * mult + deliveryFeeFull * mult);
+  const subscriptionMonthlyPrice = ceilTo(discountedFlowerPrice * mult + deliveryFeeDisc * mult, 10);
+  const savings = originalFullPrice - subscriptionMonthlyPrice;
+  const savingsPct = originalFullPrice > 0 ? Math.round((savings / originalFullPrice) * 100) : 0;
+
+  const partialPrice = form.frequency !== "monthly"
+    ? Math.ceil(discountedFlowerPrice * remainingDates.length + deliveryFeeDisc * remainingDates.length)
+    : subscriptionMonthlyPrice;
+
+  function confirmBillingChoice(choice) {
+    setField("billingChoice", choice);
+    goToStep(6);
+  }
 
   function handlePayNow() {
     alert("חיבור התשלום עדיין בבנייה - ייפתח בקרוב.");
@@ -286,61 +291,60 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
   const step = form.step;
 
+  // טקסט סיכום קטן למטה בכל שלב
+  function selectionSummaryText() {
+    const parts = [];
+    if (form.frequency) parts.push(FREQ_LABEL_BY_KEY[form.frequency]);
+    if (form.size) parts.push(SIZES.find((s) => s.key === form.size)?.label);
+    if (form.deliveryDay) parts.push(DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label);
+    if (form.deliveryWindow) parts.push(form.deliveryWindow.replace("-", ":00-") + ":00");
+    return parts.join(" · ");
+  }
+
   return (
     <div style={{ maxWidth: 560, margin: "0 auto" }}>
-      <h1 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 28, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 8 }}>
+      <h1 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 6 }}>
         {product.name}
       </h1>
-      <p style={{ textAlign: "center", color: "var(--muted)", marginBottom: 32 }}>
+      <p style={{ textAlign: "center", color: "var(--muted)", marginBottom: 24, fontSize: 14 }}>
         מנוי לפריחה מתחדשת
       </p>
 
       {step === 1 && (
         <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזו תדירות נספק את הזר?</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>תדירות</p>
+          <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {FREQUENCIES.map((f) => (
               <button key={f.key} onClick={() => setField("frequency", f.key)}
-                style={{ padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
+                style={{ flex: 1, padding: "8px 6px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
                   background: form.frequency === f.key ? "var(--green)" : "#fff", color: form.frequency === f.key ? "#fff" : "var(--ink)",
-                  border: form.frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)", textAlign: "start" }}>
+                  border: form.frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {f.label}
               </button>
             ))}
           </div>
 
-          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>איזה גודל?</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>גודל</p>
+          <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {SIZES.map((s) => {
-              const p = priceLabel(s.key);
+              const p = estPriceForSize(s.key);
               return (
                 <button key={s.key} onClick={() => setField("size", s.key)}
-                  style={{ padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
+                  style={{ flex: 1, padding: "8px 6px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
                     background: form.size === s.key ? "var(--green)" : "#fff", color: form.size === s.key ? "#fff" : "var(--ink)",
-                    border: form.size === s.key ? "1px solid var(--green)" : "1px solid var(--line)",
-                    display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>{s.label}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>{p != null ? `החל מ-₪${p}` : ""}</span>
+                    border: form.size === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+                  <div>{s.label}</div>
+                  {p != null && <div style={{ fontSize: 11, opacity: 0.85 }}>מ-₪{p}</div>}
                 </button>
               );
             })}
           </div>
 
-          <button onClick={goToStep2} disabled={!form.frequency || !form.size}
-            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700,
-              padding: "14px", borderRadius: 12, border: "none", cursor: "pointer", opacity: (!form.frequency || !form.size) ? 0.5 : 1 }}>
-            המשך
-          </button>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזה יום קבוע יסופק הזר?</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: form.frequency === "monthly" ? 20 : 32 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>יום משלוח</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 12 }}>
             {DAY_OPTIONS.map((d) => (
               <button key={d.key} onClick={() => setField("deliveryDay", d.key)}
-                style={{ padding: "12px 8px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer",
+                style={{ padding: "8px 4px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
                   background: form.deliveryDay === d.key ? "var(--green)" : "#fff", color: form.deliveryDay === d.key ? "#fff" : "var(--ink)",
                   border: form.deliveryDay === d.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {d.label}
@@ -350,11 +354,11 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
           {form.frequency === "monthly" && (
             <>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>איזה שבוע בחודש?</p>
-              <div style={{ display: "flex", gap: 10, marginBottom: 32 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>שבוע בחודש</p>
+              <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
                 {MONTHLY_WEEK_OPTIONS.map((w) => (
                   <button key={w.key} onClick={() => setField("monthlyWeek", w.key)}
-                    style={{ flex: 1, padding: "11px", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                    style={{ flex: 1, padding: "8px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
                       background: form.monthlyWeek === w.key ? "var(--green)" : "#fff", color: form.monthlyWeek === w.key ? "#fff" : "var(--ink)",
                       border: form.monthlyWeek === w.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                     {w.label}
@@ -364,98 +368,61 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             </>
           )}
 
-          <StepNav onBack={() => goToStep(1)} onNext={goToBillingChoice} disabled={!form.deliveryDay} />
-        </div>
-      )}
-
-      {step === 3 && (
-        <div>
-          {hasRemaining ? (
+          {form.deliveryDay && (
             <>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 16 }}>
-                נשארו {remainingDates.length} משלוחים החודש ({remainingDates.map(formatDate).join(", ")}). איך רוצה להתחיל?
-              </p>
-              <button onClick={() => confirmBillingChoice("now")}
-                style={{ width: "100%", padding: "16px", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer",
-                  background: "#fff", border: "1px solid var(--line)", textAlign: "start", marginBottom: 12 }}>
-                <div style={{ color: "var(--ink)" }}>התחל עכשיו</div>
-                <div style={{ color: "var(--green)", fontSize: 18, fontWeight: 700, marginTop: 4 }}>₪{partialPrice}</div>
-                <div style={{ color: "var(--muted)", fontSize: 13 }}>{remainingDates.length} זרים החודש</div>
-              </button>
-              <button onClick={() => confirmBillingChoice("next")}
-                style={{ width: "100%", padding: "16px", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer",
-                  background: "#fff", border: "1px solid var(--line)", textAlign: "start", marginBottom: 20 }}>
-                <div style={{ color: "var(--ink)" }}>התחל מ-1 לחודש הבא</div>
-                <div style={{ color: "var(--green)", fontSize: 18, fontWeight: 700, marginTop: 4 }}>₪{fullMonthlyPrice}</div>
-                <div style={{ color: "var(--muted)", fontSize: 13 }}>חודש מלא</div>
-              </button>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>שעה</p>
+              <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 20 }}>
+                {windowsForDay.map((w) => (
+                  <button key={w} onClick={() => setField("deliveryWindow", w)}
+                    style={{ padding: "8px 4px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                      background: form.deliveryWindow === w ? "var(--green)" : "#fff", color: form.deliveryWindow === w ? "#fff" : "var(--ink)",
+                      border: form.deliveryWindow === w ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+                    {w.replace("-", ":00-") + ":00"}
+                  </button>
+                ))}
+              </div>
             </>
-          ) : (
-            <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>
-                אין ימי אספקה שנותרו החודש
-              </p>
-              <p style={{ fontSize: 14, color: "var(--muted)", marginBottom: 16 }}>
-                המנוי יתחיל מהמחזור המלא הבא, בחיוב מלא
-              </p>
-              <div style={{ color: "var(--green)", fontSize: 20, fontWeight: 700 }}>₪{fullMonthlyPrice}</div>
-            </div>
           )}
-          <StepNav
-            onBack={() => goToStep(2)}
-            onNext={hasRemaining ? () => {} : confirmNoRemaining}
-            disabled={hasRemaining}
-            hideNext={hasRemaining}
-          />
+
+          {selectionSummaryText() && (
+            <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>{selectionSummaryText()}</p>
+          )}
+
+          <button onClick={goToStep2} disabled={!step1Complete}
+            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
+              padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", opacity: !step1Complete ? 0.5 : 1 }}>
+            המשך
+          </button>
         </div>
       )}
 
-      {step === 4 && (
-        <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזו שעה קבועה?</p>
-          <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 32 }}>
-            {windowsForDay.map((w) => (
-              <button key={w} onClick={() => setField("deliveryWindow", w)}
-                style={{ padding: "11px 8px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
-                  background: form.deliveryWindow === w ? "var(--green)" : "#fff", color: form.deliveryWindow === w ? "#fff" : "var(--ink)",
-                  border: form.deliveryWindow === w ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-                {w.replace("-", ":00-") + ":00"}
-              </button>
-            ))}
-          </div>
-          <StepNav onBack={() => goToStep(3)} onNext={goToStep5} disabled={!form.deliveryWindow} />
-        </div>
-      )}
-
-      {step === 5 && (
+      {step === 2 && (
         <div>
           <button onClick={() => setField("surpriseMe", !form.surpriseMe)}
-            style={{ width: "100%", padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
+            style={{ width: "100%", padding: "10px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
               background: form.surpriseMe ? "var(--green)" : "#fff", color: form.surpriseMe ? "#fff" : "var(--ink)",
-              border: form.surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)", marginBottom: 16,
-              display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+              border: form.surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)", marginBottom: 14,
+              display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
             <span>✨</span><span>תפתיעו אותי</span>
           </button>
 
           {!form.surpriseMe && (
             <>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>אילו סגנונות הכי מתחברים אליך?</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>אילו סגנונות הכי מתחברים אליך?</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8, marginBottom: 20 }}>
                 {(pool || []).map((p) => {
                   const selected = form.chosenIds.includes(p.id);
                   const img = flowerImageForSize(p, form.size);
                   return (
                     <button key={p.id} onClick={() => toggleBouquet(p.id)}
-                      style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
+                      style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 10, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
                       <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "var(--green-soft)" }}>
-                        {img ? (
-                          <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : null}
+                        {img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
                         {selected && (
-                          <span style={{ position: "absolute", top: 6, insetInlineEnd: 6, background: "var(--green)", color: "#fff", borderRadius: 999, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>✓</span>
+                          <span style={{ position: "absolute", top: 5, insetInlineEnd: 5, background: "var(--green)", color: "#fff", borderRadius: 999, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>
                         )}
                       </div>
-                      <p style={{ padding: "6px 8px", fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
+                      <p style={{ padding: "4px 6px", fontSize: 11, fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
                     </button>
                   );
                 })}
@@ -463,11 +430,15 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             </>
           )}
 
-          <StepNav onBack={() => goToStep(4)} onNext={goToStep6} disabled={!form.surpriseMe && form.chosenIds.length === 0} />
+          <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>
+            {selectionSummaryText()}{form.surpriseMe ? " · תפתיעו אותי" : form.chosenIds.length ? ` · ${form.chosenIds.length} סגנונות` : ""}
+          </p>
+
+          <StepNav onBack={() => goToStep(1)} onNext={goToStep3} disabled={!form.surpriseMe && form.chosenIds.length === 0} />
         </div>
       )}
 
-      {step === 6 && (
+      {step === 3 && (
         <div>
           <Field label="שם מלא">
             <input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} style={inputStyle} />
@@ -476,18 +447,18 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             <input type="tel" inputMode="tel" value={form.customerPhone} onChange={(e) => setField("customerPhone", e.target.value)} style={inputStyle} />
           </Field>
 
-          <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
             <button onClick={() => setField("isGift", false)}
-              style={{ flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
+              style={{ flex: 1, padding: "9px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
                 background: !form.isGift ? "var(--green)" : "#fff", color: !form.isGift ? "#fff" : "var(--ink)",
                 border: !form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
               המנוי מיועד לי
             </button>
             <button onClick={() => setField("isGift", true)}
-              style={{ flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
+              style={{ flex: 1, padding: "9px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
                 background: form.isGift ? "var(--green)" : "#fff", color: form.isGift ? "#fff" : "var(--ink)",
                 border: form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-              🎁 המנוי מיועד למתנה
+              🎁 מתנה
             </button>
           </div>
 
@@ -498,11 +469,11 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             </>
           )}
 
-          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8, marginTop: 6 }}>סוג משלוח</p>
-          <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>סוג משלוח</p>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
             {SUB_TYPES.map((s) => (
               <button key={s.key} onClick={() => setField("subType", s.key)}
-                style={{ flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                style={{ flex: 1, padding: "9px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
                   background: form.subType === s.key ? "var(--green)" : "#fff", color: form.subType === s.key ? "#fff" : "var(--ink)",
                   border: form.subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {s.label}
@@ -524,55 +495,104 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             <textarea value={form.greeting} onChange={(e) => setField("greeting", e.target.value)} rows={2} style={textareaStyle} />
           </Field>
 
-          {totalPrice != null && (
-            <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 14, marginTop: 8, marginBottom: 8 }}>
-              מחיר לזר: <strong style={{ color: "var(--green)" }}>₪{totalPrice}</strong>
-              {deliveryFee > 0 ? ` (כולל ₪${deliveryFee} משלוח)` : ""}
-            </p>
-          )}
+          <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>
+            {selectionSummaryText()}{form.subType ? ` · ${SUB_TYPES.find((s) => s.key === form.subType)?.label}` : ""}
+          </p>
 
-          <StepNav onBack={() => goToStep(5)} onNext={goToStep7} disabled={!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)} />
+          <StepNav onBack={() => goToStep(2)} onNext={goToStep4} disabled={!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)} />
         </div>
       )}
 
-      {step === 7 && (
+      {step === 4 && (
         <div>
           {checkingSession ? (
             <p style={{ textAlign: "center", color: "var(--muted)" }}>בודקת חיבור...</p>
           ) : !session ? (
             <>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 16, textAlign: "center" }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 14, textAlign: "center" }}>
                 כדי לנהל את המנוי בהמשך, צריך להתחבר
               </p>
               <button onClick={signInWithGoogle} disabled={signingIn}
-                style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 16, fontWeight: 700,
-                  padding: "14px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 14, fontWeight: 700,
+                  padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <span>🔵</span>
                 <span>{signingIn ? "מעבירה..." : "המשך עם Google"}</span>
               </button>
-              <div style={{ marginTop: 16 }}>
-                <button onClick={() => goToStep(6)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700, padding: "14px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer" }}>
+              <div style={{ marginTop: 14 }}>
+                <button onClick={() => goToStep(3)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
                   חזרה
                 </button>
               </div>
             </>
           ) : (
             <>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>איך לקרוא לך?</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>איך לקרוא לך?</p>
               <Field label="שם">
                 <input value={form.accountName} onChange={(e) => setField("accountName", e.target.value)} style={inputStyle} placeholder="השם שבו נפנה אליך" />
               </Field>
-              <StepNav onBack={() => goToStep(6)} onNext={goToStep8} disabled={!form.accountName.trim()} />
+              <StepNav onBack={() => goToStep(3)} onNext={goToStep5} disabled={!form.accountName.trim()} />
             </>
           )}
         </div>
       )}
 
-      {step === 8 && (
+      {step === 5 && (
         <div>
-          <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 16, marginBottom: 16 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>סיכום המנוי</p>
+          {hasRemaining ? (
+            <>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 14 }}>
+                {form.frequency === "monthly"
+                  ? "יש עוד תאריך מתאים החודש. איך רוצה להתחיל?"
+                  : `נשארו ${remainingDates.length} משלוחים החודש (${remainingDates.map(formatDate).join(", ")}). איך רוצה להתחיל?`}
+              </p>
+              {form.frequency !== "monthly" && (
+                <button onClick={() => confirmBillingChoice("now")}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                    background: "#fff", border: "1px solid var(--line)", textAlign: "start", marginBottom: 10 }}>
+                  <div style={{ color: "var(--ink)" }}>התחל עכשיו</div>
+                  <div style={{ color: "var(--green)", fontSize: 16, fontWeight: 700, marginTop: 2 }}>₪{partialPrice}</div>
+                  <div style={{ color: "var(--muted)", fontSize: 12 }}>{remainingDates.length} זרים החודש</div>
+                </button>
+              )}
+              <button onClick={() => confirmBillingChoice("next")}
+                style={{ width: "100%", padding: "12px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                  background: "#fff", border: "1px solid var(--line)", textAlign: "start", marginBottom: 16 }}>
+                <div style={{ color: "var(--ink)" }}>{form.frequency === "monthly" ? "התחל החודש" : "התחל מ-1 לחודש הבא"}</div>
+                <div style={{ color: "var(--green)", fontSize: 16, fontWeight: 700, marginTop: 2 }}>₪{subscriptionMonthlyPrice}</div>
+              </button>
+              <button onClick={() => goToStep(4)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
+                חזרה
+              </button>
+            </>
+          ) : (
+            <>
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>
+                  אין ימי אספקה שנותרו החודש
+                </p>
+                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                  המנוי יתחיל מהמחזור המלא הבא, בחיוב מלא
+                </p>
+                <div style={{ color: "var(--green)", fontSize: 18, fontWeight: 700 }}>₪{subscriptionMonthlyPrice}</div>
+              </div>
+              <button onClick={() => confirmBillingChoice("next")}
+                style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
+                  padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", marginBottom: 10 }}>
+                המשך
+              </button>
+              <button onClick={() => goToStep(4)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
+                חזרה
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {step === 6 && (
+        <div>
+          <div style={{ border: "1px solid var(--line)", borderRadius: 13, padding: 14, marginBottom: 14 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>סיכום המנוי</p>
             <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[form.frequency]} />
             <SummaryLine label="גודל" value={SIZES.find((s) => s.key === form.size)?.label} />
             <SummaryLine label="יום משלוח" value={DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label} />
@@ -580,31 +600,33 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             <SummaryLine label="תחילת מנוי" value={form.billingChoice === "now" ? "החודש" : "מ-1 לחודש הבא"} />
             <SummaryLine label="קו מנחה" value={form.surpriseMe ? "תפתיעו אותי" : `${form.chosenIds.length} סגנונות נבחרו`} />
             <SummaryLine label="כתובת" value={form.isGift ? form.recipientAddress : form.customerAddress} />
-            {totalPrice != null && (
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
-                <span style={{ fontWeight: 700, color: "var(--ink)" }}>מחיר לזר</span>
-                <span style={{ fontWeight: 700, color: "var(--green)" }}>₪{totalPrice}</span>
-              </div>
-            )}
+
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)", textAlign: "center" }}>
+              <span style={{ color: "var(--muted)", fontSize: 14, textDecoration: "line-through" }}>₪{originalFullPrice}</span>
+              <span style={{ color: "var(--green)", fontSize: 20, fontWeight: 700, marginInlineStart: 8 }}>₪{subscriptionMonthlyPrice}</span>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+                במנוי זה חסכת בחודש ₪{savings} ({savingsPct}% הנחה)
+              </p>
+            </div>
           </div>
 
-          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16, lineHeight: 1.6 }}>
             ניתן לבטל בכל עת.
           </p>
 
           <button onClick={handlePayNow}
-            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700,
-              padding: "14px", borderRadius: 12, border: "none", cursor: "pointer", marginBottom: 10 }}>
+            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
+              padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", marginBottom: 8 }}>
             מעבר לתשלום
           </button>
           <button onClick={handleAddToCart}
-            style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700,
-              padding: "12px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer" }}>
+            style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600,
+              padding: "10px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
             הוספה לסל וקנייה נוספת
           </button>
 
-          <div style={{ marginTop: 16 }}>
-            <button onClick={() => goToStep(7)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 14, cursor: "pointer" }}>
+          <div style={{ marginTop: 14, textAlign: "center" }}>
+            <button onClick={() => goToStep(5)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}>
               חזרה
             </button>
           </div>
@@ -616,37 +638,35 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
 function SummaryLine({ label, value }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 14 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", fontSize: 13 }}>
       <span style={{ color: "var(--muted)" }}>{label}</span>
       <span style={{ color: "var(--ink)", fontWeight: 600 }}>{value || "—"}</span>
     </div>
   );
 }
 
-function StepNav({ onBack, onNext, disabled, hideNext }) {
+function StepNav({ onBack, onNext, disabled }) {
   return (
-    <div style={{ display: "flex", gap: 10 }}>
-      <button onClick={onBack} style={{ flex: 1, background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700, padding: "14px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer" }}>
+    <div style={{ display: "flex", gap: 8 }}>
+      <button onClick={onBack} style={{ flex: 1, background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "12px", borderRadius: 11, border: "1px solid var(--line)", cursor: "pointer" }}>
         חזרה
       </button>
-      {!hideNext && (
-        <button onClick={onNext} disabled={disabled}
-          style={{ flex: 2, background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700, padding: "14px", borderRadius: 12, border: "none", cursor: "pointer", opacity: disabled ? 0.5 : 1 }}>
-          המשך
-        </button>
-      )}
+      <button onClick={onNext} disabled={disabled}
+        style={{ flex: 2, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", opacity: disabled ? 0.5 : 1 }}>
+        המשך
+      </button>
     </div>
   );
 }
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--ink)" }}>{label}</label>
+    <div style={{ marginBottom: 12 }}>
+      <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 5, color: "var(--ink)" }}>{label}</label>
       {children}
     </div>
   );
 }
 
-const inputStyle = { width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15, fontFamily: "inherit" };
+const inputStyle = { width: "100%", padding: "10px 11px", borderRadius: 9, border: "1px solid var(--line)", fontSize: 14, fontFamily: "inherit" };
 const textareaStyle = { ...inputStyle, resize: "vertical", lineHeight: 1.5, wordSpacing: "normal", whiteSpace: "pre-wrap" };
