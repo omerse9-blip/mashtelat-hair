@@ -39,6 +39,17 @@ function maxPriceForChosen(pool, sizeKey, chosenIds) {
   return max;
 }
 
+// תמונה להצגה עבור זר בגודל שנבחר - קודם תמונת הגודל המדויק, אחרת כל תמונה אחרת שיש לזר
+function flowerImageForSize(product, sizeKey) {
+  const label = SIZE_LABEL_BY_KEY[sizeKey];
+  const sizes = product?.product_sizes || [];
+  const exact = sizes.find((s) => s.size_label === label && s.image_url);
+  if (exact) return exact.image_url;
+  const anyWithImage = sizes.find((s) => s.image_url);
+  if (anyWithImage) return anyWithImage.image_url;
+  return product?.image_url || null;
+}
+
 export default function SubscriptionProductView({ product, minPrices, discounts, dayOptions, windowOptions, pool, deliveryFees }) {
   const [step, setStep] = useState(1);
   const [frequency, setFrequency] = useState("");
@@ -191,12 +202,13 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
               <div className="catalog-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
                 {(pool || []).map((p) => {
                   const selected = chosenIds.includes(p.id);
+                  const img = flowerImageForSize(p, size);
                   return (
                     <button key={p.id} onClick={() => toggleBouquet(p.id)}
                       style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
                       <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "var(--green-soft)" }}>
-                        {p.image_url ? (
-                          <img src={p.image_url} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        {img ? (
+                          <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : null}
                         {selected && (
                           <span style={{ position: "absolute", top: 6, insetInlineEnd: 6, background: "var(--green)", color: "#fff", borderRadius: 999, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>✓</span>
