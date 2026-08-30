@@ -366,7 +366,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
         .sub-flower-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
         .sub-day-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .sub-chosen-thumb { width: 92px; height: 92px; }
-        .sub-chosen-thumb-summary { width: 123px; height: 123px; }
+        .sub-chosen-thumb-summary { width: 114px; height: 114px; }
         @media (min-width: 641px) {
           .sub-opt-btn { padding: 13px 10px; font-size: 15px; border-radius: 12px; }
           .sub-opt-btn-day { padding: 13px 6px; font-size: 15px; border-radius: 12px; }
@@ -389,7 +389,6 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
         מנוי לפריחה מתחדשת
       </p>
 
-      {/* פס הזרים שנבחרו - מוצג לאורך כל התהליך */}
       {form.surpriseMe ? (
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--green-soft)", color: "var(--green)", fontWeight: 700, fontSize: 13, padding: "6px 14px", borderRadius: 999 }}>
