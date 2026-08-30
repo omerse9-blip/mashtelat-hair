@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   getProductById, getAllProductIds, getAddonsForCategory, cardPrice, cardImage,
-  getSubscriptionMinPriceForSize, getSubscriptionDiscounts, getSubscriptionDeliveryDayOptions,
+  getSubscriptionMinPriceForSize, getSubscriptionDiscounts,
   getSubscriptionWindowOptions, getSubscriptionFlowerPool, getDeliveryFees,
 } from "../../../lib/siteData";
 import ProductView from "../../../components/ProductView";
@@ -59,24 +59,21 @@ export default async function ProductPage({ params }) {
   if (product.is_subscription) {
     let minPrices = { small: null, medium: null, large: null };
     let discounts = [];
-    let dayOptions = [];
-    let windowOptions = { thursday: [], friday: [] };
+    let windowOptions = {};
     let pool = [];
     let deliveryFees = { city: 30, hotel: 50 };
     try {
-      const [small, medium, large, d, days, windows, flowerPool, fees] = await Promise.all([
+      const [small, medium, large, d, windows, flowerPool, fees] = await Promise.all([
         getSubscriptionMinPriceForSize("small"),
         getSubscriptionMinPriceForSize("medium"),
         getSubscriptionMinPriceForSize("large"),
         getSubscriptionDiscounts(),
-        getSubscriptionDeliveryDayOptions(),
         getSubscriptionWindowOptions(),
         getSubscriptionFlowerPool(),
         getDeliveryFees(),
       ]);
       minPrices = { small, medium, large };
       discounts = d;
-      dayOptions = days;
       windowOptions = windows;
       pool = flowerPool;
       deliveryFees = fees;
@@ -103,7 +100,6 @@ export default async function ProductPage({ params }) {
           product={product}
           minPrices={minPrices}
           discounts={discounts}
-          dayOptions={dayOptions}
           windowOptions={windowOptions}
           pool={pool}
           deliveryFees={deliveryFees}
