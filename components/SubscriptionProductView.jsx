@@ -55,11 +55,14 @@ function maxPriceForChosen(pool, sizeKey, chosenIds) {
   return max;
 }
 
-function flowerImageForSize(product, sizeKey) {
-  const label = SIZE_LABEL_BY_KEY[sizeKey];
+// תמונה להצגה עבור זר - אם כבר נבחר גודל, תמונת אותו גודל; אחרת כל תמונה זמינה
+function flowerImage(product, sizeKey) {
   const sizes = product?.product_sizes || [];
-  const exact = sizes.find((s) => s.size_label === label && s.image_url);
-  if (exact) return exact.image_url;
+  if (sizeKey) {
+    const label = SIZE_LABEL_BY_KEY[sizeKey];
+    const exact = sizes.find((s) => s.size_label === label && s.image_url);
+    if (exact) return exact.image_url;
+  }
   const anyWithImage = sizes.find((s) => s.image_url);
   if (anyWithImage) return anyWithImage.image_url;
   return product?.image_url || null;
@@ -115,14 +118,14 @@ function monthlyMultiplier(frequency) {
 
 const EMPTY_FORM = {
   step: 1,
-  frequency: "",
+  surpriseMe: false,
+  chosenIds: [],
   size: "",
+  frequency: "",
   deliveryDay: "",
   monthlyWeek: "first",
   deliveryWindow: "",
   billingChoice: "",
-  surpriseMe: false,
-  chosenIds: [],
   subType: "",
   isGift: false,
   recipientName: "",
@@ -133,6 +136,7 @@ const EMPTY_FORM = {
   customerAddress: "",
   notes: "",
   greeting: "",
+  pendingAction: "",
 };
 
 export default function SubscriptionProductView({ product, minPrices, discounts, windowOptions, pool, deliveryFees }) {
@@ -201,16 +205,15 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     return () => { alive = false; listener?.subscription?.unsubscribe(); };
   }, []);
 
-  // ברגע שיש session פעיל בשלב ההתחברות - ממשיכים אוטומטית לסיכום, בלי מסך שם נפרד
-  useEffect(() => {
-    if (form.step === 4 && session && !checkingSession) {
-      goToStep(5);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.step, session, checkingSession]);
-
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function toggleBouquet(id) {
+    setForm((prev) => ({
+      ...prev,
+      chosenIds: prev.chosenIds.includes(id) ? prev.chosenIds.filter((x) => x !== id) : [...prev.chosenIds, id],
+    }));
   }
 
   function estPriceForSize(sizeKey) {
@@ -221,34 +224,14 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     return Math.round(base * (1 - pct / 100));
   }
 
-  function toggleBouquet(id) {
-    setForm((prev) => ({
-      ...prev,
-      chosenIds: prev.chosenIds.includes(id) ? prev.chosenIds.filter((x) => x !== id) : [...prev.chosenIds, id],
-    }));
-  }
-
   const windowsForDay = form.deliveryDay ? (windowOptions?.[form.deliveryDay] || []) : [];
-  const step1Complete = form.frequency && form.size && form.deliveryDay && form.deliveryWindow && (form.frequency !== "monthly" || form.monthlyWeek);
+  const step2Complete = form.size && form.frequency && form.deliveryDay && form.deliveryWindow && (form.frequency !== "monthly" || form.monthlyWeek);
 
-  function goToStep2() { if (!step1Complete) return; goToStep(2); }
-  function goToStep3() { if (!form.surpriseMe && form.chosenIds.length === 0) return; goToStep(3); }
-  function goToStep4() {
+  function goToStep1Next() { if (!form.surpriseMe && form.chosenIds.length === 0) return; goToStep(2); }
+  function goToStep2Next() { if (!step2Complete) return; goToStep(3); }
+  function goToStep3Next() {
     if (!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)) return;
     goToStep(4);
-  }
-
-  async function signInWithGoogle() {
-    setSigningIn(true);
-    try {
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.href },
-      });
-    } catch (e) {
-      alert("שגיאה בהתחברות. נסי שוב.");
-      setSigningIn(false);
-    }
   }
 
   const selectedDayInfo = DAY_OPTIONS.find((d) => d.key === form.deliveryDay);
@@ -279,22 +262,63 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     ? Math.ceil(discountedFlowerPrice * remainingDates.length + deliveryFeeDisc * remainingDates.length)
     : subscriptionMonthlyPrice;
 
-  function handlePayNow() {
-    if (hasRemaining && !form.billingChoice) return;
+  const payDisabled = hasRemaining && !form.billingChoice;
+
+  async function signInWithGoogle() {
+    setSigningIn(true);
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.href },
+      });
+    } catch (e) {
+      alert("שגיאה בהתחברות. נסי שוב.");
+      setSigningIn(false);
+    }
+  }
+
+  function runPayment() {
     alert("חיבור התשלום עדיין בבנייה - ייפתח בקרוב.");
   }
-  function handleAddToCart() {
-    if (hasRemaining && !form.billingChoice) return;
+  function runAddToCart() {
     alert("חיבור לסל עדיין בבנייה - ייפתח בקרוב.");
   }
 
+  function handlePayClick() {
+    if (payDisabled) return;
+    if (!session) {
+      setField("pendingAction", "pay");
+      signInWithGoogle();
+      return;
+    }
+    runPayment();
+  }
+  function handleCartClick() {
+    if (payDisabled) return;
+    if (!session) {
+      setField("pendingAction", "cart");
+      signInWithGoogle();
+      return;
+    }
+    runAddToCart();
+  }
+
+  // אחרי חזרה מגוגל, אם הייתה פעולה ממתינה - ממשיכים אוטומטית
+  useEffect(() => {
+    if (checkingSession || !session || !form.pendingAction) return;
+    const action = form.pendingAction;
+    setField("pendingAction", "");
+    if (action === "pay") runPayment();
+    else if (action === "cart") runAddToCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, checkingSession, form.pendingAction]);
+
   const step = form.step;
-  const payDisabled = hasRemaining && !form.billingChoice;
 
   function selectionSummaryText() {
     const parts = [];
-    if (form.frequency) parts.push(FREQ_LABEL_BY_KEY[form.frequency]);
     if (form.size) parts.push(SIZES.find((s) => s.key === form.size)?.label);
+    if (form.frequency) parts.push(FREQ_LABEL_BY_KEY[form.frequency]);
     if (form.deliveryDay) parts.push(DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label);
     if (form.deliveryWindow) parts.push(form.deliveryWindow.replace("-", ":00-") + ":00");
     return parts.join(" · ");
@@ -311,18 +335,48 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
       {step === 1 && (
         <div>
-          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזו תדירות נספק את הזר?</p>
-          <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-            {FREQUENCIES.map((f) => (
-              <button key={f.key} onClick={() => setField("frequency", f.key)}
-                style={{ flex: 1, padding: "8px 6px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  background: form.frequency === f.key ? "var(--green)" : "#fff", color: form.frequency === f.key ? "#fff" : "var(--ink)",
-                  border: form.frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-                {f.label}
-              </button>
-            ))}
-          </div>
+          <button onClick={() => setField("surpriseMe", !form.surpriseMe)}
+            style={{ width: "100%", padding: "10px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
+              background: form.surpriseMe ? "var(--green)" : "#fff", color: form.surpriseMe ? "#fff" : "var(--ink)",
+              border: form.surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)", marginBottom: 14,
+              display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+            <span>✨</span><span>תפתיעו אותי</span>
+          </button>
 
+          {!form.surpriseMe && (
+            <>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>אילו סגנונות הכי מתחברים אליך?</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8, marginBottom: 20 }}>
+                {(pool || []).map((p) => {
+                  const selected = form.chosenIds.includes(p.id);
+                  const img = flowerImage(p, form.size);
+                  return (
+                    <button key={p.id} onClick={() => toggleBouquet(p.id)}
+                      style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 10, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
+                      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "var(--green-soft)" }}>
+                        {img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                        {selected && (
+                          <span style={{ position: "absolute", top: 5, insetInlineEnd: 5, background: "var(--green)", color: "#fff", borderRadius: 999, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>
+                        )}
+                      </div>
+                      <p style={{ padding: "4px 6px", fontSize: 11, fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          <button onClick={goToStep1Next} disabled={!form.surpriseMe && form.chosenIds.length === 0}
+            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
+              padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", opacity: (!form.surpriseMe && form.chosenIds.length === 0) ? 0.5 : 1 }}>
+            המשך
+          </button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div>
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>איזה גודל?</p>
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {SIZES.map((s) => {
@@ -337,6 +391,18 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
                 </button>
               );
             })}
+          </div>
+
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזו תדירות נספק את הזר?</p>
+          <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+            {FREQUENCIES.map((f) => (
+              <button key={f.key} onClick={() => setField("frequency", f.key)}
+                style={{ flex: 1, padding: "8px 6px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  background: form.frequency === f.key ? "var(--green)" : "#fff", color: form.frequency === f.key ? "#fff" : "var(--ink)",
+                  border: form.frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+                {f.label}
+              </button>
+            ))}
           </div>
 
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזה יום קבוע?</p>
@@ -387,53 +453,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>{selectionSummaryText()}</p>
           )}
 
-          <button onClick={goToStep2} disabled={!step1Complete}
-            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
-              padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", opacity: !step1Complete ? 0.5 : 1 }}>
-            המשך
-          </button>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div>
-          <button onClick={() => setField("surpriseMe", !form.surpriseMe)}
-            style={{ width: "100%", padding: "10px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
-              background: form.surpriseMe ? "var(--green)" : "#fff", color: form.surpriseMe ? "#fff" : "var(--ink)",
-              border: form.surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)", marginBottom: 14,
-              display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-            <span>✨</span><span>תפתיעו אותי</span>
-          </button>
-
-          {!form.surpriseMe && (
-            <>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>אילו סגנונות הכי מתחברים אליך?</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8, marginBottom: 20 }}>
-                {(pool || []).map((p) => {
-                  const selected = form.chosenIds.includes(p.id);
-                  const img = flowerImageForSize(p, form.size);
-                  return (
-                    <button key={p.id} onClick={() => toggleBouquet(p.id)}
-                      style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 10, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
-                      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "var(--green-soft)" }}>
-                        {img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
-                        {selected && (
-                          <span style={{ position: "absolute", top: 5, insetInlineEnd: 5, background: "var(--green)", color: "#fff", borderRadius: 999, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>
-                        )}
-                      </div>
-                      <p style={{ padding: "4px 6px", fontSize: 11, fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
-          <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>
-            {selectionSummaryText()}{form.surpriseMe ? " · תפתיעו אותי" : form.chosenIds.length ? ` · ${form.chosenIds.length} סגנונות` : ""}
-          </p>
-
-          <StepNav onBack={() => goToStep(1)} onNext={goToStep3} disabled={!form.surpriseMe && form.chosenIds.length === 0} />
+          <StepNav onBack={() => goToStep(1)} onNext={goToStep2Next} disabled={!step2Complete} />
         </div>
       )}
 
@@ -494,42 +514,16 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             <textarea value={form.greeting} onChange={(e) => setField("greeting", e.target.value)} rows={2} style={textareaStyle} />
           </Field>
 
-          <StepNav onBack={() => goToStep(2)} onNext={goToStep4} disabled={!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)} />
+          <StepNav onBack={() => goToStep(2)} onNext={goToStep3Next} disabled={!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)} />
         </div>
       )}
 
       {step === 4 && (
         <div>
-          {checkingSession ? (
-            <p style={{ textAlign: "center", color: "var(--muted)" }}>בודקת חיבור...</p>
-          ) : (
-            <>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 14, textAlign: "center" }}>
-                כדי לנהל את המנוי בהמשך, צריך להתחבר
-              </p>
-              <button onClick={signInWithGoogle} disabled={signingIn}
-                style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 14, fontWeight: 700,
-                  padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <span>🔵</span>
-                <span>{signingIn ? "מעבירה..." : "המשך עם Google"}</span>
-              </button>
-              <div style={{ marginTop: 14 }}>
-                <button onClick={() => goToStep(3)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
-                  חזרה
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {step === 5 && (
-        <div>
           <div style={{ border: "1px solid var(--line)", borderRadius: 13, padding: 14, marginBottom: 14 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>סיכום המנוי</p>
-            <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[form.frequency]} />
             <SummaryLine label="גודל" value={SIZES.find((s) => s.key === form.size)?.label} />
+            <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[form.frequency]} />
             <SummaryLine label="יום משלוח" value={DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label} />
             <SummaryLine label="שעה" value={form.deliveryWindow ? form.deliveryWindow.replace("-", ":00-") + ":00" : ""} />
             <SummaryLine label="קו מנחה" value={form.surpriseMe ? "תפתיעו אותי" : `${form.chosenIds.length} סגנונות נבחרו`} />
@@ -572,19 +566,19 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             ניתן לבטל בכל עת.
           </p>
 
-          <button onClick={handlePayNow} disabled={payDisabled}
+          <button onClick={handlePayClick} disabled={payDisabled || signingIn}
             style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
-              padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", marginBottom: 8, opacity: payDisabled ? 0.5 : 1 }}>
-            מעבר לתשלום
+              padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", marginBottom: 8, opacity: (payDisabled || signingIn) ? 0.5 : 1 }}>
+            {signingIn ? "מעבירה..." : "מעבר לתשלום"}
           </button>
-          <button onClick={handleAddToCart} disabled={payDisabled}
+          <button onClick={handleCartClick} disabled={payDisabled || signingIn}
             style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600,
-              padding: "10px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer", opacity: payDisabled ? 0.5 : 1 }}>
+              padding: "10px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer", opacity: (payDisabled || signingIn) ? 0.5 : 1 }}>
             הוספה לסל וקנייה נוספת
           </button>
 
           <div style={{ marginTop: 14, textAlign: "center" }}>
-            <button onClick={() => goToStep(4)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}>
+            <button onClick={() => goToStep(3)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}>
               חזרה
             </button>
           </div>
