@@ -159,7 +159,7 @@ function ProductCard({ product, activeId, highlight }) {
           </span>
         ) : null}
         {isSubscription ? (
-          <span style={{ position: "absolute", top: 10, insetInlineEnd: 10, background: "rgba(110,140,88,0.92)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
+          <span style={{ position: "absolute", top: 10, insetInlineEnd: 10, background: "rgba(63,122,82,0.92)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
             🌸 מנוי
           </span>
         ) : null}
