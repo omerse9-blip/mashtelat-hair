@@ -214,10 +214,10 @@ function NavTab({ href, label, active }) {
       style={{
         fontSize: 14,
         fontWeight: 700,
-        padding: "8px 14px",
+        padding: "7px 11px",
         borderRadius: 999,
         whiteSpace: "nowrap",
-        minWidth: 108,
+        minWidth: 96,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
