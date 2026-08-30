@@ -239,12 +239,10 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  // לחיצה על "תפתיעו אותי" רק מחליפה מצב תצוגה - לא מוחקת את הבחירות הקודמות
   function toggleSurpriseMe() {
     setField("surpriseMe", !form.surpriseMe);
   }
 
-  // לחיצה על זר ספציפי: אם "תפתיעו אותי" פעיל, מכבים אותו קודם ואז בוחרים את הזר
   function toggleBouquet(id) {
     setForm((prev) => {
       const newChosen = prev.chosenIds.includes(id)
@@ -353,6 +351,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
 
   const step = form.step;
   const chosenFlowers = (pool || []).filter((p) => form.chosenIds.includes(p.id));
+  const thumbClass = step === 3 ? "sub-chosen-thumb-summary" : "sub-chosen-thumb";
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto" }}>
@@ -366,7 +365,8 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
         .sub-flower-card p { font-size: 11px; padding: 4px 6px; }
         .sub-flower-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
         .sub-day-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .sub-chosen-thumb { width: 88px; height: 88px; }
+        .sub-chosen-thumb { width: 92px; height: 92px; }
+        .sub-chosen-thumb-summary { width: 123px; height: 123px; }
         @media (min-width: 641px) {
           .sub-opt-btn { padding: 13px 10px; font-size: 15px; border-radius: 12px; }
           .sub-opt-btn-day { padding: 13px 6px; font-size: 15px; border-radius: 12px; }
@@ -377,7 +377,8 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           .sub-flower-card p { font-size: 13px; padding: 8px 10px; }
           .sub-flower-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
           .sub-day-grid { gap: 10px; }
-          .sub-chosen-thumb { width: 114px; height: 114px; }
+          .sub-chosen-thumb { width: 120px; height: 120px; }
+          .sub-chosen-thumb-summary { width: 160px; height: 160px; }
         }
       `}</style>
 
@@ -396,11 +397,11 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           </span>
         </div>
       ) : chosenFlowers.length > 0 ? (
-        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 24 }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 24, flexWrap: "wrap" }}>
           {chosenFlowers.map((f) => {
             const img = flowerImage(f, form.size);
             return (
-              <div key={f.id} className="sub-chosen-thumb" style={{ borderRadius: 999, overflow: "hidden", border: "2px solid var(--green)", background: "var(--green-soft)" }}>
+              <div key={f.id} className={thumbClass} style={{ borderRadius: 999, overflow: "hidden", border: "2px solid var(--green)", background: "var(--green-soft)" }}>
                 {img ? <img src={img} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
               </div>
             );
