@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const FREQUENCIES = [
@@ -20,6 +20,8 @@ const SUB_TYPES = [
 const SIZE_LABEL_BY_KEY = { small: "קטן", medium: "בינוני", large: "גדול" };
 const FREQ_LABEL_BY_KEY = { monthly: "חודשי", biweekly: "דו שבועי", weekly: "שבועי" };
 const DAY_LABEL_BY_KEY = { thursday: "חמישי", friday: "שישי" };
+
+const STORAGE_PREFIX = "subscription_form_";
 
 function getDiscountPercent(discounts, size, frequency) {
   const row = discounts.find((d) => d.size === size && d.frequency === frequency);
@@ -52,29 +54,83 @@ function flowerImageForSize(product, sizeKey) {
   return product?.image_url || null;
 }
 
+const EMPTY_FORM = {
+  step: 1,
+  frequency: "",
+  size: "",
+  deliveryDay: "",
+  deliveryWindow: "",
+  surpriseMe: false,
+  chosenIds: [],
+  subType: "",
+  isGift: false,
+  recipientName: "",
+  recipientPhone: "",
+  recipientAddress: "",
+  customerName: "",
+  customerPhone: "",
+  customerAddress: "",
+  notes: "",
+  greeting: "",
+  accountName: "",
+};
+
 export default function SubscriptionProductView({ product, minPrices, discounts, dayOptions, windowOptions, pool, deliveryFees }) {
-  const [step, setStep] = useState(1);
-  const [frequency, setFrequency] = useState("");
-  const [size, setSize] = useState("");
-  const [deliveryDay, setDeliveryDay] = useState("");
-  const [deliveryWindow, setDeliveryWindow] = useState("");
-  const [surpriseMe, setSurpriseMe] = useState(false);
-  const [chosenIds, setChosenIds] = useState([]);
-  const [subType, setSubType] = useState("");
-  const [isGift, setIsGift] = useState(false);
-  const [recipientName, setRecipientName] = useState("");
-  const [recipientPhone, setRecipientPhone] = useState("");
-  const [recipientAddress, setRecipientAddress] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerAddress, setCustomerAddress] = useState("");
-  const [notes, setNotes] = useState("");
-  const [greeting, setGreeting] = useState("");
+  const storageKey = STORAGE_PREFIX + product.id;
+
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [loadedFromStorage, setLoadedFromStorage] = useState(false);
+
+  // טעינת מצב שמור מ-localStorage, פעם אחת עם עליית הרכיב
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setForm((prev) => ({ ...prev, ...saved }));
+      }
+    } catch { /* התעלמות */ }
+    setLoadedFromStorage(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // שמירה אוטומטית בכל שינוי
+  useEffect(() => {
+    if (!loadedFromStorage) return;
+    try { localStorage.setItem(storageKey, JSON.stringify(form)); } catch { /* התעלמות */ }
+  }, [form, loadedFromStorage, storageKey]);
+
+  // גלילה לראש העמוד בכל מעבר שלב
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [form.step]);
+
+  // ניווט "חזרה" בדפדפן מזיז שלב אחורה בתוך המסלול, במקום לצאת מהעמוד
+  const initializedHistory = useRef(false);
+  useEffect(() => {
+    if (!initializedHistory.current) {
+      window.history.replaceState({ subscriptionStep: form.step }, "");
+      initializedHistory.current = true;
+    }
+    function onPop(e) {
+      const backStep = e.state?.subscriptionStep;
+      if (backStep && backStep < form.step) {
+        setForm((prev) => ({ ...prev, step: backStep }));
+      }
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.step]);
+
+  function goToStep(n) {
+    window.history.pushState({ subscriptionStep: n }, "");
+    setForm((prev) => ({ ...prev, step: n }));
+  }
 
   // התחברות
   const [session, setSession] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
-  const [accountName, setAccountName] = useState("");
   const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
@@ -90,25 +146,32 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     return () => { alive = false; listener?.subscription?.unsubscribe(); };
   }, []);
 
+  function setField(key, value) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
   function priceLabel(sizeKey) {
     const base = minPrices?.[sizeKey];
     if (base == null) return null;
-    if (!frequency) return base;
-    const pct = getDiscountPercent(discounts || [], sizeKey, frequency);
+    if (!form.frequency) return base;
+    const pct = getDiscountPercent(discounts || [], sizeKey, form.frequency);
     return Math.round(base * (1 - pct / 100));
   }
 
   function toggleBouquet(id) {
-    setChosenIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    setForm((prev) => ({
+      ...prev,
+      chosenIds: prev.chosenIds.includes(id) ? prev.chosenIds.filter((x) => x !== id) : [...prev.chosenIds, id],
+    }));
   }
 
-  function goToStep2() { if (!frequency || !size) return; setStep(2); }
-  function goToStep3() { if (!deliveryDay) return; setStep(3); }
-  function goToStep4() { if (!deliveryWindow) return; setStep(4); }
-  function goToStep5() { if (!surpriseMe && chosenIds.length === 0) return; setStep(5); }
+  function goToStep2() { if (!form.frequency || !form.size) return; goToStep(2); }
+  function goToStep3() { if (!form.deliveryDay) return; goToStep(3); }
+  function goToStep4() { if (!form.deliveryWindow) return; goToStep(4); }
+  function goToStep5() { if (!form.surpriseMe && form.chosenIds.length === 0) return; goToStep(5); }
   function goToStep6() {
-    if (!customerName || !customerPhone || !subType || !(isGift ? recipientAddress : customerAddress)) return;
-    setStep(6);
+    if (!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)) return;
+    goToStep(6);
   }
 
   async function signInWithGoogle() {
@@ -125,16 +188,16 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
   }
 
   function goToStep7() {
-    if (!accountName.trim()) return;
-    setStep(7);
+    if (!form.accountName.trim()) return;
+    goToStep(7);
   }
 
-  const windowsForDay = deliveryDay ? (windowOptions?.[deliveryDay] || []) : [];
-  const finalPrice = !surpriseMe && chosenIds.length > 0
-    ? Math.round((maxPriceForChosen(pool || [], size, chosenIds) || 0) * (1 - getDiscountPercent(discounts || [], size, frequency) / 100))
+  const windowsForDay = form.deliveryDay ? (windowOptions?.[form.deliveryDay] || []) : [];
+  const finalPrice = !form.surpriseMe && form.chosenIds.length > 0
+    ? Math.round((maxPriceForChosen(pool || [], form.size, form.chosenIds) || 0) * (1 - getDiscountPercent(discounts || [], form.size, form.frequency) / 100))
     : null;
-  const deliveryFee = subType === "city" ? Number(deliveryFees?.city || 30) : subType === "hotel" ? Number(deliveryFees?.hotel || 50) : 0;
-  const totalPerCycle = finalPrice != null ? finalPrice + deliveryFee : null;
+  const deliveryFee = form.subType === "city" ? Number(deliveryFees?.city || 30) : form.subType === "hotel" ? Number(deliveryFees?.hotel || 50) : 0;
+  const totalPrice = finalPrice != null ? finalPrice + deliveryFee : null;
 
   function handlePayNow() {
     alert("חיבור התשלום עדיין בבנייה - ייפתח בקרוב.");
@@ -142,6 +205,8 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
   function handleAddToCart() {
     alert("חיבור לסל עדיין בבנייה - ייפתח בקרוב.");
   }
+
+  const step = form.step;
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto" }}>
@@ -154,13 +219,13 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
       {step === 1 && (
         <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזו תדירות תרצי לקבל?</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזו תדירות נספק את הזר?</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
             {FREQUENCIES.map((f) => (
-              <button key={f.key} onClick={() => setFrequency(f.key)}
+              <button key={f.key} onClick={() => setField("frequency", f.key)}
                 style={{ padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
-                  background: frequency === f.key ? "var(--green)" : "#fff", color: frequency === f.key ? "#fff" : "var(--ink)",
-                  border: frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)", textAlign: "start" }}>
+                  background: form.frequency === f.key ? "var(--green)" : "#fff", color: form.frequency === f.key ? "#fff" : "var(--ink)",
+                  border: form.frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)", textAlign: "start" }}>
                 {f.label}
               </button>
             ))}
@@ -171,10 +236,10 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             {SIZES.map((s) => {
               const p = priceLabel(s.key);
               return (
-                <button key={s.key} onClick={() => setSize(s.key)}
+                <button key={s.key} onClick={() => setField("size", s.key)}
                   style={{ padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
-                    background: size === s.key ? "var(--green)" : "#fff", color: size === s.key ? "#fff" : "var(--ink)",
-                    border: size === s.key ? "1px solid var(--green)" : "1px solid var(--line)",
+                    background: form.size === s.key ? "var(--green)" : "#fff", color: form.size === s.key ? "#fff" : "var(--ink)",
+                    border: form.size === s.key ? "1px solid var(--green)" : "1px solid var(--line)",
                     display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span>{s.label}</span>
                   <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>{p != null ? `החל מ-₪${p}` : ""}</span>
@@ -183,9 +248,9 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             })}
           </div>
 
-          <button onClick={goToStep2} disabled={!frequency || !size}
+          <button onClick={goToStep2} disabled={!form.frequency || !form.size}
             style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700,
-              padding: "14px", borderRadius: 12, border: "none", cursor: "pointer", opacity: (!frequency || !size) ? 0.5 : 1 }}>
+              padding: "14px", borderRadius: 12, border: "none", cursor: "pointer", opacity: (!form.frequency || !form.size) ? 0.5 : 1 }}>
             המשך
           </button>
         </div>
@@ -193,55 +258,55 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
       {step === 2 && (
         <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזה יום קבוע תרצי לקבל?</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזה יום קבוע יסופק הזר?</p>
           <div style={{ display: "flex", gap: 10, marginBottom: 32 }}>
             {(dayOptions || []).map((d) => (
-              <button key={d.key} onClick={() => setDeliveryDay(d.key)}
+              <button key={d.key} onClick={() => setField("deliveryDay", d.key)}
                 style={{ flex: 1, padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
-                  background: deliveryDay === d.key ? "var(--green)" : "#fff", color: deliveryDay === d.key ? "#fff" : "var(--ink)",
-                  border: deliveryDay === d.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+                  background: form.deliveryDay === d.key ? "var(--green)" : "#fff", color: form.deliveryDay === d.key ? "#fff" : "var(--ink)",
+                  border: form.deliveryDay === d.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {d.label}
               </button>
             ))}
           </div>
-          <StepNav onBack={() => setStep(1)} onNext={goToStep3} disabled={!deliveryDay} />
+          <StepNav onBack={() => goToStep(1)} onNext={goToStep3} disabled={!form.deliveryDay} />
         </div>
       )}
 
       {step === 3 && (
         <div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>איזו שעה קבועה?</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזו שעה קבועה?</p>
           <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 32 }}>
             {windowsForDay.map((w) => (
-              <button key={w} onClick={() => setDeliveryWindow(w)}
+              <button key={w} onClick={() => setField("deliveryWindow", w)}
                 style={{ padding: "11px 8px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
-                  background: deliveryWindow === w ? "var(--green)" : "#fff", color: deliveryWindow === w ? "#fff" : "var(--ink)",
-                  border: deliveryWindow === w ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+                  background: form.deliveryWindow === w ? "var(--green)" : "#fff", color: form.deliveryWindow === w ? "#fff" : "var(--ink)",
+                  border: form.deliveryWindow === w ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {w.replace("-", ":00-") + ":00"}
               </button>
             ))}
           </div>
-          <StepNav onBack={() => setStep(2)} onNext={goToStep4} disabled={!deliveryWindow} />
+          <StepNav onBack={() => goToStep(2)} onNext={goToStep4} disabled={!form.deliveryWindow} />
         </div>
       )}
 
       {step === 4 && (
         <div>
-          <button onClick={() => setSurpriseMe((v) => !v)}
+          <button onClick={() => setField("surpriseMe", !form.surpriseMe)}
             style={{ width: "100%", padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
-              background: surpriseMe ? "var(--green)" : "#fff", color: surpriseMe ? "#fff" : "var(--ink)",
-              border: surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)", marginBottom: 16,
+              background: form.surpriseMe ? "var(--green)" : "#fff", color: form.surpriseMe ? "#fff" : "var(--ink)",
+              border: form.surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)", marginBottom: 16,
               display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
             <span>✨</span><span>תפתיעו אותי</span>
           </button>
 
-          {!surpriseMe && (
+          {!form.surpriseMe && (
             <>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>איזה סגנונות את הכי אוהבת?</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>אילו סגנונות הכי מתחברים אליך?</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
                 {(pool || []).map((p) => {
-                  const selected = chosenIds.includes(p.id);
-                  const img = flowerImageForSize(p, size);
+                  const selected = form.chosenIds.includes(p.id);
+                  const img = flowerImageForSize(p, form.size);
                   return (
                     <button key={p.id} onClick={() => toggleBouquet(p.id)}
                       style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 12, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
@@ -261,75 +326,75 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             </>
           )}
 
-          <StepNav onBack={() => setStep(3)} onNext={goToStep5} disabled={!surpriseMe && chosenIds.length === 0} />
+          <StepNav onBack={() => goToStep(3)} onNext={goToStep5} disabled={!form.surpriseMe && form.chosenIds.length === 0} />
         </div>
       )}
 
       {step === 5 && (
         <div>
           <Field label="שם מלא">
-            <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={inputStyle} />
+            <input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} style={inputStyle} />
           </Field>
           <Field label="טלפון">
-            <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} style={inputStyle} />
+            <input type="tel" inputMode="tel" value={form.customerPhone} onChange={(e) => setField("customerPhone", e.target.value)} style={inputStyle} />
           </Field>
 
           <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-            <button onClick={() => setIsGift(false)}
+            <button onClick={() => setField("isGift", false)}
               style={{ flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
-                background: !isGift ? "var(--green)" : "#fff", color: !isGift ? "#fff" : "var(--ink)",
-                border: !isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-              זה מגיע אליי
+                background: !form.isGift ? "var(--green)" : "#fff", color: !form.isGift ? "#fff" : "var(--ink)",
+                border: !form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+              המנוי מיועד לי
             </button>
-            <button onClick={() => setIsGift(true)}
+            <button onClick={() => setField("isGift", true)}
               style={{ flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
-                background: isGift ? "var(--green)" : "#fff", color: isGift ? "#fff" : "var(--ink)",
-                border: isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-              🎁 זה מנוי מתנה
+                background: form.isGift ? "var(--green)" : "#fff", color: form.isGift ? "#fff" : "var(--ink)",
+                border: form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+              🎁 המנוי מיועד למתנה
             </button>
           </div>
 
-          {isGift && (
+          {form.isGift && (
             <>
-              <Field label="שם המקבלת"><input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} style={inputStyle} /></Field>
-              <Field label="טלפון המקבלת"><input value={recipientPhone} onChange={(e) => setRecipientPhone(e.target.value)} style={inputStyle} /></Field>
+              <Field label="שם המקבל/ת"><input value={form.recipientName} onChange={(e) => setField("recipientName", e.target.value)} style={inputStyle} /></Field>
+              <Field label="טלפון המקבל/ת"><input type="tel" inputMode="tel" value={form.recipientPhone} onChange={(e) => setField("recipientPhone", e.target.value)} style={inputStyle} /></Field>
             </>
           )}
 
           <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8, marginTop: 6 }}>סוג משלוח</p>
           <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
             {SUB_TYPES.map((s) => (
-              <button key={s.key} onClick={() => setSubType(s.key)}
+              <button key={s.key} onClick={() => setField("subType", s.key)}
                 style={{ flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
-                  background: subType === s.key ? "var(--green)" : "#fff", color: subType === s.key ? "#fff" : "var(--ink)",
-                  border: subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+                  background: form.subType === s.key ? "var(--green)" : "#fff", color: form.subType === s.key ? "#fff" : "var(--ink)",
+                  border: form.subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {s.label}
               </button>
             ))}
           </div>
 
           <Field label="כתובת">
-            <input value={isGift ? recipientAddress : customerAddress}
-              onChange={(e) => isGift ? setRecipientAddress(e.target.value) : setCustomerAddress(e.target.value)}
+            <input value={form.isGift ? form.recipientAddress : form.customerAddress}
+              onChange={(e) => setField(form.isGift ? "recipientAddress" : "customerAddress", e.target.value)}
               style={inputStyle} />
           </Field>
 
           <Field label="הערה לצוות (אופציונלי)">
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+            <textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} rows={2} style={textareaStyle} />
           </Field>
 
           <Field label="כרטיס ברכה (אופציונלי, ניתן לעדכן לכל מחזור בנפרד)">
-            <textarea value={greeting} onChange={(e) => setGreeting(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+            <textarea value={form.greeting} onChange={(e) => setField("greeting", e.target.value)} rows={2} style={textareaStyle} />
           </Field>
 
-          {totalPerCycle != null && (
+          {totalPrice != null && (
             <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 14, marginTop: 8, marginBottom: 8 }}>
-              מחיר משוער למחזור: <strong style={{ color: "var(--green)" }}>₪{totalPerCycle}</strong>
+              מחיר לזר: <strong style={{ color: "var(--green)" }}>₪{totalPrice}</strong>
               {deliveryFee > 0 ? ` (כולל ₪${deliveryFee} משלוח)` : ""}
             </p>
           )}
 
-          <StepNav onBack={() => setStep(4)} onNext={goToStep6} disabled={!customerName || !customerPhone || !subType || !(isGift ? recipientAddress : customerAddress)} />
+          <StepNav onBack={() => goToStep(4)} onNext={goToStep6} disabled={!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)} />
         </div>
       )}
 
@@ -350,16 +415,18 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
                 <span>{signingIn ? "מעבירה..." : "המשך עם Google"}</span>
               </button>
               <div style={{ marginTop: 16 }}>
-                <StepNav onBack={() => setStep(5)} onNext={() => {}} disabled={true} />
+                <button onClick={() => goToStep(5)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700, padding: "14px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer" }}>
+                  חזרה
+                </button>
               </div>
             </>
           ) : (
             <>
               <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>איך לקרוא לך?</p>
               <Field label="שם">
-                <input value={accountName} onChange={(e) => setAccountName(e.target.value)} style={inputStyle} placeholder="השם שבו נפנה אלייך" />
+                <input value={form.accountName} onChange={(e) => setField("accountName", e.target.value)} style={inputStyle} placeholder="השם שבו נפנה אליך" />
               </Field>
-              <StepNav onBack={() => setStep(5)} onNext={goToStep7} disabled={!accountName.trim()} />
+              <StepNav onBack={() => goToStep(5)} onNext={goToStep7} disabled={!form.accountName.trim()} />
             </>
           )}
         </div>
@@ -369,16 +436,16 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
         <div>
           <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 16, marginBottom: 16 }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>סיכום המנוי</p>
-            <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[frequency]} />
-            <SummaryLine label="גודל" value={SIZES.find((s) => s.key === size)?.label} />
-            <SummaryLine label="יום משלוח" value={DAY_LABEL_BY_KEY[deliveryDay]} />
-            <SummaryLine label="שעה" value={deliveryWindow ? deliveryWindow.replace("-", ":00-") + ":00" : ""} />
-            <SummaryLine label="קו מנחה" value={surpriseMe ? "תפתיעו אותי" : `${chosenIds.length} סגנונות נבחרו`} />
-            <SummaryLine label="כתובת" value={isGift ? recipientAddress : customerAddress} />
-            {totalPerCycle != null && (
+            <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[form.frequency]} />
+            <SummaryLine label="גודל" value={SIZES.find((s) => s.key === form.size)?.label} />
+            <SummaryLine label="יום משלוח" value={DAY_LABEL_BY_KEY[form.deliveryDay]} />
+            <SummaryLine label="שעה" value={form.deliveryWindow ? form.deliveryWindow.replace("-", ":00-") + ":00" : ""} />
+            <SummaryLine label="קו מנחה" value={form.surpriseMe ? "תפתיעו אותי" : `${form.chosenIds.length} סגנונות נבחרו`} />
+            <SummaryLine label="כתובת" value={form.isGift ? form.recipientAddress : form.customerAddress} />
+            {totalPrice != null && (
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
-                <span style={{ fontWeight: 700, color: "var(--ink)" }}>מחיר למחזור</span>
-                <span style={{ fontWeight: 700, color: "var(--green)" }}>₪{totalPerCycle}</span>
+                <span style={{ fontWeight: 700, color: "var(--ink)" }}>מחיר לזר</span>
+                <span style={{ fontWeight: 700, color: "var(--green)" }}>₪{totalPrice}</span>
               </div>
             )}
           </div>
@@ -399,7 +466,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           </button>
 
           <div style={{ marginTop: 16 }}>
-            <button onClick={() => setStep(6)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 14, cursor: "pointer" }}>
+            <button onClick={() => goToStep(6)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 14, cursor: "pointer" }}>
               חזרה
             </button>
           </div>
@@ -441,4 +508,5 @@ function Field({ label, children }) {
   );
 }
 
-const inputStyle = { width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 };
+const inputStyle = { width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15, fontFamily: "inherit" };
+const textareaStyle = { ...inputStyle, resize: "vertical", lineHeight: 1.5, wordSpacing: "normal", whiteSpace: "pre-wrap" };
