@@ -1,96 +1,113 @@
-import Link from "next/link";
-import { getProductById, getAllProductIds, getAddonsForCategory, cardPrice, cardImage } from "../../../lib/siteData";
-import ProductView from "../../../components/ProductView";
-import SubscriptionProductView from "../../../components/SubscriptionProductView";
+"use client";
 
-export const revalidate = 0;
+import { useState } from "react";
 
-export async function generateStaticParams() {
-  try {
-    const ids = await getAllProductIds();
-    return ids.map((id) => ({ id }));
-  } catch {
-    return [];
-  }
+const FREQUENCIES = [
+  { key: "monthly", label: "חודשי" },
+  { key: "biweekly", label: "דו שבועי" },
+  { key: "weekly", label: "שבועי" },
+];
+const SIZES = [
+  { key: "small", label: "קטן" },
+  { key: "medium", label: "בינוני" },
+  { key: "large", label: "גדול" },
+];
+
+function getDiscountPercent(discounts, size, frequency) {
+  const row = discounts.find((d) => d.size === size && d.frequency === frequency);
+  return row ? Number(row.discount_percent) : 0;
 }
 
-export async function generateMetadata({ params }) {
-  const product = await getProductById(params.id);
-  if (!product) return { title: "מוצר לא נמצא — משתלת העיר" };
-  const cat = product.categories?.name || "";
-  const price = cardPrice(product);
-  const title = `${product.name}${cat ? ` — ${cat}` : ""} | משתלת העיר אילת`;
-  const description = product.description
-    ? product.description.slice(0, 150)
-    : `${product.name} למכירה במשתלת העיר אילת${price != null ? `. החל מ-₪${price}` : ""}.`;
-  const image = cardImage(product);
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url: `https://mashtelathair.co.il/product/${params.id}`,
-      siteName: "משתלת העיר",
-      locale: "he_IL",
-      type: "website",
-      images: image ? [{ url: image, alt: product.name }] : undefined,
-    },
-  };
-}
+export default function SubscriptionProductView({ product, minPrices, discounts }) {
+  const [step, setStep] = useState(1);
+  const [frequency, setFrequency] = useState("");
+  const [size, setSize] = useState("");
 
-export default async function ProductPage({ params }) {
-  const product = await getProductById(params.id);
-  if (!product) {
-    return (
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
-        <p style={{ fontSize: 20, marginBottom: 16 }}>המוצר לא נמצא.</p>
-        <Link href="/" style={{ color: "var(--green)", fontWeight: 600 }}>חזרה למשתלה</Link>
-      </main>
-    );
+  function priceLabel(sizeKey) {
+    const base = minPrices?.[sizeKey];
+    if (base == null) return null;
+    if (!frequency) return base;
+    const pct = getDiscountPercent(discounts || [], sizeKey, frequency);
+    return Math.round(base * (1 - pct / 100));
   }
 
-  const catName = product.categories?.name || "";
-
-  if (product.is_subscription) {
-    return (
-      <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
-        <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)", display: "flex", flexWrap: "wrap", gap: 8 }}>
-          <Link href="/" style={{ color: "var(--muted)" }}>דף הבית</Link>
-          {catName ? (
-            <>
-              <span>/</span>
-              <Link href={`/?cat=${encodeURIComponent(product.category_id)}`} style={{ color: "var(--green)", fontWeight: 600 }}>
-                {catName}
-              </Link>
-            </>
-          ) : null}
-          <span>/</span>
-          <span style={{ color: "var(--ink)" }}>{product.name}</span>
-        </nav>
-        <SubscriptionProductView product={product} />
-      </main>
-    );
+  function goNext() {
+    if (!frequency || !size) return;
+    setStep(2);
   }
-
-  const addonGroups = await getAddonsForCategory(product.category_id);
 
   return (
-    <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
-      <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)", display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <Link href="/" style={{ color: "var(--muted)" }}>דף הבית</Link>
-        {catName ? (
-          <>
-            <span>/</span>
-            <Link href={`/?cat=${encodeURIComponent(product.category_id)}`} style={{ color: "var(--green)", fontWeight: 600 }}>
-              {catName}
-            </Link>
-          </>
-        ) : null}
-        <span>/</span>
-        <span style={{ color: "var(--ink)" }}>{product.name}</span>
-      </nav>
-      <ProductView product={product} addonGroups={addonGroups} />
-    </main>
+    <div style={{ maxWidth: 560, margin: "0 auto" }}>
+      <h1 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 28, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 8 }}>
+        {product.name}
+      </h1>
+      <p style={{ textAlign: "center", color: "var(--muted)", marginBottom: 32 }}>
+        מנוי לפריחה מתחדשת
+      </p>
+
+      {step === 1 && (
+        <div>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזו תדירות תרצי לקבל?</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+            {FREQUENCIES.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFrequency(f.key)}
+                style={{
+                  padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
+                  background: frequency === f.key ? "var(--green)" : "#fff",
+                  color: frequency === f.key ? "#fff" : "var(--ink)",
+                  border: frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)",
+                  textAlign: "start",
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>איזה גודל?</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 }}>
+            {SIZES.map((s) => {
+              const p = priceLabel(s.key);
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setSize(s.key)}
+                  style={{
+                    padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
+                    background: size === s.key ? "var(--green)" : "#fff",
+                    color: size === s.key ? "#fff" : "var(--ink)",
+                    border: size === s.key ? "1px solid var(--green)" : "1px solid var(--line)",
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                  }}
+                >
+                  <span>{s.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>
+                    {p != null ? `החל מ-₪${p}` : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={goNext}
+            disabled={!frequency || !size}
+            style={{
+              width: "100%", background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700,
+              padding: "14px", borderRadius: 12, border: "none", cursor: "pointer",
+              opacity: (!frequency || !size) ? 0.5 : 1,
+            }}
+          >
+            המשך
+          </button>
+        </div>
+      )}
+
+      {step > 1 && (
+        <p style={{ textAlign: "center", color: "var(--muted)" }}>שלב {step} — בבנייה</p>
+      )}
+    </div>
   );
 }
