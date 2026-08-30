@@ -19,7 +19,7 @@ export default function SubscriptionProductView({ product }) {
   const [frequency, setFrequency] = useState("");
   const [size, setSize] = useState("");
   const [discounts, setDiscounts] = useState([]);
-  const [minPrices, setMinPrices] = useState({}); // size -> min price
+  const [minPrices, setMinPrices] = useState({});
   const [loadingPrices, setLoadingPrices] = useState(true);
 
   useEffect(() => {
