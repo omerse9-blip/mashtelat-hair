@@ -34,6 +34,10 @@ const MONTHLY_WEEK_OPTIONS = [
 
 const STORAGE_PREFIX = "subscription_form_";
 
+function flowersCountLabel(n) {
+  return n === 1 ? "זר אחד" : `${n} זרים`;
+}
+
 function getDiscountPercent(discounts, size, frequency) {
   const row = discounts.find((d) => d.size === size && d.frequency === frequency);
   return row ? Number(row.discount_percent) : 0;
@@ -235,11 +239,19 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  // לחיצה על "תפתיעו אותי" רק מחליפה מצב תצוגה - לא מוחקת את הבחירות הקודמות
+  function toggleSurpriseMe() {
+    setField("surpriseMe", !form.surpriseMe);
+  }
+
+  // לחיצה על זר ספציפי: אם "תפתיעו אותי" פעיל, מכבים אותו קודם ואז בוחרים את הזר
   function toggleBouquet(id) {
-    setForm((prev) => ({
-      ...prev,
-      chosenIds: prev.chosenIds.includes(id) ? prev.chosenIds.filter((x) => x !== id) : [...prev.chosenIds, id],
-    }));
+    setForm((prev) => {
+      const newChosen = prev.chosenIds.includes(id)
+        ? prev.chosenIds.filter((x) => x !== id)
+        : [...prev.chosenIds, id];
+      return { ...prev, surpriseMe: false, chosenIds: newChosen };
+    });
   }
 
   const basePrices = useMemo(() => cheapestFlowerPrices(pool || []), [pool]);
@@ -354,7 +366,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
         .sub-flower-card p { font-size: 11px; padding: 4px 6px; }
         .sub-flower-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
         .sub-day-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .sub-chosen-thumb { width: 44px; height: 44px; }
+        .sub-chosen-thumb { width: 88px; height: 88px; }
         @media (min-width: 641px) {
           .sub-opt-btn { padding: 13px 10px; font-size: 15px; border-radius: 12px; }
           .sub-opt-btn-day { padding: 13px 6px; font-size: 15px; border-radius: 12px; }
@@ -365,7 +377,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           .sub-flower-card p { font-size: 13px; padding: 8px 10px; }
           .sub-flower-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
           .sub-day-grid { gap: 10px; }
-          .sub-chosen-thumb { width: 88px; height: 88px; }
+          .sub-chosen-thumb { width: 114px; height: 114px; }
         }
       `}</style>
 
@@ -398,7 +410,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
 
       {step === 1 && (
         <div>
-          <button onClick={() => setField("surpriseMe", !form.surpriseMe)}
+          <button onClick={toggleSurpriseMe}
             className="sub-opt-btn"
             style={{ width: "100%", marginBottom: 14,
               background: form.surpriseMe ? "var(--green)" : "#fff", color: form.surpriseMe ? "#fff" : "var(--ink)",
@@ -407,29 +419,25 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
             <span>✨</span><span>תפתיעו אותי</span>
           </button>
 
-          {!form.surpriseMe && (
-            <>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>אילו סגנונות הכי מתחברים אליך?</p>
-              <div className="sub-flower-grid" style={{ marginBottom: 20 }}>
-                {(pool || []).map((p) => {
-                  const selected = form.chosenIds.includes(p.id);
-                  const img = flowerImage(p, form.size);
-                  return (
-                    <button key={p.id} onClick={() => toggleBouquet(p.id)} className="sub-flower-card"
-                      style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 10, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
-                      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "var(--green-soft)" }}>
-                        {img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
-                        {selected && (
-                          <span style={{ position: "absolute", top: 5, insetInlineEnd: 5, background: "var(--green)", color: "#fff", borderRadius: 999, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>
-                        )}
-                      </div>
-                      <p style={{ fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>אילו סגנונות הכי מתחברים אליך?</p>
+          <div className="sub-flower-grid" style={{ marginBottom: 20 }}>
+            {(pool || []).map((p) => {
+              const selected = !form.surpriseMe && form.chosenIds.includes(p.id);
+              const img = flowerImage(p, form.size);
+              return (
+                <button key={p.id} onClick={() => toggleBouquet(p.id)} className="sub-flower-card"
+                  style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 10, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "var(--green-soft)" }}>
+                    {img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                    {selected && (
+                      <span style={{ position: "absolute", top: 5, insetInlineEnd: 5, background: "var(--green)", color: "#fff", borderRadius: 999, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>
+                    )}
+                  </div>
+                  <p style={{ fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
+                </button>
+              );
+            })}
+          </div>
 
           <button onClick={goToStep1Next} disabled={!form.surpriseMe && form.chosenIds.length === 0}
             className="sub-primary-btn"
@@ -542,6 +550,9 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
               <p style={{ fontSize: 15, color: "var(--muted)", marginTop: 8 }}>
                 במנוי זה חסכת בחודש ₪{savings} ({savingsPct}% הנחה)
               </p>
+              <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
+                המחיר כולל דמי משלוח
+              </p>
             </div>
           </div>
 
@@ -606,7 +617,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
                 style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start", marginBottom: 8,
                   background: form.billingChoice === "now" ? "var(--green)" : "#fff", color: form.billingChoice === "now" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "now" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-                <div>עכשיו (מ-{firstDateLabel}) · ₪{partialPrice} (חיוב חד פעמי על {remainingDates.length} זרים החודש)</div>
+                <div>עכשיו · ₪{partialPrice} ({flowersCountLabel(remainingDates.length)}, מתחיל ב-{firstDateLabel})</div>
                 <div style={{ fontSize: "0.92em", opacity: 0.75, fontWeight: 600, marginTop: 3 }}>ומהחודש הבא: ₪{subscriptionMonthlyPrice} לחודש</div>
               </button>
               <button onClick={() => setField("billingChoice", "next")} className="sub-secondary-btn"
