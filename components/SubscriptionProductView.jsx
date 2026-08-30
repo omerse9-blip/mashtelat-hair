@@ -226,9 +226,10 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
   function goToStep2() { if (!step1Complete) return; goToStep(2); }
   function goToStep3() { if (!form.surpriseMe && form.chosenIds.length === 0) return; goToStep(3); }
+
   function goToStep4() {
     if (!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)) return;
-    goToStep(4);
+    goToStep(5);
   }
 
   async function signInWithGoogle() {
@@ -244,12 +245,11 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     }
   }
 
-  function goToStep5() {
+  function goToStep6() {
     if (!form.accountName.trim()) return;
-    goToStep(5);
+    goToStep(6);
   }
 
-  // חישובי מחיר אמיתיים - לפי הזרים שנבחרו בפועל (או הערכה אם "תפתיעו אותי")
   const selectedDayInfo = DAY_OPTIONS.find((d) => d.key === form.deliveryDay);
   let remainingDates = [];
   if (selectedDayInfo && form.frequency) {
@@ -279,7 +279,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
   function confirmBillingChoice(choice) {
     setField("billingChoice", choice);
-    goToStep(6);
+    goToStep(4);
   }
 
   function handlePayNow() {
@@ -291,7 +291,6 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
   const step = form.step;
 
-  // טקסט סיכום קטן למטה בכל שלב
   function selectionSummaryText() {
     const parts = [];
     if (form.frequency) parts.push(FREQ_LABEL_BY_KEY[form.frequency]);
@@ -312,7 +311,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
       {step === 1 && (
         <div>
-          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>תדירות</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזו תדירות נספק את הזר?</p>
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {FREQUENCIES.map((f) => (
               <button key={f.key} onClick={() => setField("frequency", f.key)}
@@ -324,7 +323,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             ))}
           </div>
 
-          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>גודל</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>איזה גודל?</p>
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {SIZES.map((s) => {
               const p = estPriceForSize(s.key);
@@ -340,7 +339,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             })}
           </div>
 
-          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>יום משלוח</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזה יום קבוע?</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 12 }}>
             {DAY_OPTIONS.map((d) => (
               <button key={d.key} onClick={() => setField("deliveryDay", d.key)}
@@ -370,7 +369,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
           {form.deliveryDay && (
             <>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>שעה</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזו שעה?</p>
               <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 20 }}>
                 {windowsForDay.map((w) => (
                   <button key={w} onClick={() => setField("deliveryWindow", w)}
@@ -440,6 +439,61 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
       {step === 3 && (
         <div>
+          {hasRemaining ? (
+            <>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 14 }}>
+                {form.frequency === "monthly"
+                  ? "יש עוד תאריך מתאים החודש. איך רוצה להתחיל?"
+                  : `נשארו ${remainingDates.length} משלוחים החודש (${remainingDates.map(formatDate).join(", ")}). איך רוצה להתחיל?`}
+              </p>
+              {form.frequency !== "monthly" && (
+                <button onClick={() => confirmBillingChoice("now")}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                    background: "#fff", border: "1px solid var(--line)", textAlign: "start", marginBottom: 10 }}>
+                  <div style={{ color: "var(--ink)" }}>התחל עכשיו</div>
+                  <div style={{ color: "var(--green)", fontSize: 16, fontWeight: 700, marginTop: 2 }}>₪{partialPrice}</div>
+                  <div style={{ color: "var(--muted)", fontSize: 12 }}>{remainingDates.length} זרים החודש</div>
+                </button>
+              )}
+              <button onClick={() => confirmBillingChoice("next")}
+                style={{ width: "100%", padding: "12px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                  background: "#fff", border: "1px solid var(--line)", textAlign: "start", marginBottom: 16 }}>
+                <div style={{ color: "var(--ink)" }}>{form.frequency === "monthly" ? "התחל החודש" : "התחל מ-1 לחודש הבא"}</div>
+                <div style={{ color: "var(--green)", fontSize: 16, fontWeight: 700, marginTop: 2 }}>₪{subscriptionMonthlyPrice}</div>
+              </button>
+            </>
+          ) : (
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>
+                אין ימי אספקה שנותרו החודש
+              </p>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
+                המנוי יתחיל מהמחזור המלא הבא, בחיוב מלא
+              </p>
+              <div style={{ color: "var(--green)", fontSize: 18, fontWeight: 700, marginBottom: 16 }}>₪{subscriptionMonthlyPrice}</div>
+              <button onClick={() => confirmBillingChoice("next")}
+                style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
+                  padding: "12px", borderRadius: 11, border: "none", cursor: "pointer" }}>
+                המשך
+              </button>
+            </div>
+          )}
+
+          <div style={{ textAlign: "center", marginTop: 6 }}>
+            <span style={{ color: "var(--muted)", fontSize: 13, textDecoration: "line-through" }}>₪{originalFullPrice}</span>
+            <span style={{ color: "var(--ink)", fontSize: 13, marginInlineStart: 6 }}>חסכת ₪{savings} ({savingsPct}%)</span>
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            <button onClick={() => goToStep(2)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
+              חזרה
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 5 && (
+        <div>
           <Field label="שם מלא">
             <input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} style={inputStyle} />
           </Field>
@@ -495,15 +549,11 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             <textarea value={form.greeting} onChange={(e) => setField("greeting", e.target.value)} rows={2} style={textareaStyle} />
           </Field>
 
-          <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>
-            {selectionSummaryText()}{form.subType ? ` · ${SUB_TYPES.find((s) => s.key === form.subType)?.label}` : ""}
-          </p>
-
-          <StepNav onBack={() => goToStep(2)} onNext={goToStep4} disabled={!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)} />
+          <StepNav onBack={() => goToStep(3)} onNext={goToStep4} disabled={!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)} />
         </div>
       )}
 
-      {step === 4 && (
+      {step === 6 && (
         <div>
           {checkingSession ? (
             <p style={{ textAlign: "center", color: "var(--muted)" }}>בודקת חיבור...</p>
@@ -520,7 +570,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
                 <span>{signingIn ? "מעבירה..." : "המשך עם Google"}</span>
               </button>
               <div style={{ marginTop: 14 }}>
-                <button onClick={() => goToStep(3)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
+                <button onClick={() => goToStep(5)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
                   חזרה
                 </button>
               </div>
@@ -531,65 +581,13 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
               <Field label="שם">
                 <input value={form.accountName} onChange={(e) => setField("accountName", e.target.value)} style={inputStyle} placeholder="השם שבו נפנה אליך" />
               </Field>
-              <StepNav onBack={() => goToStep(3)} onNext={goToStep5} disabled={!form.accountName.trim()} />
+              <StepNav onBack={() => goToStep(5)} onNext={goToStep6} disabled={!form.accountName.trim()} />
             </>
           )}
         </div>
       )}
 
-      {step === 5 && (
-        <div>
-          {hasRemaining ? (
-            <>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 14 }}>
-                {form.frequency === "monthly"
-                  ? "יש עוד תאריך מתאים החודש. איך רוצה להתחיל?"
-                  : `נשארו ${remainingDates.length} משלוחים החודש (${remainingDates.map(formatDate).join(", ")}). איך רוצה להתחיל?`}
-              </p>
-              {form.frequency !== "monthly" && (
-                <button onClick={() => confirmBillingChoice("now")}
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
-                    background: "#fff", border: "1px solid var(--line)", textAlign: "start", marginBottom: 10 }}>
-                  <div style={{ color: "var(--ink)" }}>התחל עכשיו</div>
-                  <div style={{ color: "var(--green)", fontSize: 16, fontWeight: 700, marginTop: 2 }}>₪{partialPrice}</div>
-                  <div style={{ color: "var(--muted)", fontSize: 12 }}>{remainingDates.length} זרים החודש</div>
-                </button>
-              )}
-              <button onClick={() => confirmBillingChoice("next")}
-                style={{ width: "100%", padding: "12px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
-                  background: "#fff", border: "1px solid var(--line)", textAlign: "start", marginBottom: 16 }}>
-                <div style={{ color: "var(--ink)" }}>{form.frequency === "monthly" ? "התחל החודש" : "התחל מ-1 לחודש הבא"}</div>
-                <div style={{ color: "var(--green)", fontSize: 16, fontWeight: 700, marginTop: 2 }}>₪{subscriptionMonthlyPrice}</div>
-              </button>
-              <button onClick={() => goToStep(4)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
-                חזרה
-              </button>
-            </>
-          ) : (
-            <>
-              <div style={{ textAlign: "center", marginBottom: 16 }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>
-                  אין ימי אספקה שנותרו החודש
-                </p>
-                <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
-                  המנוי יתחיל מהמחזור המלא הבא, בחיוב מלא
-                </p>
-                <div style={{ color: "var(--green)", fontSize: 18, fontWeight: 700 }}>₪{subscriptionMonthlyPrice}</div>
-              </div>
-              <button onClick={() => confirmBillingChoice("next")}
-                style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
-                  padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", marginBottom: 10 }}>
-                המשך
-              </button>
-              <button onClick={() => goToStep(4)} style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "11px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer" }}>
-                חזרה
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {step === 6 && (
+      {step === 7 && (
         <div>
           <div style={{ border: "1px solid var(--line)", borderRadius: 13, padding: 14, marginBottom: 14 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>סיכום המנוי</p>
@@ -626,7 +624,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           </button>
 
           <div style={{ marginTop: 14, textAlign: "center" }}>
-            <button onClick={() => goToStep(5)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}>
+            <button onClick={() => goToStep(6)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}>
               חזרה
             </button>
           </div>
