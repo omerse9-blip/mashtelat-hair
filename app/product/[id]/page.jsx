@@ -1,7 +1,8 @@
 import Link from "next/link";
 import {
   getProductById, getAllProductIds, getAddonsForCategory, cardPrice, cardImage,
-  getSubscriptionMinPriceForSize, getSubscriptionDiscounts,
+  getSubscriptionMinPriceForSize, getSubscriptionDiscounts, getSubscriptionDeliveryDayOptions,
+  getSubscriptionWindowOptions, getSubscriptionFlowerPool, getDeliveryFees,
 } from "../../../lib/siteData";
 import ProductView from "../../../components/ProductView";
 import SubscriptionProductView from "../../../components/SubscriptionProductView";
@@ -58,17 +59,29 @@ export default async function ProductPage({ params }) {
   if (product.is_subscription) {
     let minPrices = { small: null, medium: null, large: null };
     let discounts = [];
+    let dayOptions = [];
+    let windowOptions = { thursday: [], friday: [] };
+    let pool = [];
+    let deliveryFees = { city: 30, hotel: 50 };
     try {
-      const [small, medium, large, d] = await Promise.all([
+      const [small, medium, large, d, days, windows, flowerPool, fees] = await Promise.all([
         getSubscriptionMinPriceForSize("small"),
         getSubscriptionMinPriceForSize("medium"),
         getSubscriptionMinPriceForSize("large"),
         getSubscriptionDiscounts(),
+        getSubscriptionDeliveryDayOptions(),
+        getSubscriptionWindowOptions(),
+        getSubscriptionFlowerPool(),
+        getDeliveryFees(),
       ]);
       minPrices = { small, medium, large };
       discounts = d;
+      dayOptions = days;
+      windowOptions = windows;
+      pool = flowerPool;
+      deliveryFees = fees;
     } catch (e) {
-      // נשאר עם ברירת המחדל הריקה
+      // נשארים עם ברירות המחדל הריקות
     }
 
     return (
@@ -86,7 +99,15 @@ export default async function ProductPage({ params }) {
           <span>/</span>
           <span style={{ color: "var(--ink)" }}>{product.name}</span>
         </nav>
-        <SubscriptionProductView product={product} minPrices={minPrices} discounts={discounts} />
+        <SubscriptionProductView
+          product={product}
+          minPrices={minPrices}
+          discounts={discounts}
+          dayOptions={dayOptions}
+          windowOptions={windowOptions}
+          pool={pool}
+          deliveryFees={deliveryFees}
+        />
       </main>
     );
   }
