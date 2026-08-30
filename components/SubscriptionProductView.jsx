@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const FREQUENCIES = [
@@ -55,7 +55,28 @@ function maxPriceForChosen(pool, sizeKey, chosenIds) {
   return max;
 }
 
-// תמונה להצגה עבור זר - אם כבר נבחר גודל, תמונת אותו גודל; אחרת כל תמונה זמינה
+// מוצא את הזר הזול ביותר לפי מחיר גודל "קטן" שלו, ומחזיר את שלושת המחירים של אותו זר בדיוק
+function cheapestFlowerPrices(pool) {
+  let cheapest = null;
+  let cheapestSmall = null;
+  for (const p of pool || []) {
+    if (!p.has_sizes || !p.product_sizes?.length) continue;
+    const small = p.product_sizes.find((s) => s.size_label === "קטן");
+    if (!small) continue;
+    const price = Number(small.price);
+    if (!isNaN(price) && (cheapestSmall === null || price < cheapestSmall)) {
+      cheapestSmall = price;
+      cheapest = p;
+    }
+  }
+  if (!cheapest) return { small: null, medium: null, large: null };
+  function bySize(label) {
+    const s = cheapest.product_sizes.find((x) => x.size_label === label);
+    return s ? Number(s.price) : null;
+  }
+  return { small: bySize("קטן"), medium: bySize("בינוני"), large: bySize("גדול") };
+}
+
 function flowerImage(product, sizeKey) {
   const sizes = product?.product_sizes || [];
   if (sizeKey) {
@@ -139,7 +160,7 @@ const EMPTY_FORM = {
   pendingAction: "",
 };
 
-export default function SubscriptionProductView({ product, minPrices, discounts, windowOptions, pool, deliveryFees }) {
+export default function SubscriptionProductView({ product, discounts, windowOptions, pool, deliveryFees }) {
   const storageKey = STORAGE_PREFIX + product.id;
 
   const [form, setForm] = useState(EMPTY_FORM);
@@ -216,8 +237,10 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     }));
   }
 
+  const basePrices = useMemo(() => cheapestFlowerPrices(pool || []), [pool]);
+
   function estPriceForSize(sizeKey) {
-    const base = minPrices?.[sizeKey];
+    const base = basePrices?.[sizeKey];
     if (base == null) return null;
     if (!form.frequency) return base;
     const pct = getDiscountPercent(discounts || [], sizeKey, form.frequency);
@@ -229,10 +252,6 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
   function goToStep1Next() { if (!form.surpriseMe && form.chosenIds.length === 0) return; goToStep(2); }
   function goToStep2Next() { if (!step2Complete) return; goToStep(3); }
-  function goToStep3Next() {
-    if (!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)) return;
-    goToStep(4);
-  }
 
   const selectedDayInfo = DAY_OPTIONS.find((d) => d.key === form.deliveryDay);
   let remainingDates = [];
@@ -245,8 +264,8 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
   const firstDateLabel = hasRemaining ? formatDate(remainingDates[0]) : "";
 
   const rawFlowerPrice = !form.surpriseMe && form.chosenIds.length > 0
-    ? (maxPriceForChosen(pool || [], form.size, form.chosenIds) || minPrices?.[form.size] || 0)
-    : (minPrices?.[form.size] || 0);
+    ? (maxPriceForChosen(pool || [], form.size, form.chosenIds) || basePrices?.[form.size] || 0)
+    : (basePrices?.[form.size] || 0);
   const discountPct = getDiscountPercent(discounts || [], form.size, form.frequency);
   const discountedFlowerPrice = rawFlowerPrice * (1 - discountPct / 100);
   const mult = monthlyMultiplier(form.frequency);
@@ -262,7 +281,9 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     ? Math.ceil(discountedFlowerPrice * remainingDates.length + deliveryFeeDisc * remainingDates.length)
     : subscriptionMonthlyPrice;
 
-  const payDisabled = hasRemaining && !form.billingChoice;
+  const detailsComplete = form.customerName && form.customerPhone && form.subType && (form.isGift ? form.recipientAddress : form.customerAddress);
+  const billingResolved = !hasRemaining || !!form.billingChoice;
+  const payDisabled = !detailsComplete || !billingResolved;
 
   async function signInWithGoogle() {
     setSigningIn(true);
@@ -303,7 +324,6 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     runAddToCart();
   }
 
-  // אחרי חזרה מגוגל, אם הייתה פעולה ממתינה - ממשיכים אוטומטית
   useEffect(() => {
     if (checkingSession || !session || !form.pendingAction) return;
     const action = form.pendingAction;
@@ -326,6 +346,29 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto" }}>
+      <style>{`
+        .sub-opt-btn { padding: 8px 6px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .sub-opt-btn-day { padding: 8px 4px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .sub-opt-btn-window { padding: 8px 4px; border-radius: 9px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .sub-primary-btn { font-size: 15px; padding: 12px; border-radius: 11px; }
+        .sub-secondary-btn { font-size: 13px; padding: 12px; border-radius: 11px; }
+        .sub-input { padding: 10px 11px; border-radius: 9px; font-size: 14px; }
+        .sub-flower-card p { font-size: 11px; padding: 4px 6px; }
+        .sub-flower-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+        .sub-day-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        @media (min-width: 641px) {
+          .sub-opt-btn { padding: 13px 10px; font-size: 15px; border-radius: 12px; }
+          .sub-opt-btn-day { padding: 13px 6px; font-size: 15px; border-radius: 12px; }
+          .sub-opt-btn-window { padding: 12px 6px; font-size: 14px; border-radius: 12px; }
+          .sub-primary-btn { font-size: 17px; padding: 15px; border-radius: 13px; }
+          .sub-secondary-btn { font-size: 15px; padding: 14px; border-radius: 13px; }
+          .sub-input { padding: 13px 14px; font-size: 16px; border-radius: 11px; }
+          .sub-flower-card p { font-size: 13px; padding: 8px 10px; }
+          .sub-flower-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+          .sub-day-grid { gap: 10px; }
+        }
+      `}</style>
+
       <h1 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 6 }}>
         {product.name}
       </h1>
@@ -336,9 +379,10 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
       {step === 1 && (
         <div>
           <button onClick={() => setField("surpriseMe", !form.surpriseMe)}
-            style={{ width: "100%", padding: "10px 14px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer",
+            className="sub-opt-btn"
+            style={{ width: "100%", marginBottom: 14,
               background: form.surpriseMe ? "var(--green)" : "#fff", color: form.surpriseMe ? "#fff" : "var(--ink)",
-              border: form.surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)", marginBottom: 14,
+              border: form.surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)",
               display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
             <span>✨</span><span>תפתיעו אותי</span>
           </button>
@@ -346,12 +390,12 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           {!form.surpriseMe && (
             <>
               <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>אילו סגנונות הכי מתחברים אליך?</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8, marginBottom: 20 }}>
+              <div className="sub-flower-grid" style={{ marginBottom: 20 }}>
                 {(pool || []).map((p) => {
                   const selected = form.chosenIds.includes(p.id);
                   const img = flowerImage(p, form.size);
                   return (
-                    <button key={p.id} onClick={() => toggleBouquet(p.id)}
+                    <button key={p.id} onClick={() => toggleBouquet(p.id)} className="sub-flower-card"
                       style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 10, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
                       <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "var(--green-soft)" }}>
                         {img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
@@ -359,7 +403,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
                           <span style={{ position: "absolute", top: 5, insetInlineEnd: 5, background: "var(--green)", color: "#fff", borderRadius: 999, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>
                         )}
                       </div>
-                      <p style={{ padding: "4px 6px", fontSize: 11, fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
+                      <p style={{ fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
                     </button>
                   );
                 })}
@@ -368,8 +412,9 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           )}
 
           <button onClick={goToStep1Next} disabled={!form.surpriseMe && form.chosenIds.length === 0}
-            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
-              padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", opacity: (!form.surpriseMe && form.chosenIds.length === 0) ? 0.5 : 1 }}>
+            className="sub-primary-btn"
+            style={{ width: "100%", background: "var(--green)", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer",
+              opacity: (!form.surpriseMe && form.chosenIds.length === 0) ? 0.5 : 1 }}>
             המשך
           </button>
         </div>
@@ -382,12 +427,12 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             {SIZES.map((s) => {
               const p = estPriceForSize(s.key);
               return (
-                <button key={s.key} onClick={() => setField("size", s.key)}
-                  style={{ flex: 1, padding: "8px 6px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                <button key={s.key} onClick={() => setField("size", s.key)} className="sub-opt-btn"
+                  style={{ flex: 1,
                     background: form.size === s.key ? "var(--green)" : "#fff", color: form.size === s.key ? "#fff" : "var(--ink)",
                     border: form.size === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                   <div>{s.label}</div>
-                  {p != null && <div style={{ fontSize: 11, opacity: 0.85 }}>מ-₪{p}</div>}
+                  {p != null && <div style={{ fontSize: "0.85em", opacity: 0.85 }}>מ-₪{p}</div>}
                 </button>
               );
             })}
@@ -396,8 +441,8 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזו תדירות נספק את הזר?</p>
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {FREQUENCIES.map((f) => (
-              <button key={f.key} onClick={() => setField("frequency", f.key)}
-                style={{ flex: 1, padding: "8px 6px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
+              <button key={f.key} onClick={() => setField("frequency", f.key)} className="sub-opt-btn"
+                style={{ flex: 1,
                   background: form.frequency === f.key ? "var(--green)" : "#fff", color: form.frequency === f.key ? "#fff" : "var(--ink)",
                   border: form.frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {f.label}
@@ -406,10 +451,10 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           </div>
 
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזה יום קבוע?</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 12 }}>
+          <div className="sub-day-grid" style={{ marginBottom: 12 }}>
             {DAY_OPTIONS.map((d) => (
-              <button key={d.key} onClick={() => setField("deliveryDay", d.key)}
-                style={{ padding: "8px 4px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
+              <button key={d.key} onClick={() => setField("deliveryDay", d.key)} className="sub-opt-btn-day"
+                style={{
                   background: form.deliveryDay === d.key ? "var(--green)" : "#fff", color: form.deliveryDay === d.key ? "#fff" : "var(--ink)",
                   border: form.deliveryDay === d.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {d.label}
@@ -422,8 +467,8 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
               <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>שבוע בחודש</p>
               <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
                 {MONTHLY_WEEK_OPTIONS.map((w) => (
-                  <button key={w.key} onClick={() => setField("monthlyWeek", w.key)}
-                    style={{ flex: 1, padding: "8px", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  <button key={w.key} onClick={() => setField("monthlyWeek", w.key)} className="sub-opt-btn"
+                    style={{ flex: 1,
                       background: form.monthlyWeek === w.key ? "var(--green)" : "#fff", color: form.monthlyWeek === w.key ? "#fff" : "var(--ink)",
                       border: form.monthlyWeek === w.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                     {w.label}
@@ -436,10 +481,10 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           {form.deliveryDay && (
             <>
               <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזו שעה?</p>
-              <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 20 }}>
+              <div dir="ltr" className="sub-day-grid" style={{ marginBottom: 20 }}>
                 {windowsForDay.map((w) => (
-                  <button key={w} onClick={() => setField("deliveryWindow", w)}
-                    style={{ padding: "8px 4px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  <button key={w} onClick={() => setField("deliveryWindow", w)} className="sub-opt-btn-window"
+                    style={{
                       background: form.deliveryWindow === w ? "var(--green)" : "#fff", color: form.deliveryWindow === w ? "#fff" : "var(--ink)",
                       border: form.deliveryWindow === w ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                     {w.replace("-", ":00-") + ":00"}
@@ -453,48 +498,70 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>{selectionSummaryText()}</p>
           )}
 
-          <StepNav onBack={() => goToStep(1)} onNext={goToStep2Next} disabled={!step2Complete} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => goToStep(1)} className="sub-secondary-btn" style={{ flex: 1, background: "#fff", color: "var(--ink)", fontWeight: 600, border: "1px solid var(--line)", cursor: "pointer" }}>
+              חזרה
+            </button>
+            <button onClick={goToStep2Next} disabled={!step2Complete} className="sub-primary-btn"
+              style={{ flex: 2, background: "var(--green)", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer", opacity: !step2Complete ? 0.5 : 1 }}>
+              המשך
+            </button>
+          </div>
         </div>
       )}
 
       {step === 3 && (
         <div>
+          <div style={{ border: "1px solid var(--line)", borderRadius: 13, padding: 16, marginBottom: 18 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>סיכום המנוי</p>
+            <SummaryLine label="גודל" value={SIZES.find((s) => s.key === form.size)?.label} />
+            <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[form.frequency]} />
+            <SummaryLine label="יום משלוח" value={DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label} />
+            <SummaryLine label="שעה" value={form.deliveryWindow ? form.deliveryWindow.replace("-", ":00-") + ":00" : ""} />
+            <SummaryLine label="קו מנחה" value={form.surpriseMe ? "תפתיעו אותי" : `${form.chosenIds.length} סגנונות נבחרו`} />
+
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)", textAlign: "center" }}>
+              <span style={{ color: "var(--muted)", fontSize: 15, textDecoration: "line-through" }}>₪{originalFullPrice}</span>
+              <span style={{ color: "var(--green)", fontSize: 22, fontWeight: 700, marginInlineStart: 8 }}>₪{subscriptionMonthlyPrice}</span>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+                במנוי זה חסכת בחודש ₪{savings} ({savingsPct}% הנחה)
+              </p>
+            </div>
+          </div>
+
           <Field label="שם מלא">
-            <input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} style={inputStyle} />
+            <input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} className="sub-input" style={inputStyle} />
           </Field>
           <Field label="טלפון">
-            <input type="tel" inputMode="tel" value={form.customerPhone} onChange={(e) => setField("customerPhone", e.target.value)} style={inputStyle} />
+            <input type="tel" inputMode="tel" value={form.customerPhone} onChange={(e) => setField("customerPhone", e.target.value)} className="sub-input" style={inputStyle} />
           </Field>
 
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <button onClick={() => setField("isGift", false)}
-              style={{ flex: 1, padding: "9px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                background: !form.isGift ? "var(--green)" : "#fff", color: !form.isGift ? "#fff" : "var(--ink)",
-                border: !form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+            <button onClick={() => setField("isGift", false)} className="sub-opt-btn" style={{ flex: 1,
+              background: !form.isGift ? "var(--green)" : "#fff", color: !form.isGift ? "#fff" : "var(--ink)",
+              border: !form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
               המנוי מיועד לי
             </button>
-            <button onClick={() => setField("isGift", true)}
-              style={{ flex: 1, padding: "9px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                background: form.isGift ? "var(--green)" : "#fff", color: form.isGift ? "#fff" : "var(--ink)",
-                border: form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+            <button onClick={() => setField("isGift", true)} className="sub-opt-btn" style={{ flex: 1,
+              background: form.isGift ? "var(--green)" : "#fff", color: form.isGift ? "#fff" : "var(--ink)",
+              border: form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
               🎁 מתנה
             </button>
           </div>
 
           {form.isGift && (
             <>
-              <Field label="שם המקבל/ת"><input value={form.recipientName} onChange={(e) => setField("recipientName", e.target.value)} style={inputStyle} /></Field>
-              <Field label="טלפון המקבל/ת"><input type="tel" inputMode="tel" value={form.recipientPhone} onChange={(e) => setField("recipientPhone", e.target.value)} style={inputStyle} /></Field>
+              <Field label="שם המקבל/ת"><input value={form.recipientName} onChange={(e) => setField("recipientName", e.target.value)} className="sub-input" style={inputStyle} /></Field>
+              <Field label="טלפון המקבל/ת"><input type="tel" inputMode="tel" value={form.recipientPhone} onChange={(e) => setField("recipientPhone", e.target.value)} className="sub-input" style={inputStyle} /></Field>
             </>
           )}
 
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>סוג משלוח</p>
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
             {SUB_TYPES.map((s) => (
-              <button key={s.key} onClick={() => setField("subType", s.key)}
-                style={{ flex: 1, padding: "9px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  background: form.subType === s.key ? "var(--green)" : "#fff", color: form.subType === s.key ? "#fff" : "var(--ink)",
-                  border: form.subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+              <button key={s.key} onClick={() => setField("subType", s.key)} className="sub-opt-btn" style={{ flex: 1,
+                background: form.subType === s.key ? "var(--green)" : "#fff", color: form.subType === s.key ? "#fff" : "var(--ink)",
+                border: form.subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {s.label}
               </button>
             ))}
@@ -503,61 +570,37 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           <Field label="כתובת">
             <input value={form.isGift ? form.recipientAddress : form.customerAddress}
               onChange={(e) => setField(form.isGift ? "recipientAddress" : "customerAddress", e.target.value)}
-              style={inputStyle} />
+              className="sub-input" style={inputStyle} />
           </Field>
 
           <Field label="הערה לצוות (אופציונלי)">
-            <textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} rows={2} style={textareaStyle} />
+            <textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} rows={2} className="sub-input" style={textareaStyle} />
           </Field>
 
           <Field label="כרטיס ברכה (אופציונלי, ניתן לעדכן לכל מחזור בנפרד)">
-            <textarea value={form.greeting} onChange={(e) => setField("greeting", e.target.value)} rows={2} style={textareaStyle} />
+            <textarea value={form.greeting} onChange={(e) => setField("greeting", e.target.value)} rows={2} className="sub-input" style={textareaStyle} />
           </Field>
 
-          <StepNav onBack={() => goToStep(2)} onNext={goToStep3Next} disabled={!form.customerName || !form.customerPhone || !form.subType || !(form.isGift ? form.recipientAddress : form.customerAddress)} />
-        </div>
-      )}
-
-      {step === 4 && (
-        <div>
-          <div style={{ border: "1px solid var(--line)", borderRadius: 13, padding: 14, marginBottom: 14 }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>סיכום המנוי</p>
-            <SummaryLine label="גודל" value={SIZES.find((s) => s.key === form.size)?.label} />
-            <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[form.frequency]} />
-            <SummaryLine label="יום משלוח" value={DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label} />
-            <SummaryLine label="שעה" value={form.deliveryWindow ? form.deliveryWindow.replace("-", ":00-") + ":00" : ""} />
-            <SummaryLine label="קו מנחה" value={form.surpriseMe ? "תפתיעו אותי" : `${form.chosenIds.length} סגנונות נבחרו`} />
-            <SummaryLine label="כתובת" value={form.isGift ? form.recipientAddress : form.customerAddress} />
-
-            <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)", textAlign: "center" }}>
-              <span style={{ color: "var(--muted)", fontSize: 14, textDecoration: "line-through" }}>₪{originalFullPrice}</span>
-              <span style={{ color: "var(--green)", fontSize: 20, fontWeight: 700, marginInlineStart: 8 }}>₪{subscriptionMonthlyPrice}</span>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-                במנוי זה חסכת בחודש ₪{savings} ({savingsPct}% הנחה)
-              </p>
-            </div>
-          </div>
-
           {hasRemaining ? (
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ margin: "18px 0 14px" }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
                 המשלוח הראשון האפשרי: {firstDateLabel}. איך רוצה להתחיל?
               </p>
-              <button onClick={() => setField("billingChoice", "now")}
-                style={{ width: "100%", padding: "11px 14px", borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: "pointer",
+              <button onClick={() => setField("billingChoice", "now")} className="sub-secondary-btn"
+                style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start", marginBottom: 8,
                   background: form.billingChoice === "now" ? "var(--green)" : "#fff", color: form.billingChoice === "now" ? "#fff" : "var(--ink)",
-                  border: form.billingChoice === "now" ? "1px solid var(--green)" : "1px solid var(--line)", textAlign: "start", marginBottom: 8 }}>
+                  border: form.billingChoice === "now" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 <div>עכשיו ({firstDateLabel}) · ₪{partialPrice}</div>
               </button>
-              <button onClick={() => setField("billingChoice", "next")}
-                style={{ width: "100%", padding: "11px 14px", borderRadius: 11, fontSize: 13, fontWeight: 700, cursor: "pointer",
+              <button onClick={() => setField("billingChoice", "next")} className="sub-secondary-btn"
+                style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start",
                   background: form.billingChoice === "next" ? "var(--green)" : "#fff", color: form.billingChoice === "next" ? "#fff" : "var(--ink)",
-                  border: form.billingChoice === "next" ? "1px solid var(--green)" : "1px solid var(--line)", textAlign: "start" }}>
+                  border: form.billingChoice === "next" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 <div>מ-1 לחודש הבא · ₪{subscriptionMonthlyPrice}</div>
               </button>
             </div>
           ) : (
-            <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", marginBottom: 14 }}>
+            <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: "18px 0 14px" }}>
               אין ימי אספקה שנותרו החודש - המנוי יתחיל מהמחזור המלא הבא
             </p>
           )}
@@ -566,19 +609,17 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             ניתן לבטל בכל עת.
           </p>
 
-          <button onClick={handlePayClick} disabled={payDisabled || signingIn}
-            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700,
-              padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", marginBottom: 8, opacity: (payDisabled || signingIn) ? 0.5 : 1 }}>
+          <button onClick={handlePayClick} disabled={payDisabled || signingIn} className="sub-primary-btn"
+            style={{ width: "100%", background: "var(--green)", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer", marginBottom: 8, opacity: (payDisabled || signingIn) ? 0.5 : 1 }}>
             {signingIn ? "מעבירה..." : "מעבר לתשלום"}
           </button>
-          <button onClick={handleCartClick} disabled={payDisabled || signingIn}
-            style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600,
-              padding: "10px", borderRadius: 10, border: "1px solid var(--line)", cursor: "pointer", opacity: (payDisabled || signingIn) ? 0.5 : 1 }}>
+          <button onClick={handleCartClick} disabled={payDisabled || signingIn} className="sub-secondary-btn"
+            style={{ width: "100%", background: "#fff", color: "var(--ink)", fontWeight: 600, border: "1px solid var(--line)", cursor: "pointer", opacity: (payDisabled || signingIn) ? 0.5 : 1 }}>
             הוספה לסל וקנייה נוספת
           </button>
 
           <div style={{ marginTop: 14, textAlign: "center" }}>
-            <button onClick={() => goToStep(3)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}>
+            <button onClick={() => goToStep(2)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}>
               חזרה
             </button>
           </div>
@@ -597,20 +638,6 @@ function SummaryLine({ label, value }) {
   );
 }
 
-function StepNav({ onBack, onNext, disabled }) {
-  return (
-    <div style={{ display: "flex", gap: 8 }}>
-      <button onClick={onBack} style={{ flex: 1, background: "#fff", color: "var(--ink)", fontSize: 13, fontWeight: 600, padding: "12px", borderRadius: 11, border: "1px solid var(--line)", cursor: "pointer" }}>
-        חזרה
-      </button>
-      <button onClick={onNext} disabled={disabled}
-        style={{ flex: 2, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, padding: "12px", borderRadius: 11, border: "none", cursor: "pointer", opacity: disabled ? 0.5 : 1 }}>
-        המשך
-      </button>
-    </div>
-  );
-}
-
 function Field({ label, children }) {
   return (
     <div style={{ marginBottom: 12 }}>
@@ -620,5 +647,5 @@ function Field({ label, children }) {
   );
 }
 
-const inputStyle = { width: "100%", padding: "10px 11px", borderRadius: 9, border: "1px solid var(--line)", fontSize: 14, fontFamily: "inherit" };
+const inputStyle = { width: "100%", border: "1px solid var(--line)", fontFamily: "inherit" };
 const textareaStyle = { ...inputStyle, resize: "vertical", lineHeight: 1.5, wordSpacing: "normal", whiteSpace: "pre-wrap" };
