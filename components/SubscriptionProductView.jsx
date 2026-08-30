@@ -340,15 +340,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
   }, [session, checkingSession, form.pendingAction]);
 
   const step = form.step;
-
-  function selectionSummaryText() {
-    const parts = [];
-    if (form.size) parts.push(SIZES.find((s) => s.key === form.size)?.label);
-    if (form.frequency) parts.push(FREQ_LABEL_BY_KEY[form.frequency]);
-    if (form.deliveryDay) parts.push(DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label);
-    if (form.deliveryWindow) parts.push(form.deliveryWindow.replace("-", ":00-") + ":00");
-    return parts.join(" · ");
-  }
+  const chosenFlowers = (pool || []).filter((p) => form.chosenIds.includes(p.id));
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto" }}>
@@ -378,9 +370,29 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
       <h1 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 6 }}>
         {product.name}
       </h1>
-      <p style={{ textAlign: "center", color: "var(--muted)", marginBottom: 24, fontSize: 14 }}>
+      <p style={{ textAlign: "center", color: "var(--muted)", marginBottom: 16, fontSize: 14 }}>
         מנוי לפריחה מתחדשת
       </p>
+
+      {/* פס הזרים שנבחרו - מוצג לאורך כל התהליך */}
+      {form.surpriseMe ? (
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--green-soft)", color: "var(--green)", fontWeight: 700, fontSize: 13, padding: "6px 14px", borderRadius: 999 }}>
+            <span>✨</span><span>תפתיעו אותי</span>
+          </span>
+        </div>
+      ) : chosenFlowers.length > 0 ? (
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 20 }}>
+          {chosenFlowers.map((f) => {
+            const img = flowerImage(f, form.size);
+            return (
+              <div key={f.id} style={{ width: 44, height: 44, borderRadius: 999, overflow: "hidden", border: "2px solid var(--green)", background: "var(--green-soft)" }}>
+                {img ? <img src={img} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
 
       {step === 1 && (
         <div>
@@ -500,10 +512,6 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
             </>
           )}
 
-          {selectionSummaryText() && (
-            <p style={{ textAlign: "center", fontSize: 13, color: "var(--muted)", marginBottom: 10 }}>{selectionSummaryText()}</p>
-          )}
-
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => goToStep(1)} className="sub-secondary-btn" style={{ flex: 1, background: "#fff", color: "var(--ink)", fontWeight: 600, border: "1px solid var(--line)", cursor: "pointer" }}>
               חזרה
@@ -519,17 +527,17 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
       {step === 3 && (
         <div>
           <div style={{ border: "1px solid var(--line)", borderRadius: 13, padding: 16, marginBottom: 18 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>סיכום המנוי</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>סיכום המנוי</p>
             <SummaryLine label="גודל" value={SIZES.find((s) => s.key === form.size)?.label} />
             <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[form.frequency]} />
             <SummaryLine label="יום משלוח" value={DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label} />
             <SummaryLine label="שעה" value={form.deliveryWindow ? form.deliveryWindow.replace("-", ":00-") + ":00" : ""} />
             <SummaryLine label="קו מנחה" value={form.surpriseMe ? "תפתיעו אותי" : `${form.chosenIds.length} סגנונות נבחרו`} />
 
-            <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)", textAlign: "center" }}>
-              <span style={{ color: "var(--muted)", fontSize: 15, textDecoration: "line-through" }}>₪{originalFullPrice}</span>
-              <span style={{ color: "var(--green)", fontSize: 22, fontWeight: 700, marginInlineStart: 8 }}>₪{subscriptionMonthlyPrice}</span>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)", textAlign: "center" }}>
+              <div style={{ color: "var(--muted)", fontSize: 14, textDecoration: "line-through" }}>₪{originalFullPrice} לחודש</div>
+              <div style={{ color: "var(--green)", fontSize: 24, fontWeight: 700, marginTop: 6 }}>₪{subscriptionMonthlyPrice} <span style={{ fontSize: 14, fontWeight: 600 }}>לחודש</span></div>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
                 במנוי זה חסכת בחודש ₪{savings} ({savingsPct}% הנחה)
               </p>
             </div>
@@ -583,31 +591,33 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
             <textarea value={form.notes} onChange={(e) => setField("notes", e.target.value)} rows={2} className="sub-input" style={textareaStyle} />
           </Field>
 
-          <Field label="כרטיס ברכה (אופציונלי, ניתן לעדכן לכל מחזור בנפרד)">
+          <Field label="כרטיס ברכה (אופציונלי, ניתן לעדכן בכל זר מחדש)">
             <textarea value={form.greeting} onChange={(e) => setField("greeting", e.target.value)} rows={2} className="sub-input" style={textareaStyle} />
           </Field>
 
           {hasRemaining ? (
             <div style={{ margin: "18px 0 14px" }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
-                המשלוח הראשון האפשרי: {firstDateLabel}. איך רוצה להתחיל?
+                איך רוצה להתחיל?
               </p>
               <button onClick={() => setField("billingChoice", "now")} className="sub-secondary-btn"
                 style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start", marginBottom: 8,
                   background: form.billingChoice === "now" ? "var(--green)" : "#fff", color: form.billingChoice === "now" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "now" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-                <div>עכשיו ({firstDateLabel}) · ₪{partialPrice}</div>
+                <div>עכשיו (מ-{firstDateLabel}) · ₪{partialPrice} חיוב חד פעמי</div>
+                <div style={{ fontSize: "0.8em", opacity: 0.85, marginTop: 2 }}>ומהחודש הבא: ₪{subscriptionMonthlyPrice} לחודש</div>
               </button>
               <button onClick={() => setField("billingChoice", "next")} className="sub-secondary-btn"
                 style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start",
                   background: form.billingChoice === "next" ? "var(--green)" : "#fff", color: form.billingChoice === "next" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "next" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-                <div>מ-{nextCycleLabel} · ₪{subscriptionMonthlyPrice}</div>
+                <div>להתחיל בחודש הבא, ב-{nextCycleLabel}</div>
+                <div style={{ fontSize: "0.8em", opacity: 0.85, marginTop: 2 }}>₪{subscriptionMonthlyPrice} לחודש</div>
               </button>
             </div>
           ) : (
             <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: "18px 0 14px" }}>
-              אין ימי אספקה שנותרו החודש - המנוי יתחיל ב-{nextCycleLabel}
+              אין ימי אספקה שנותרו החודש - המנוי יתחיל ב-{nextCycleLabel}, ₪{subscriptionMonthlyPrice} לחודש
             </p>
           )}
 
@@ -637,9 +647,9 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
 
 function SummaryLine({ label, value }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", fontSize: 13 }}>
-      <span style={{ color: "var(--muted)" }}>{label}</span>
+    <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "4px 0", fontSize: 13 }}>
       <span style={{ color: "var(--ink)", fontWeight: 600 }}>{value || "—"}</span>
+      <span style={{ color: "var(--muted)" }}>:{label}</span>
     </div>
   );
 }
