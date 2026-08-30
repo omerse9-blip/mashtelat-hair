@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 const FREQUENCIES = [
   { key: "monthly", label: "חודשי" },
@@ -17,6 +18,8 @@ const SUB_TYPES = [
   { key: "hotel", label: "משלוח למלון" },
 ];
 const SIZE_LABEL_BY_KEY = { small: "קטן", medium: "בינוני", large: "גדול" };
+const FREQ_LABEL_BY_KEY = { monthly: "חודשי", biweekly: "דו שבועי", weekly: "שבועי" };
+const DAY_LABEL_BY_KEY = { thursday: "חמישי", friday: "שישי" };
 
 function getDiscountPercent(discounts, size, frequency) {
   const row = discounts.find((d) => d.size === size && d.frequency === frequency);
@@ -39,7 +42,6 @@ function maxPriceForChosen(pool, sizeKey, chosenIds) {
   return max;
 }
 
-// תמונה להצגה עבור זר בגודל שנבחר - קודם תמונת הגודל המדויק, אחרת כל תמונה אחרת שיש לזר
 function flowerImageForSize(product, sizeKey) {
   const label = SIZE_LABEL_BY_KEY[sizeKey];
   const sizes = product?.product_sizes || [];
@@ -69,6 +71,25 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
   const [notes, setNotes] = useState("");
   const [greeting, setGreeting] = useState("");
 
+  // התחברות
+  const [session, setSession] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [accountName, setAccountName] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
+      setSession(data?.session || null);
+      setCheckingSession(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+    });
+    return () => { alive = false; listener?.subscription?.unsubscribe(); };
+  }, []);
+
   function priceLabel(sizeKey) {
     const base = minPrices?.[sizeKey];
     if (base == null) return null;
@@ -81,28 +102,46 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
     setChosenIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   }
 
-  function goToStep2() {
-    if (!frequency || !size) return;
-    setStep(2);
+  function goToStep2() { if (!frequency || !size) return; setStep(2); }
+  function goToStep3() { if (!deliveryDay) return; setStep(3); }
+  function goToStep4() { if (!deliveryWindow) return; setStep(4); }
+  function goToStep5() { if (!surpriseMe && chosenIds.length === 0) return; setStep(5); }
+  function goToStep6() {
+    if (!customerName || !customerPhone || !subType || !(isGift ? recipientAddress : customerAddress)) return;
+    setStep(6);
   }
-  function goToStep3() {
-    if (!deliveryDay) return;
-    setStep(3);
+
+  async function signInWithGoogle() {
+    setSigningIn(true);
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.href },
+      });
+    } catch (e) {
+      alert("שגיאה בהתחברות. נסי שוב.");
+      setSigningIn(false);
+    }
   }
-  function goToStep4() {
-    if (!deliveryWindow) return;
-    setStep(4);
-  }
-  function goToStep5() {
-    if (!surpriseMe && chosenIds.length === 0) return;
-    setStep(5);
+
+  function goToStep7() {
+    if (!accountName.trim()) return;
+    setStep(7);
   }
 
   const windowsForDay = deliveryDay ? (windowOptions?.[deliveryDay] || []) : [];
-  const finalPricePreview = !surpriseMe && chosenIds.length > 0
+  const finalPrice = !surpriseMe && chosenIds.length > 0
     ? Math.round((maxPriceForChosen(pool || [], size, chosenIds) || 0) * (1 - getDiscountPercent(discounts || [], size, frequency) / 100))
     : null;
   const deliveryFee = subType === "city" ? Number(deliveryFees?.city || 30) : subType === "hotel" ? Number(deliveryFees?.hotel || 50) : 0;
+  const totalPerCycle = finalPrice != null ? finalPrice + deliveryFee : null;
+
+  function handlePayNow() {
+    alert("חיבור התשלום עדיין בבנייה - ייפתח בקרוב.");
+  }
+  function handleAddToCart() {
+    alert("חיבור לסל עדיין בבנייה - ייפתח בקרוב.");
+  }
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto" }}>
@@ -199,7 +238,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
           {!surpriseMe && (
             <>
               <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>איזה סגנונות את הכי אוהבת?</p>
-              <div className="catalog-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
                 {(pool || []).map((p) => {
                   const selected = chosenIds.includes(p.id);
                   const img = flowerImageForSize(p, size);
@@ -283,20 +322,98 @@ export default function SubscriptionProductView({ product, minPrices, discounts,
             <textarea value={greeting} onChange={(e) => setGreeting(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
           </Field>
 
-          {finalPricePreview != null && (
+          {totalPerCycle != null && (
             <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 14, marginTop: 8, marginBottom: 8 }}>
-              מחיר משוער למחזור: <strong style={{ color: "var(--green)" }}>₪{finalPricePreview + deliveryFee}</strong>
+              מחיר משוער למחזור: <strong style={{ color: "var(--green)" }}>₪{totalPerCycle}</strong>
               {deliveryFee > 0 ? ` (כולל ₪${deliveryFee} משלוח)` : ""}
             </p>
           )}
 
-          <StepNav onBack={() => setStep(4)} onNext={() => setStep(6)} disabled={!customerName || !customerPhone || !subType || !(isGift ? recipientAddress : customerAddress)} />
+          <StepNav onBack={() => setStep(4)} onNext={goToStep6} disabled={!customerName || !customerPhone || !subType || !(isGift ? recipientAddress : customerAddress)} />
         </div>
       )}
 
-      {step > 5 && (
-        <p style={{ textAlign: "center", color: "var(--muted)" }}>שלב {step} — בבנייה (התחברות, סיכום ותשלום)</p>
+      {step === 6 && (
+        <div>
+          {checkingSession ? (
+            <p style={{ textAlign: "center", color: "var(--muted)" }}>בודקת חיבור...</p>
+          ) : !session ? (
+            <>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 16, textAlign: "center" }}>
+                כדי לנהל את המנוי בהמשך, צריך להתחבר
+              </p>
+              <button onClick={signInWithGoogle} disabled={signingIn}
+                style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 16, fontWeight: 700,
+                  padding: "14px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                <span>🔵</span>
+                <span>{signingIn ? "מעבירה..." : "המשך עם Google"}</span>
+              </button>
+              <div style={{ marginTop: 16 }}>
+                <StepNav onBack={() => setStep(5)} onNext={() => {}} disabled={true} />
+              </div>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>איך לקרוא לך?</p>
+              <Field label="שם">
+                <input value={accountName} onChange={(e) => setAccountName(e.target.value)} style={inputStyle} placeholder="השם שבו נפנה אלייך" />
+              </Field>
+              <StepNav onBack={() => setStep(5)} onNext={goToStep7} disabled={!accountName.trim()} />
+            </>
+          )}
+        </div>
       )}
+
+      {step === 7 && (
+        <div>
+          <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 16, marginBottom: 16 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>סיכום המנוי</p>
+            <SummaryLine label="תדירות" value={FREQ_LABEL_BY_KEY[frequency]} />
+            <SummaryLine label="גודל" value={SIZES.find((s) => s.key === size)?.label} />
+            <SummaryLine label="יום משלוח" value={DAY_LABEL_BY_KEY[deliveryDay]} />
+            <SummaryLine label="שעה" value={deliveryWindow ? deliveryWindow.replace("-", ":00-") + ":00" : ""} />
+            <SummaryLine label="קו מנחה" value={surpriseMe ? "תפתיעו אותי" : `${chosenIds.length} סגנונות נבחרו`} />
+            <SummaryLine label="כתובת" value={isGift ? recipientAddress : customerAddress} />
+            {totalPerCycle != null && (
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+                <span style={{ fontWeight: 700, color: "var(--ink)" }}>מחיר למחזור</span>
+                <span style={{ fontWeight: 700, color: "var(--green)" }}>₪{totalPerCycle}</span>
+              </div>
+            )}
+          </div>
+
+          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 20, lineHeight: 1.6 }}>
+            ניתן לבטל בכל עת. ביטול לפני 2 משלוחים כרוך בתשלום ההפרש בין מחיר המנוי למחיר המלא.
+          </p>
+
+          <button onClick={handlePayNow}
+            style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700,
+              padding: "14px", borderRadius: 12, border: "none", cursor: "pointer", marginBottom: 10 }}>
+            מעבר לתשלום
+          </button>
+          <button onClick={handleAddToCart}
+            style={{ width: "100%", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700,
+              padding: "12px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer" }}>
+            הוספה לסל וקנייה נוספת
+          </button>
+
+          <div style={{ marginTop: 16 }}>
+            <button onClick={() => setStep(6)} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 14, cursor: "pointer" }}>
+              חזרה
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryLine({ label, value }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 14 }}>
+      <span style={{ color: "var(--muted)" }}>{label}</span>
+      <span style={{ color: "var(--ink)", fontWeight: 600 }}>{value || "—"}</span>
     </div>
   );
 }
