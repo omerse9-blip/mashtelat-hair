@@ -18,10 +18,11 @@ function getDiscountPercent(discounts, size, frequency) {
   return row ? Number(row.discount_percent) : 0;
 }
 
-export default function SubscriptionProductView({ product, minPrices, discounts }) {
+export default function SubscriptionProductView({ product, minPrices, discounts, dayOptions }) {
   const [step, setStep] = useState(1);
   const [frequency, setFrequency] = useState("");
   const [size, setSize] = useState("");
+  const [deliveryDay, setDeliveryDay] = useState("");
 
   function priceLabel(sizeKey) {
     const base = minPrices?.[sizeKey];
@@ -31,9 +32,14 @@ export default function SubscriptionProductView({ product, minPrices, discounts 
     return Math.round(base * (1 - pct / 100));
   }
 
-  function goNext() {
+  function goToStep2() {
     if (!frequency || !size) return;
     setStep(2);
+  }
+
+  function goToStep3() {
+    if (!deliveryDay) return;
+    setStep(3);
   }
 
   return (
@@ -92,7 +98,7 @@ export default function SubscriptionProductView({ product, minPrices, discounts 
           </div>
 
           <button
-            onClick={goNext}
+            onClick={goToStep2}
             disabled={!frequency || !size}
             style={{
               width: "100%", background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700,
@@ -105,7 +111,52 @@ export default function SubscriptionProductView({ product, minPrices, discounts 
         </div>
       )}
 
-      {step > 1 && (
+      {step === 2 && (
+        <div>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>באיזה יום קבוע תרצי לקבל?</p>
+          <div style={{ display: "flex", gap: 10, marginBottom: 32 }}>
+            {(dayOptions || []).map((d) => (
+              <button
+                key={d.key}
+                onClick={() => setDeliveryDay(d.key)}
+                style={{
+                  flex: 1, padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer",
+                  background: deliveryDay === d.key ? "var(--green)" : "#fff",
+                  color: deliveryDay === d.key ? "#fff" : "var(--ink)",
+                  border: deliveryDay === d.key ? "1px solid var(--green)" : "1px solid var(--line)",
+                }}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={() => setStep(1)}
+              style={{
+                flex: 1, background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700,
+                padding: "14px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer",
+              }}
+            >
+              חזרה
+            </button>
+            <button
+              onClick={goToStep3}
+              disabled={!deliveryDay}
+              style={{
+                flex: 2, background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700,
+                padding: "14px", borderRadius: 12, border: "none", cursor: "pointer",
+                opacity: !deliveryDay ? 0.5 : 1,
+              }}
+            >
+              המשך
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step > 2 && (
         <p style={{ textAlign: "center", color: "var(--muted)" }}>שלב {step} — בבנייה</p>
       )}
     </div>
