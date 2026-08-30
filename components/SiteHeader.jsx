@@ -184,7 +184,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           <NavTab href="/garden" label="גינון העיר" active={isGarden} />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 14, flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, flex: "0 0 auto" }}>
           <Link href="/account" aria-label="האזור שלי" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <AccountIcon />
           </Link>
