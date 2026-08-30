@@ -1,8 +1,7 @@
 import Link from "next/link";
 import {
   getProductById, getAllProductIds, getAddonsForCategory, cardPrice, cardImage,
-  getSubscriptionMinPriceForSize, getSubscriptionDiscounts,
-  getSubscriptionWindowOptions, getSubscriptionFlowerPool, getDeliveryFees,
+  getSubscriptionDiscounts, getSubscriptionWindowOptions, getSubscriptionFlowerPool, getDeliveryFees,
 } from "../../../lib/siteData";
 import ProductView from "../../../components/ProductView";
 import SubscriptionProductView from "../../../components/SubscriptionProductView";
@@ -57,22 +56,17 @@ export default async function ProductPage({ params }) {
   const catName = product.categories?.name || "";
 
   if (product.is_subscription) {
-    let minPrices = { small: null, medium: null, large: null };
     let discounts = [];
     let windowOptions = {};
     let pool = [];
     let deliveryFees = { city: 30, hotel: 50 };
     try {
-      const [small, medium, large, d, windows, flowerPool, fees] = await Promise.all([
-        getSubscriptionMinPriceForSize("small"),
-        getSubscriptionMinPriceForSize("medium"),
-        getSubscriptionMinPriceForSize("large"),
+      const [d, windows, flowerPool, fees] = await Promise.all([
         getSubscriptionDiscounts(),
         getSubscriptionWindowOptions(),
         getSubscriptionFlowerPool(),
         getDeliveryFees(),
       ]);
-      minPrices = { small, medium, large };
       discounts = d;
       windowOptions = windows;
       pool = flowerPool;
@@ -98,7 +92,6 @@ export default async function ProductPage({ params }) {
         </nav>
         <SubscriptionProductView
           product={product}
-          minPrices={minPrices}
           discounts={discounts}
           windowOptions={windowOptions}
           pool={pool}
