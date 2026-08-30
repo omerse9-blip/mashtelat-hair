@@ -122,6 +122,7 @@ function ProductCard({ product, activeId, highlight }) {
   const img = product._image;
   const price = product._price;
   const multi = product._multi;
+  const isSubscription = product._isSubscription;
   const inStock = product.in_stock;
 
   const productHref = `/product/${product.id}?from=${encodeURIComponent(String(activeId))}`;
@@ -157,12 +158,17 @@ function ProductCard({ product, activeId, highlight }) {
             אזל מהמלאי
           </span>
         ) : null}
+        {isSubscription ? (
+          <span style={{ position: "absolute", top: 10, insetInlineEnd: 10, background: "rgba(110,140,88,0.92)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
+            🌸 מנוי
+          </span>
+        ) : null}
       </div>
 
       <div className="product-body" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
         <p className="product-name" style={{ fontFamily: "'Rubik', sans-serif", fontWeight: 700, fontSize: 20, color: "var(--ink)" }}>{product.name}</p>
         <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: "auto" }}>
-          {multi ? <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span> : null}
+          {(multi || isSubscription) ? <span style={{ color: "var(--muted)", fontSize: 13 }}>החל מ־</span> : null}
           <span className="product-price" style={{ fontWeight: 700, fontSize: 18, color: "var(--green)" }}>
             {price != null ? `₪${price}` : "—"}
           </span>
