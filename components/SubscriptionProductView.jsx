@@ -129,7 +129,7 @@ function formatDate(d) {
 function nextMonthFirstLabel() {
   const today = new Date();
   const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-  return `1.${next.getMonth() + 1}.${next.getFullYear()}`;
+  return `1.${next.getMonth() + 1}.${String(next.getFullYear()).slice(2)}`;
 }
 
 function ceilTo(n, step) {
@@ -354,6 +354,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
         .sub-flower-card p { font-size: 11px; padding: 4px 6px; }
         .sub-flower-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
         .sub-day-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .sub-chosen-thumb { width: 44px; height: 44px; }
         @media (min-width: 641px) {
           .sub-opt-btn { padding: 13px 10px; font-size: 15px; border-radius: 12px; }
           .sub-opt-btn-day { padding: 13px 6px; font-size: 15px; border-radius: 12px; }
@@ -364,6 +365,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           .sub-flower-card p { font-size: 13px; padding: 8px 10px; }
           .sub-flower-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
           .sub-day-grid { gap: 10px; }
+          .sub-chosen-thumb { width: 88px; height: 88px; }
         }
       `}</style>
 
@@ -382,11 +384,11 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           </span>
         </div>
       ) : chosenFlowers.length > 0 ? (
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 24 }}>
           {chosenFlowers.map((f) => {
             const img = flowerImage(f, form.size);
             return (
-              <div key={f.id} style={{ width: 44, height: 44, borderRadius: 999, overflow: "hidden", border: "2px solid var(--green)", background: "var(--green-soft)" }}>
+              <div key={f.id} className="sub-chosen-thumb" style={{ borderRadius: 999, overflow: "hidden", border: "2px solid var(--green)", background: "var(--green-soft)" }}>
                 {img ? <img src={img} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
               </div>
             );
@@ -535,9 +537,9 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
             <SummaryLine label="קו מנחה" value={form.surpriseMe ? "תפתיעו אותי" : `${form.chosenIds.length} סגנונות נבחרו`} />
 
             <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--line)", textAlign: "center" }}>
-              <div style={{ color: "var(--muted)", fontSize: 14, textDecoration: "line-through" }}>₪{originalFullPrice} לחודש</div>
-              <div style={{ color: "var(--green)", fontSize: 24, fontWeight: 700, marginTop: 6 }}>₪{subscriptionMonthlyPrice} <span style={{ fontSize: 14, fontWeight: 600 }}>לחודש</span></div>
-              <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8 }}>
+              <div style={{ color: "var(--muted)", fontSize: 16, textDecoration: "line-through" }}>₪{originalFullPrice} לחודש</div>
+              <div style={{ color: "var(--green)", fontSize: 26, fontWeight: 700, marginTop: 6 }}>₪{subscriptionMonthlyPrice} <span style={{ fontSize: 16, fontWeight: 600 }}>לחודש</span></div>
+              <p style={{ fontSize: 15, color: "var(--muted)", marginTop: 8 }}>
                 במנוי זה חסכת בחודש ₪{savings} ({savingsPct}% הנחה)
               </p>
             </div>
@@ -604,20 +606,20 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
                 style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start", marginBottom: 8,
                   background: form.billingChoice === "now" ? "var(--green)" : "#fff", color: form.billingChoice === "now" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "now" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-                <div>עכשיו (מ-{firstDateLabel}) · ₪{partialPrice} חיוב חד פעמי</div>
-                <div style={{ fontSize: "0.8em", opacity: 0.85, marginTop: 2 }}>ומהחודש הבא: ₪{subscriptionMonthlyPrice} לחודש</div>
+                <div>עכשיו (מ-{firstDateLabel}) · ₪{partialPrice} (חיוב חד פעמי על {remainingDates.length} זרים החודש)</div>
+                <div style={{ fontSize: "0.92em", opacity: 0.75, fontWeight: 600, marginTop: 3 }}>ומהחודש הבא: ₪{subscriptionMonthlyPrice} לחודש</div>
               </button>
               <button onClick={() => setField("billingChoice", "next")} className="sub-secondary-btn"
                 style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start",
                   background: form.billingChoice === "next" ? "var(--green)" : "#fff", color: form.billingChoice === "next" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "next" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
-                <div>להתחיל בחודש הבא, ב-{nextCycleLabel}</div>
-                <div style={{ fontSize: "0.8em", opacity: 0.85, marginTop: 2 }}>₪{subscriptionMonthlyPrice} לחודש</div>
+                <div>להתחיל חודש מלא מ-{nextCycleLabel}</div>
+                <div style={{ fontSize: "0.92em", opacity: 0.75, fontWeight: 600, marginTop: 3 }}>₪{subscriptionMonthlyPrice} לחודש</div>
               </button>
             </div>
           ) : (
             <p style={{ fontSize: 13, color: "var(--muted)", textAlign: "center", margin: "18px 0 14px" }}>
-              אין ימי אספקה שנותרו החודש - המנוי יתחיל ב-{nextCycleLabel}, ₪{subscriptionMonthlyPrice} לחודש
+              אין ימי אספקה שנותרו החודש - המנוי יתחיל חודש מלא מ-{nextCycleLabel}, ₪{subscriptionMonthlyPrice} לחודש
             </p>
           )}
 
@@ -647,10 +649,10 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
 
 function SummaryLine({ label, value }) {
   return (
-    <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "4px 0", fontSize: 13 }}>
+    <p style={{ textAlign: "right", fontSize: 13, padding: "4px 0", margin: 0 }}>
+      <span style={{ color: "var(--muted)" }}>{label}: </span>
       <span style={{ color: "var(--ink)", fontWeight: 600 }}>{value || "—"}</span>
-      <span style={{ color: "var(--muted)" }}>:{label}</span>
-    </div>
+    </p>
   );
 }
 
