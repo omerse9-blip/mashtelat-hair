@@ -8,6 +8,11 @@ export const metadata = {
   metadataBase: new URL("https://mashtelathair.co.il"),
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
   description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
+  icons: {
+    icon: "/logo-mashtela.png",
+    shortcut: "/logo-mashtela.png",
+    apple: "/logo-mashtela.png",
+  },
   alternates: {
     canonical: "/",
   },
