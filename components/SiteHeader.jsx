@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 import SearchOverlay from "./SearchOverlay";
+import { supabase } from "../lib/supabaseClient";
 
 const BTN_BORDER = "#ece3d4";
 const WA_LINK = "https://wa.me/972533669089";
@@ -43,12 +44,25 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
   const { count } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [session, setSession] = useState(null);
 
   const categories = isGarden ? gardenCategories : nurseryCategories;
   const menuTitle = isGarden ? "שירותי הגינון" : "המחלקות שלנו";
   const baseHref = isGarden ? "/garden" : "/";
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    let alive = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
+      setSession(data?.session || null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => { alive = false; listener?.subscription?.unsubscribe(); };
+  }, []);
+
+  const displayName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email || "";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -73,6 +87,11 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
   function goToAccount() {
     setMenuOpen(false);
     router.push("/account");
+  }
+
+  async function handleSignOut(e) {
+    e.stopPropagation();
+    await supabase.auth.signOut();
   }
 
   function goToCategory(catId) {
@@ -129,21 +148,27 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
-          <button
-            onClick={goToAccount}
-            style={{
-              width: "100%", cursor: "pointer", background: "transparent",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-              padding: "20px 14px 18px", border: "none",
-              borderBottom: "1px solid rgba(207,155,111,0.22)",
-              marginBottom: 6, fontFamily: "inherit",
-            }}
-          >
-            <div style={{ width: 56, height: 56, borderRadius: 999, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", border: "1px solid " + BTN_BORDER }}>
-              <AccountIcon size={30} />
-            </div>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "var(--green)" }}>התחברות / האזור שלי</span>
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "22px 14px 18px", borderBottom: "1px solid rgba(207,155,111,0.22)", marginBottom: 6 }}>
+            <button
+              onClick={goToAccount}
+              style={{ cursor: "pointer", background: "transparent", border: "none", padding: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontFamily: "inherit" }}
+            >
+              <div style={{ width: 62, height: 62, borderRadius: 999, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", border: "1px solid " + BTN_BORDER }}>
+                <AccountIcon size={33} />
+              </div>
+              <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)" }}>
+                {session ? displayName : "האזור שלי"}
+              </span>
+            </button>
+            {session && (
+              <button
+                onClick={handleSignOut}
+                style={{ cursor: "pointer", background: "transparent", border: "none", padding: 0, fontSize: 12.5, color: "var(--muted)", textDecoration: "underline", fontFamily: "inherit" }}
+              >
+                התנתקות
+              </button>
+            )}
+          </div>
 
           <button
             onClick={goHome}
