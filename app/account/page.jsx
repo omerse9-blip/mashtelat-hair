@@ -38,6 +38,10 @@ export default function AccountPage() {
   const [loadingSubs, setLoadingSubs] = useState(false);
   const [cancelTargetId, setCancelTargetId] = useState(null);
 
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
   useEffect(() => {
     let alive = true;
     supabase.auth.getSession().then(({ data }) => {
@@ -48,6 +52,13 @@ export default function AccountPage() {
     const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => { alive = false; listener?.subscription?.unsubscribe(); };
   }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      const current = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
+      setNameValue(current);
+    }
+  }, [session]);
 
   const loadSubs = useCallback(async (userId) => {
     setLoadingSubs(true);
@@ -88,6 +99,20 @@ export default function AccountPage() {
     setSubs([]);
   }
 
+  async function saveName() {
+    if (!nameValue.trim()) return;
+    setSavingName(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { full_name: nameValue.trim() } });
+      if (error) throw new Error(error.message);
+      setEditingName(false);
+    } catch (e) {
+      alert(e.message || "שגיאה בשמירת השם");
+    } finally {
+      setSavingName(false);
+    }
+  }
+
   return (
     <main style={{ maxWidth: 640, margin: "0 auto", padding: "40px 20px" }}>
       <h1 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 24 }}>
@@ -111,12 +136,35 @@ export default function AccountPage() {
         </div>
       ) : (
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <p style={{ fontSize: 14, color: "var(--muted)" }}>{session.user.email}</p>
-            <button onClick={signOut} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>
-              התנתקות
-            </button>
+          <div style={{ marginBottom: 6 }}>
+            {editingName ? (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  value={nameValue}
+                  onChange={(e) => setNameValue(e.target.value)}
+                  style={{ flex: 1, border: "1px solid var(--line)", borderRadius: 9, padding: "8px 11px", fontSize: 14, fontFamily: "inherit" }}
+                  autoFocus
+                />
+                <button onClick={saveName} disabled={savingName}
+                  style={{ fontSize: 13, fontWeight: 700, color: "#fff", background: "var(--green)", border: "none", borderRadius: 9, padding: "8px 14px", cursor: "pointer", opacity: savingName ? 0.6 : 1 }}>
+                  {savingName ? "שומרת..." : "שמירה"}
+                </button>
+                <button onClick={() => setEditingName(false)}
+                  style={{ fontSize: 13, color: "var(--muted)", background: "none", border: "none", cursor: "pointer" }}>
+                  ביטול
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <p style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>{nameValue || "ללא שם"}</p>
+                <button onClick={() => setEditingName(true)} aria-label="עריכת שם"
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 15, padding: 0, lineHeight: 1 }}>
+                  ✎
+                </button>
+              </div>
+            )}
           </div>
+          <p style={{ fontSize: 14, color: "var(--muted)", marginBottom: 20 }}>{session.user.email}</p>
 
           {loadingSubs ? (
             <p style={{ textAlign: "center", color: "var(--muted)" }}>טוענת...</p>
@@ -132,6 +180,12 @@ export default function AccountPage() {
               ))}
             </div>
           )}
+
+          <div style={{ textAlign: "center", marginTop: 40 }}>
+            <button onClick={signOut} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>
+              התנתקות
+            </button>
+          </div>
         </div>
       )}
 
