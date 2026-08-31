@@ -27,9 +27,9 @@ function WhatsAppIcon() {
   );
 }
 
-function AccountIcon() {
+function AccountIcon({ size = 19 }) {
   return (
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21c0-4 3.58-7 8-7s8 3 8 7" />
     </svg>
@@ -132,17 +132,19 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           <button
             onClick={goToAccount}
             style={{
-              width: "100%", textAlign: "inherit", cursor: "pointer", background: "transparent",
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "10px 14px", borderRadius: 10, fontSize: 15.5, fontWeight: 700,
-              color: "var(--green)", fontFamily: "inherit",
-              border: "none", borderBottom: "1px solid rgba(207,155,111,0.22)",
-              marginBottom: 4,
+              width: "100%", cursor: "pointer", background: "transparent",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+              padding: "20px 14px 18px", border: "none",
+              borderBottom: "1px solid rgba(207,155,111,0.22)",
+              marginBottom: 6, fontFamily: "inherit",
             }}
           >
-            <AccountIcon />
-            <span>התחברות / האזור שלי</span>
+            <div style={{ width: 56, height: 56, borderRadius: 999, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", border: "1px solid " + BTN_BORDER }}>
+              <AccountIcon size={30} />
+            </div>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "var(--green)" }}>התחברות / האזור שלי</span>
           </button>
+
           <button
             onClick={goHome}
             style={{
