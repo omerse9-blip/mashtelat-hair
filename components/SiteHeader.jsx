@@ -144,6 +144,14 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           boxShadow: "0 0 50px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column",
         }}
       >
+        {session && (
+          <div style={{ padding: "8px 20px", textAlign: "right", flexShrink: 0, background: "#f7f2e9" }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--green)" }}>
+              {greetingByHour()} {displayName}
+            </span>
+          </div>
+        )}
+
         <div style={{ height: 66, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "var(--green)", flexShrink: 0 }}>
           <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
           <button
@@ -164,24 +172,8 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
               <div style={{ width: 62, height: 62, borderRadius: 999, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", border: "1px solid " + BTN_BORDER }}>
                 <AccountIcon size={33} />
               </div>
-              {session ? (
-                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)", textAlign: "center", lineHeight: 1.4 }}>
-                  {greetingByHour()}
-                  <br />
-                  {displayName}
-                </span>
-              ) : (
-                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)" }}>האזור שלי</span>
-              )}
+              <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)" }}>האזור שלי</span>
             </button>
-            {session && (
-              <button
-                onClick={handleSignOut}
-                style={{ cursor: "pointer", background: "transparent", border: "none", padding: 0, fontSize: 12.5, color: "var(--muted)", textDecoration: "underline", fontFamily: "inherit" }}
-              >
-                התנתקות
-              </button>
-            )}
           </div>
 
           <button
@@ -217,6 +209,17 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
                 <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>›</span>
               </button>
             ))
+          )}
+
+          {session && (
+            <div style={{ textAlign: "center", padding: "18px 12px 8px" }}>
+              <button
+                onClick={handleSignOut}
+                style={{ cursor: "pointer", background: "transparent", border: "none", padding: 0, fontSize: 13, color: "var(--muted)", textDecoration: "underline", fontFamily: "inherit" }}
+              >
+                התנתקות
+              </button>
+            </div>
           )}
         </div>
       </div>
