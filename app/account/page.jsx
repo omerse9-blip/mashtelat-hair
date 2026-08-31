@@ -1,294 +1,318 @@
 "use client";
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useCart } from "./CartProvider";
-import SearchOverlay from "./SearchOverlay";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 
-const BTN_BORDER = "#ece3d4";
-const WA_LINK = "https://wa.me/972533669089";
+const FREQ_LABEL_BY_KEY = { monthly: "חודשי", biweekly: "דו שבועי", weekly: "שבועי" };
+const SIZE_LABEL_BY_KEY = { small: "קטן", medium: "בינוני", large: "גדול" };
+const DAY_LABEL_BY_KEY = {
+  sunday: "ראשון", monday: "שני", tuesday: "שלישי",
+  wednesday: "רביעי", thursday: "חמישי", friday: "שישי",
+};
+const STATUS_LABELS = {
+  pending_payment: { label: "ממתין לתשלום", color: "var(--muted)" },
+  active: { label: "פעיל", color: "var(--green)" },
+  pending_cancellation: { label: "ממתין לביטול", color: "#c17a4f" },
+  cancelled: { label: "מבוטל", color: "var(--muted)" },
+};
+const CANCEL_REASONS = [
+  { key: "price", label: "מחיר" },
+  { key: "taste", label: "הזרים לא תאמו את הטעם שלי" },
+  { key: "service", label: "חוויית השירות לא הייתה כמו שציפיתי" },
+  { key: "other", label: "נשמח לשמוע במילים שלך למה ביטלת" },
+];
 
-function CartIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="9" cy="21" r="1" />
-      <circle cx="19" cy="21" r="1" />
-      <path d="M1 1h3l2.4 13.2a2 2 0 0 0 2 1.6h9.2a2 2 0 0 0 2-1.6L21.6 6H5.2" />
-    </svg>
-  );
+function formatDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso + (iso.length === 10 ? "T00:00:00" : ""));
+  if (isNaN(d.getTime())) return "";
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
 }
 
-function WhatsAppIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--green)">
-      <path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.08L2 22l5.06-1.33A9.94 9.94 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2Zm0 18.13c-1.62 0-3.13-.45-4.43-1.24l-.32-.19-3.01.79.8-2.93-.2-.3A8.11 8.11 0 0 1 3.9 12c0-4.48 3.65-8.13 8.12-8.13 4.47 0 8.12 3.65 8.12 8.13 0 4.48-3.65 8.13-8.12 8.13Zm4.47-6.08c-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.29.18-.53.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.34-1.67-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.32-.75-1.8-.2-.48-.4-.42-.55-.42-.14 0-.3-.02-.46-.02-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.02 0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28Z" />
-    </svg>
-  );
-}
-
-function AccountIcon({ size = 19 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c0-4 3.58-7 8-7s8 3 8 7" />
-    </svg>
-  );
-}
-
-function greetingByHour() {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "בוקר טוב,";
-  if (h >= 12 && h < 17) return "צהריים טובים,";
-  if (h >= 17 && h < 21) return "ערב טוב,";
-  return "לילה טוב,";
-}
-
-export default function SiteHeader({ searchIndex, nurseryCategories = [], gardenCategories = [] }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const isGarden = pathname.startsWith("/garden");
-  const { count } = useCart();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+export default function AccountPage() {
   const [session, setSession] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [signingIn, setSigningIn] = useState(false);
+  const [subs, setSubs] = useState([]);
+  const [loadingSubs, setLoadingSubs] = useState(false);
+  const [cancelTargetId, setCancelTargetId] = useState(null);
 
-  const categories = isGarden ? gardenCategories : nurseryCategories;
-  const menuTitle = isGarden ? "שירותי הגינון" : "המחלקות שלנו";
-  const baseHref = isGarden ? "/garden" : "/";
-
-  useEffect(() => { setMounted(true); }, []);
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState("");
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     let alive = true;
     supabase.auth.getSession().then(({ data }) => {
       if (!alive) return;
       setSession(data?.session || null);
+      setCheckingSession(false);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => { alive = false; listener?.subscription?.unsubscribe(); };
   }, []);
 
-  const displayName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email || "";
+  useEffect(() => {
+    if (session?.user) {
+      const current = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
+      setNameValue(current);
+    }
+  }, [session]);
+
+  const loadSubs = useCallback(async (userId) => {
+    setLoadingSubs(true);
+    try {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("auth_user_id", userId)
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      setSubs(data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingSubs(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!menuOpen) return;
-    window.history.pushState({ menu: true }, "");
-    const onPop = () => setMenuOpen(false);
-    window.addEventListener("popstate", onPop);
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("popstate", onPop);
-      document.body.style.overflow = "";
-    };
-  }, [menuOpen]);
+    if (session?.user?.id) loadSubs(session.user.id);
+  }, [session, loadSubs]);
 
-  function closeMenu() {
-    if (window.history.state && window.history.state.menu) {
-      window.history.back();
-    } else {
-      setMenuOpen(false);
+  async function signInWithGoogle() {
+    setSigningIn(true);
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.href },
+      });
+    } catch {
+      alert("שגיאה בהתחברות. נסי שוב.");
+      setSigningIn(false);
     }
   }
 
-  function goToAccount() {
-    setMenuOpen(false);
-    router.push("/account");
-  }
-
-  async function handleSignOut(e) {
-    e.stopPropagation();
+  async function signOut() {
     await supabase.auth.signOut();
+    setSubs([]);
   }
 
-  function goToCategory(catId) {
-    const targetId = "cat-" + catId;
-    const onBasePage = pathname === baseHref;
-    if (onBasePage) {
-      closeMenu();
-      setTimeout(function () {
-        const el = document.getElementById(targetId);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 320);
-    } else {
-      setMenuOpen(false);
-      router.push(baseHref);
-      setTimeout(function () {
-        const el = document.getElementById(targetId);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 450);
+  async function saveName() {
+    if (!nameValue.trim()) return;
+    setSavingName(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { full_name: nameValue.trim() } });
+      if (error) throw new Error(error.message);
+      setEditingName(false);
+    } catch (e) {
+      alert(e.message || "שגיאה בשמירת השם");
+    } finally {
+      setSavingName(false);
     }
   }
-
-  function goHome() {
-    const onBasePage = pathname === baseHref;
-    if (onBasePage) {
-      closeMenu();
-      setTimeout(function () { window.scrollTo({ top: 0, behavior: "smooth" }); }, 320);
-    } else {
-      setMenuOpen(false);
-      router.push(baseHref);
-    }
-  }
-
-  const menuOverlay = (
-    <div
-      onClick={closeMenu}
-      style={{ position: "fixed", inset: 0, background: "rgba(33,58,45,0.45)", backdropFilter: "blur(2px)", zIndex: 1000, display: "flex", justifyContent: "flex-start" }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(84vw, 340px)", height: "100%", background: "#f7f2e9",
-          boxShadow: "0 0 50px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column",
-        }}
-      >
-        {session && (
-          <div style={{ padding: "8px 20px", textAlign: "right", flexShrink: 0, background: "#f7f2e9" }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--green)" }}>
-              {greetingByHour()} {displayName}
-            </span>
-          </div>
-        )}
-
-        <div style={{ height: 66, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "var(--green)", flexShrink: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
-          <button
-            onClick={closeMenu}
-            aria-label="Close"
-            style={{ width: 36, height: 36, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "22px 14px 18px", borderBottom: "1px solid rgba(207,155,111,0.22)", marginBottom: 6 }}>
-            <button
-              onClick={goToAccount}
-              style={{ cursor: "pointer", background: "transparent", border: "none", padding: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, fontFamily: "inherit" }}
-            >
-              <div style={{ width: 62, height: 62, borderRadius: 999, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", border: "1px solid " + BTN_BORDER }}>
-                <AccountIcon size={33} />
-              </div>
-              <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)" }}>האזור שלי</span>
-            </button>
-          </div>
-
-          <button
-            onClick={goHome}
-            style={{
-              width: "100%", textAlign: "inherit", cursor: "pointer", background: "transparent",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 14px", borderRadius: 10, fontSize: 16.5, fontWeight: 700,
-              color: "var(--green)", fontFamily: "inherit",
-              border: "none", borderBottom: "1px solid rgba(207,155,111,0.22)",
-            }}
-          >
-            <span>דף הבית</span>
-            <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>›</span>
-          </button>
-          {categories.length === 0 ? (
-            <p style={{ color: "var(--muted)", fontSize: 15, padding: "16px 12px" }}>אין מחלקות להצגה.</p>
-          ) : (
-            categories.map((c, i) => (
-              <button
-                key={c.id}
-                onClick={() => goToCategory(c.id)}
-                style={{
-                  width: "100%", textAlign: "inherit", cursor: "pointer", background: "transparent",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "10px 14px", borderRadius: 10, fontSize: 16.5, fontWeight: 600,
-                  color: "var(--ink)", fontFamily: "inherit",
-                  border: "none",
-                  borderBottom: i < categories.length - 1 ? "1px solid rgba(207,155,111,0.22)" : "none",
-                }}
-              >
-                <span>{c.name}</span>
-                <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>›</span>
-              </button>
-            ))
-          )}
-
-          {session && (
-            <div style={{ textAlign: "center", padding: "18px 12px 8px" }}>
-              <button
-                onClick={handleSignOut}
-                style={{ cursor: "pointer", background: "transparent", border: "none", padding: 0, fontSize: 13, color: "var(--muted)", textDecoration: "underline", fontFamily: "inherit" }}
-              >
-                התנתקות
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 
   return (
-    <header style={{ borderBottom: "1px solid var(--line)", position: "sticky", top: 0, background: "rgba(247,242,233,0.92)", backdropFilter: "blur(8px)", zIndex: 50 }}>
-      <div style={{ width: "100%", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-          <button
-            onClick={() => setMenuOpen(true)}
-            aria-label="Menu"
-            style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5, width: 26, height: 22, border: "none", background: "transparent", cursor: "pointer", padding: 0 }}
-          >
-            <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
-            <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
-            <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
+    <main style={{ maxWidth: 640, margin: "0 auto", padding: "40px 20px" }}>
+      <h1 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 24 }}>
+        האזור שלי
+      </h1>
+
+      {checkingSession ? (
+        <p style={{ textAlign: "center", color: "var(--muted)" }}>בודקת חיבור...</p>
+      ) : !session ? (
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 15, color: "var(--ink)", marginBottom: 16 }}>
+            כדי לראות את המנוי שלך, צריך להתחבר
+          </p>
+          <button onClick={signInWithGoogle} disabled={signingIn}
+            style={{ background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700,
+              padding: "13px 24px", borderRadius: 12, border: "1px solid var(--line)", cursor: "pointer",
+              display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <span>🔵</span>
+            <span>{signingIn ? "מעבירה..." : "המשך עם Google"}</span>
           </button>
-          <SearchOverlay index={searchIndex} categories={categories} baseHref={baseHref} pathname={pathname} />
         </div>
+      ) : (
+        <div>
+          <div style={{ marginBottom: 6 }}>
+            {editingName ? (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  value={nameValue}
+                  onChange={(e) => setNameValue(e.target.value)}
+                  style={{ flex: 1, border: "1px solid var(--line)", borderRadius: 9, padding: "8px 11px", fontSize: 14, fontFamily: "inherit" }}
+                  autoFocus
+                />
+                <button onClick={saveName} disabled={savingName}
+                  style={{ fontSize: 13, fontWeight: 700, color: "#fff", background: "var(--green)", border: "none", borderRadius: 9, padding: "8px 14px", cursor: "pointer", opacity: savingName ? 0.6 : 1 }}>
+                  {savingName ? "שומרת..." : "שמירה"}
+                </button>
+                <button onClick={() => setEditingName(false)}
+                  style={{ fontSize: 13, color: "var(--muted)", background: "none", border: "none", cursor: "pointer" }}>
+                  ביטול
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <p style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>{nameValue || "ללא שם"}</p>
+                <button onClick={() => setEditingName(true)} aria-label="עריכת שם"
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 15, padding: 0, lineHeight: 1 }}>
+                  ✎
+                </button>
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: 14, color: "var(--muted)", marginBottom: 20 }}>{session.user.email}</p>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-          <NavTab href="/" label="משתלת העיר" active={!isGarden} />
-          <NavTab href="/garden" label="גינון העיר" active={isGarden} />
+          {loadingSubs ? (
+            <p style={{ textAlign: "center", color: "var(--muted)" }}>טוענת...</p>
+          ) : subs.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "30px 0" }}>
+              <p style={{ fontSize: 15, color: "var(--ink)", marginBottom: 14 }}>עדיין אין לך מנוי פעיל</p>
+              <Link href="/" style={{ color: "var(--green)", fontWeight: 700, fontSize: 14 }}>לגלות את מנוי הפריחה שלך</Link>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {subs.map((s) => (
+                <SubscriptionCard key={s.id} sub={s} onCancelClick={() => setCancelTargetId(s.id)} />
+              ))}
+            </div>
+          )}
+
+          <div style={{ textAlign: "center", marginTop: 40 }}>
+            <button onClick={signOut} style={{ background: "none", border: "none", color: "var(--muted)", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>
+              התנתקות
+            </button>
+          </div>
         </div>
+      )}
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, flex: 1, minWidth: 0 }}>
-          <a href={WA_LINK} target="_blank" rel="noreferrer" aria-label="WhatsApp" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <WhatsAppIcon />
-          </a>
-          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Cart">
-            <CartIcon />
-            {count > 0 ? (
-              <span style={{ position: "absolute", top: -6, insetInlineEnd: -8, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: "var(--green)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {count}
-              </span>
-            ) : null}
-          </Link>
-        </div>
-      </div>
-
-      {menuOpen && mounted ? createPortal(menuOverlay, document.body) : null}
-    </header>
+      {cancelTargetId && (
+        <CancelModal
+          subscriptionId={cancelTargetId}
+          onClose={() => setCancelTargetId(null)}
+          onDone={async () => {
+            setCancelTargetId(null);
+            if (session?.user?.id) await loadSubs(session.user.id);
+          }}
+        />
+      )}
+    </main>
   );
 }
 
-function NavTab({ href, label, active }) {
+function SubscriptionCard({ sub, onCancelClick }) {
+  const statusInfo = STATUS_LABELS[sub.status] || STATUS_LABELS.active;
   return (
-    <Link
-      href={href}
-      style={{
-        fontSize: 14,
-        fontWeight: 700,
-        padding: "8px 14px",
-        borderRadius: 999,
-        whiteSpace: "nowrap",
-        minWidth: 108,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        background: active ? "var(--green)" : "#fbf8f1",
-        color: active ? "#fff" : "var(--green)",
-        border: active ? "1px solid var(--green)" : "1px solid " + BTN_BORDER,
-        boxShadow: active ? "none" : "0 1px 2px rgba(91,70,40,0.06)",
-      }}
-    >
-      {label}
-    </Link>
+    <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, background: "#fff" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <p style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>מנוי הפריחה שלך</p>
+        <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: statusInfo.color, padding: "3px 10px", borderRadius: 999 }}>
+          {statusInfo.label}
+        </span>
+      </div>
+
+      <InfoLine label="גודל" value={SIZE_LABEL_BY_KEY[sub.size] || sub.size} />
+      <InfoLine label="תדירות" value={FREQ_LABEL_BY_KEY[sub.frequency] || sub.frequency} />
+      <InfoLine label="יום משלוח" value={DAY_LABEL_BY_KEY[sub.delivery_day] || sub.delivery_day} />
+      <InfoLine label="כתובת" value={sub.customer_address || (sub.is_gift ? sub.recipient_address : "")} />
+      {sub.next_billing_date && <InfoLine label="חיוב הבא" value={formatDate(sub.next_billing_date)} />}
+      <InfoLine label="קו מנחה" value={sub.surprise_me ? "תפתיעו אותי" : `${(sub.preferred_bouquet_ids || []).length} סגנונות נבחרו`} />
+
+      {sub.status === "cancelled" && (sub.cancel_reason_category || sub.cancel_reason_text) && (
+        <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: "#FBF2EF", fontSize: 13, color: "var(--ink)" }}>
+          <span style={{ fontWeight: 700, color: "#c17a4f" }}>סיבת ביטול: </span>
+          {CANCEL_REASONS.find((c) => c.key === sub.cancel_reason_category)?.label || sub.cancel_reason_category}
+          {sub.cancel_reason_text ? ` — ${sub.cancel_reason_text}` : ""}
+        </div>
+      )}
+
+      {(sub.status === "active" || sub.status === "pending_payment") && (
+        <button onClick={onCancelClick}
+          style={{ marginTop: 14, width: "100%", padding: "11px", borderRadius: 11, fontSize: 14, fontWeight: 700,
+            background: "#fff", color: "#c17a4f", border: "1px solid #c17a4f", cursor: "pointer" }}>
+          ביטול מנוי
+        </button>
+      )}
+    </div>
+  );
+}
+
+function InfoLine({ label, value }) {
+  if (!value) return null;
+  return (
+    <p style={{ display: "flex", justifyContent: "space-between", fontSize: 14, padding: "4px 0" }}>
+      <span style={{ color: "var(--muted)" }}>{label}</span>
+      <span style={{ color: "var(--ink)", fontWeight: 600 }}>{value}</span>
+    </p>
+  );
+}
+
+function CancelModal({ subscriptionId, onClose, onDone }) {
+  const [reasonKey, setReasonKey] = useState("");
+  const [freeText, setFreeText] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function confirm() {
+    setBusy(true);
+    try {
+      const { error } = await supabase
+        .from("subscriptions")
+        .update({
+          status: "cancelled",
+          cancel_reason_category: reasonKey || null,
+          cancel_reason_text: reasonKey === "other" ? freeText.trim() || null : null,
+        })
+        .eq("id", subscriptionId);
+      if (error) throw new Error(error.message);
+      onDone();
+    } catch (e) {
+      alert(e.message || "שגיאה בביטול");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(43,58,42,0.45)" }}>
+      <div style={{ width: "100%", maxWidth: 380, borderRadius: 16, padding: 18, background: "#fff", maxHeight: "88vh", overflowY: "auto" }}>
+        <h3 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 17, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 14 }}>
+          ביטול מנוי
+        </h3>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+          {CANCEL_REASONS.map((r) => {
+            const selected = reasonKey === r.key;
+            return (
+              <button key={r.key} onClick={() => setReasonKey(r.key)}
+                style={{ width: "100%", textAlign: "start", padding: "10px 12px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                  background: selected ? "var(--green)" : "#fff", color: selected ? "#fff" : "var(--ink)",
+                  border: selected ? "1px solid var(--green)" : "1px solid var(--line)" }}>
+                {r.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {reasonKey === "other" && (
+          <textarea value={freeText} onChange={(e) => setFreeText(e.target.value)} rows={3} autoFocus
+            placeholder="ספרי לנו במילים שלך..."
+            style={{ width: "100%", border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", fontSize: 14, marginBottom: 12, resize: "vertical", fontFamily: "inherit" }} />
+        )}
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onClose} disabled={busy}
+            style={{ flex: 1, padding: "11px", borderRadius: 11, fontSize: 14, fontWeight: 600, cursor: "pointer", background: "#fff", color: "var(--ink)", border: "1px solid var(--line)" }}>
+            חזרה
+          </button>
+          <button onClick={confirm} disabled={busy}
+            style={{ flex: 1, padding: "11px", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", background: "#c17a4f", color: "#fff", border: "none", opacity: busy ? 0.6 : 1 }}>
+            {busy ? "מבטלת..." : "אישור הביטול"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
