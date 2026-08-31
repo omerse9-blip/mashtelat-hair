@@ -37,6 +37,14 @@ function AccountIcon({ size = 19 }) {
   );
 }
 
+function greetingByHour() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "בוקר טוב,";
+  if (h >= 12 && h < 17) return "צהריים טובים,";
+  if (h >= 17 && h < 21) return "ערב טוב,";
+  return "לילה טוב,";
+}
+
 export default function SiteHeader({ searchIndex, nurseryCategories = [], gardenCategories = [] }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -156,9 +164,15 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
               <div style={{ width: 62, height: 62, borderRadius: 999, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", border: "1px solid " + BTN_BORDER }}>
                 <AccountIcon size={33} />
               </div>
-              <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)" }}>
-                {session ? displayName : "האזור שלי"}
-              </span>
+              {session ? (
+                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)", textAlign: "center", lineHeight: 1.4 }}>
+                  {greetingByHour()}
+                  <br />
+                  {displayName}
+                </span>
+              ) : (
+                <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)" }}>האזור שלי</span>
+              )}
             </button>
             {session && (
               <button
