@@ -59,6 +59,15 @@ function maxPriceForChosen(pool, sizeKey, chosenIds) {
   return max;
 }
 
+// מחיר בסיס לכל שלושת הגדלים - הגבוה מבין הזרים שנבחרו, לכל גודל בנפרד
+function maxPricesForAllSizes(pool, chosenIds) {
+  return {
+    small: maxPriceForChosen(pool, "small", chosenIds),
+    medium: maxPriceForChosen(pool, "medium", chosenIds),
+    large: maxPriceForChosen(pool, "large", chosenIds),
+  };
+}
+
 function cheapestFlowerPrices(pool) {
   let cheapest = null;
   let cheapestSmall = null;
@@ -130,23 +139,10 @@ function formatDate(d) {
   return `${d.getDate()}.${d.getMonth() + 1}`;
 }
 
-function isoDate(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 function nextMonthFirstLabel() {
   const today = new Date();
   const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
   return `1.${next.getMonth() + 1}.${String(next.getFullYear()).slice(2)}`;
-}
-
-function nextMonthFirstIso() {
-  const today = new Date();
-  const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-  return isoDate(next);
 }
 
 function ceilTo(n, step) {
@@ -267,7 +263,13 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
     });
   }
 
-  const basePrices = useMemo(() => cheapestFlowerPrices(pool || []), [pool]);
+  // מחיר בסיס לכל גודל - אם נבחרו זרים ספציפיים, הגבוה מבין הזרים שנבחרו; אחרת (תפתיעו אותי) הזול ביותר במאגר
+  const basePrices = useMemo(() => {
+    if (!form.surpriseMe && form.chosenIds.length > 0) {
+      return maxPricesForAllSizes(pool || [], form.chosenIds);
+    }
+    return cheapestFlowerPrices(pool || []);
+  }, [pool, form.surpriseMe, form.chosenIds]);
 
   function estPriceForSize(sizeKey) {
     const base = basePrices?.[sizeKey];
@@ -329,7 +331,6 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
     }
   }
 
-  // יוצר את רשומת המנוי בטבלה, בסטטוס "ממתין לתשלום" - לפני שהחיוב בפועל רץ
   async function createPendingSubscription(currentSession) {
     if (form.createdSubscriptionId) return form.createdSubscriptionId;
 
@@ -337,7 +338,14 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
     try {
       const nextBillingDate = form.billingChoice === "now" && hasRemaining
         ? null
-        : nextMonthFirstIso();
+        : (() => {
+            const today = new Date();
+            const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+            const y = next.getFullYear();
+            const m = String(next.getMonth() + 1).padStart(2, "0");
+            const d = String(next.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+          })();
 
       const { data, error } = await supabase
         .from("subscriptions")
@@ -419,8 +427,8 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
 
   function selectionSummaryText() {
     const parts = [];
-    if (form.frequency) parts.push(FREQ_LABEL_BY_KEY[form.frequency]);
     if (form.size) parts.push(SIZES.find((s) => s.key === form.size)?.label);
+    if (form.frequency) parts.push(FREQ_LABEL_BY_KEY[form.frequency]);
     if (form.deliveryDay) parts.push(DAY_OPTIONS.find((d) => d.key === form.deliveryDay)?.label);
     if (form.deliveryWindow) parts.push(form.deliveryWindow.replace("-", ":00-") + ":00");
     return parts.join(" · ");
