@@ -165,8 +165,8 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
 
   return (
     <header style={{ borderBottom: "1px solid var(--line)", position: "sticky", top: 0, background: "rgba(247,242,233,0.92)", backdropFilter: "blur(8px)", zIndex: 50 }}>
-      <div style={{ width: "100%", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
+      <div style={{ width: "100%", padding: "12px 12px", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
           <button
             onClick={() => setMenuOpen(true)}
             aria-label="Menu"
@@ -179,12 +179,12 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           <SearchOverlay index={searchIndex} categories={categories} baseHref={baseHref} pathname={pathname} />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <NavTab href="/" label="משתלת העיר" active={!isGarden} />
           <NavTab href="/garden" label="גינון העיר" active={isGarden} />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, flex: "0 0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
           <Link href="/account" aria-label="האזור שלי" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <AccountIcon />
           </Link>
