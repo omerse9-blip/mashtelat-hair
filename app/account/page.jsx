@@ -53,12 +53,26 @@ export default function AccountPage() {
     return () => { alive = false; listener?.subscription?.unsubscribe(); };
   }, []);
 
+  const loadProfile = useCallback(async (userId, fallbackName) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("auth_user_id", userId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      setNameValue(data?.display_name || fallbackName || "");
+    } catch (e) {
+      setNameValue(fallbackName || "");
+    }
+  }, []);
+
   useEffect(() => {
     if (session?.user) {
-      const current = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
-      setNameValue(current);
+      const googleFallback = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
+      loadProfile(session.user.id, googleFallback);
     }
-  }, [session]);
+  }, [session, loadProfile]);
 
   const loadSubs = useCallback(async (userId) => {
     setLoadingSubs(true);
@@ -100,10 +114,12 @@ export default function AccountPage() {
   }
 
   async function saveName() {
-    if (!nameValue.trim()) return;
+    if (!nameValue.trim() || !session?.user?.id) return;
     setSavingName(true);
     try {
-      const { error } = await supabase.auth.updateUser({ data: { full_name: nameValue.trim() } });
+      const { error } = await supabase
+        .from("profiles")
+        .upsert({ auth_user_id: session.user.id, display_name: nameValue.trim(), updated_at: new Date().toISOString() });
       if (error) throw new Error(error.message);
       setEditingName(false);
     } catch (e) {
