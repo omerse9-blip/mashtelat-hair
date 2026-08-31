@@ -53,6 +53,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [session, setSession] = useState(null);
+  const [profileName, setProfileName] = useState("");
 
   const categories = isGarden ? gardenCategories : nurseryCategories;
   const menuTitle = isGarden ? "שירותי הגינון" : "המחלקות שלנו";
@@ -70,7 +71,22 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
     return () => { alive = false; listener?.subscription?.unsubscribe(); };
   }, []);
 
-  const displayName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email || "";
+  useEffect(() => {
+    let alive = true;
+    if (!session?.user?.id) { setProfileName(""); return; }
+    const googleFallback = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email || "";
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("auth_user_id", session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive) return;
+        setProfileName(data?.display_name || googleFallback);
+      })
+      .catch(() => { if (alive) setProfileName(googleFallback); });
+    return () => { alive = false; };
+  }, [session]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -144,14 +160,6 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           boxShadow: "0 0 50px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column",
         }}
       >
-        {session && (
-          <div style={{ padding: "8px 20px", textAlign: "right", flexShrink: 0, background: "#f7f2e9" }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--green)" }}>
-              {greetingByHour()} {displayName}
-            </span>
-          </div>
-        )}
-
         <div style={{ height: 66, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "var(--green)", flexShrink: 0 }}>
           <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
           <button
@@ -173,6 +181,11 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
                 <AccountIcon size={33} />
               </div>
               <span style={{ fontSize: 16, fontWeight: 700, color: "var(--green)" }}>האזור שלי</span>
+              {session && profileName && (
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", textAlign: "center" }}>
+                  {greetingByHour()} {profileName}
+                </span>
+              )}
             </button>
           </div>
 
