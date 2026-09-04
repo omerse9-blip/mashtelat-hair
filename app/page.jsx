@@ -1,12 +1,10 @@
 import { Suspense } from "react";
-import { getCategories, getProducts, getFeaturedProducts, getActiveHeroImage, getSubscriptionMinPrice, cardPrice, cardImage, cardSizeText } from "../lib/siteData";
+import { getCategories, getProducts, getFeaturedProducts, getActiveHeroImage, getSubscriptionMinPrice, cardPrice, cardImage, cardSizeText, availableFromShort } from "../lib/siteData";
 import NurseryCatalog from "../components/NurseryCatalog";
-
 export const metadata = {
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
   description: "משתלה באילת עם עציצים, זרי פרחים, צמחי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית. הזמינו אונליין עכשיו.",
 };
-
 function toCard(p, subscriptionMinPrice) {
   const isSubscription = !!p.is_subscription;
   return {
@@ -19,9 +17,9 @@ function toCard(p, subscriptionMinPrice) {
     _hasSizes: !!(p.has_sizes && p.product_sizes?.length),
     _multi: !!(p.has_sizes && p.product_sizes?.length > 1),
     _isSubscription: isSubscription,
+    _availableFrom: availableFromShort(p),
   };
 }
-
 export default async function NurseryPage() {
   let categories = [];
   const productsByCat = {};
