@@ -6,7 +6,7 @@ import { useCart } from "../../components/CartProvider";
 import { useDelivery } from "../../components/DeliveryProvider";
 import { getDeliveryOptions, getDeliveryFees, createOrder } from "../../lib/siteData";
 
-const FORM_STORAGE_KEY = "mashtela_checkout_form_v2";
+const FORM_STORAGE_KEY = "mashtela_checkout_form_v3";
 const SUB_TYPES = [
   { key: "city", label: "משלוח בעיר" },
   { key: "hotel", label: "משלוח למלון" },
@@ -149,15 +149,19 @@ export default function CheckoutPage() {
     setBlocks((prev) => {
       const next = { ...prev };
       let changed = false;
-      groups.forEach((g, i) => {
+      groups.forEach((g) => {
         if (next[g.key]) return;
         changed = true;
-        const base = { method: null, subType: "", rName: "", rPhone: "", rAddr: "", greeting: "", selDate: "", selWindow: "", open: i === 0 };
+        const base = {
+          method: null, subType: "", forWho: "", rName: "", rPhone: "", rAddr: "",
+          greeting: "", selDate: "", selWindow: "", collapsed: false,
+        };
         if (!prefilled && delivery.method) {
           base.method = delivery.method === "pickup" ? "pickup" : "delivery";
           if (delivery.method === "delivery") {
             if (delivery.subType) base.subType = delivery.subType;
             if (delivery.street || delivery.houseNumber) {
+              base.forWho = "self";
               base.rAddr = `${delivery.street} ${delivery.houseNumber}`.trim();
             }
           }
@@ -211,12 +215,12 @@ export default function CheckoutPage() {
   const feesTotal = groups.reduce((s, g) => s + groupFee(g), 0);
   const grandTotal = total + feesTotal;
 
-  // הכתובת שכבר מולאה בבלוק קודם — למילוי מהיר
+  // כתובת שכבר מולאה בבלוק קודם — למילוי מהיר
   function previousAddress(index) {
     for (let i = index - 1; i >= 0; i--) {
       const b = blocks[groups[i].key];
       if (b && b.method === "delivery" && b.rAddr && b.rAddr.trim()) {
-        return { rName: b.rName, rPhone: b.rPhone, rAddr: b.rAddr, subType: b.subType };
+        return { forWho: b.forWho, rName: b.rName, rPhone: b.rPhone, rAddr: b.rAddr, subType: b.subType };
       }
     }
     return null;
@@ -260,13 +264,16 @@ export default function CheckoutPage() {
       const g = groups[i];
       const b = blocks[g.key] || {};
       const n = groups.length > 1 ? ` (מסירה ${i + 1})` : "";
-      if (!b.method) return `יש לבחור איסוף עצמי או שליחה לכתובת${n}.`;
+      if (!b.method) return `יש לבחור איסוף עצמי או משלוח${n}.`;
       if (b.method === "delivery") {
         if (!b.subType) return `יש לבחור משלוח בעיר או למלון${n}.`;
-        if (!b.rName?.trim()) return `יש למלא את שם המקבל${n}.`;
-        if (!b.rPhone?.trim()) return `יש למלא את טלפון המקבל${n}.`;
-        if (!validPhone(b.rPhone)) return `טלפון המקבל אינו תקין${n}.`;
-        if (!b.rAddr?.trim()) return `יש למלא את כתובת המקבל${n}.`;
+        if (!b.forWho) return `יש לבחור למי המשלוח${n}.`;
+        if (!b.rAddr?.trim()) return `יש למלא כתובת למשלוח${n}.`;
+        if (b.forWho === "other") {
+          if (!b.rName?.trim()) return `יש למלא את שם המקבל${n}.`;
+          if (!b.rPhone?.trim()) return `יש למלא את טלפון המקבל${n}.`;
+          if (!validPhone(b.rPhone)) return `טלפון המקבל אינו תקין${n}.`;
+        }
       }
       if (!b.selDate || !b.selWindow) return `יש לבחור מועד${n}.`;
     }
@@ -276,13 +283,14 @@ export default function CheckoutPage() {
   function detailsFor(g) {
     const b = blocks[g.key] || {};
     const isDelivery = b.method === "delivery";
+    const toOther = isDelivery && b.forWho === "other";
     return {
       customer_name: cName.trim(),
       customer_phone: cPhone.trim(),
-      customer_address: "",
-      is_gift: isDelivery,
-      recipient_name: isDelivery ? (b.rName || "").trim() : "",
-      recipient_phone: isDelivery ? (b.rPhone || "").trim() : "",
+      customer_address: isDelivery && !toOther ? (b.rAddr || "").trim() : "",
+      is_gift: toOther,
+      recipient_name: toOther ? (b.rName || "").trim() : "",
+      recipient_phone: toOther ? (b.rPhone || "").trim() : "",
       recipient_address: isDelivery ? (b.rAddr || "").trim() : "",
       notes: notes.trim(),
       fulfillment_type: b.method === "pickup" ? "pickup" : "delivery",
@@ -362,6 +370,12 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {groups.length > 1 ? (
+        <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, marginBottom: 18 }}>
+          ההזמנה מחולקת ל-{groups.length} מסירות, לפי מועדי הזמינות של הפריטים. לכל מסירה נבחרים אופן ומועד בנפרד.
+        </p>
+      ) : null}
+
       {groups.map((g, i) => (
         <DeliveryBlock
           key={g.key}
@@ -415,4 +429,243 @@ export default function CheckoutPage() {
       >
         {submitting
           ? (allOnlinePayable ? "מעביר לתשלום..." : "שולח הזמנה...")
-          : (allOnlinePayable ?
+          : (allOnlinePayable ? "מעבר לתשלום מאובטח" : "שליחת ההזמנה")}
+      </button>
+    </main>
+  );
+}
+
+function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, fee, prevAddress, onChange }) {
+  const b = block;
+  const isDelivery = b.method === "delivery";
+  const toOther = isDelivery && b.forWho === "other";
+  const currentDay = options.find((o) => o.date === b.selDate);
+  const rPhoneBad = (b.rPhone || "").trim() !== "" && !validPhone(b.rPhone);
+
+  // בלוק שעדיין לא מולא נשאר פתוח — אין מה לכווץ
+  const complete = !!b.method && !!b.selDate && !!b.selWindow && (
+    b.method === "pickup" ||
+    (b.subType && b.rAddr?.trim() && (b.forWho === "self" || (b.forWho === "other" && b.rName?.trim() && validPhone(b.rPhone))))
+  );
+  const open = !complete || !b.collapsed;
+
+  const title = !multi
+    ? "אופן ומועד המסירה"
+    : group.fromDate
+      ? `מסירה ${index + 1} · זמין מיום ${isoParts(group.fromDate).dayName} ${isoParts(group.fromDate).d}.${isoParts(group.fromDate).m}`
+      : `מסירה ${index + 1} · זמין עכשיו`;
+
+  const summary = b.selDate
+    ? `${isoParts(b.selDate).dayName} ${isoParts(b.selDate).d}.${isoParts(b.selDate).m}${b.selWindow ? ` · ${b.selWindow.replace("-", ":00-")}:00` : ""}`
+    : "";
+
+  const methodText = b.method === "pickup"
+    ? "איסוף עצמי מהמשתלה"
+    : isDelivery
+      ? (b.subType === "hotel" ? "משלוח למלון" : "משלוח בעיר")
+      : "";
+
+  function fillPrevAddress() {
+    if (!prevAddress) return;
+    onChange({
+      forWho: prevAddress.forWho || "self",
+      rName: prevAddress.rName,
+      rPhone: prevAddress.rPhone,
+      rAddr: prevAddress.rAddr,
+      subType: prevAddress.subType,
+    });
+  }
+
+  const bigBtn = (active, label, onClick) => (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1, padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer",
+        background: active ? "var(--green)" : "#fff",
+        color: active ? "#fff" : "var(--ink)",
+        border: active ? "1px solid var(--green)" : "1px solid var(--line)",
+      }}
+    >
+      {label}
+    </button>
+  );
+
+  return (
+    <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, marginBottom: 18 }}>
+      <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>{title}</p>
+
+      <div style={{ background: "var(--green-soft)", borderRadius: 10, padding: 12, marginBottom: 16 }}>
+        {group.items.map((it, k) => (
+          <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: k === group.items.length - 1 ? 0 : 10 }}>
+            <div style={{ width: 46, height: 46, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "#f4f6f4" }}>
+              {it.image ? (
+                <img src={it.image} alt={it.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🪴</div>
+              )}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.name}</p>
+              <p style={{ color: "var(--muted)", fontSize: 13 }}>
+                {it.sizeLabel ? `${it.sizeLabel} · ` : ""}{it.quantity > 1 ? `×${it.quantity}` : "יחידה"}
+              </p>
+            </div>
+            <span style={{ fontWeight: 700, fontSize: 14, flexShrink: 0 }}>₪{(Number(it.price) * it.quantity).toFixed(0)}</span>
+          </div>
+        ))}
+        <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid var(--line)", marginTop: 10, paddingTop: 10, fontWeight: 700, fontSize: 14 }}>
+          <span>סכום המסירה</span>
+          <span>₪{(itemsTotal + fee).toFixed(0)}{fee > 0 ? ` (כולל משלוח ₪${fee.toFixed(0)})` : ""}</span>
+        </div>
+      </div>
+
+      {!open ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px" }}>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontSize: 14, fontWeight: 700 }}>{methodText}</p>
+            <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 2 }}>{summary}</p>
+            {isDelivery && b.rAddr ? (
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {b.rAddr}{toOther && b.rName ? ` · ${b.rName}` : ""}
+              </p>
+            ) : null}
+          </div>
+          <button
+            onClick={() => onChange({ collapsed: false })}
+            style={{ background: "none", border: "1px solid var(--green)", borderRadius: 999, padding: "7px 14px", color: "var(--green)", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
+          >
+            עריכת המסירה
+          </button>
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+            {bigBtn(b.method === "pickup", "איסוף עצמי", () => onChange({ method: "pickup" }))}
+            {bigBtn(b.method === "delivery", "משלוח", () => onChange({ method: "delivery" }))}
+          </div>
+
+          {isDelivery ? (
+            <>
+              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                {SUB_TYPES.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => onChange({ subType: s.key })}
+                    style={{
+                      flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                      background: b.subType === s.key ? "var(--green)" : "#fff",
+                      color: b.subType === s.key ? "#fff" : "var(--ink)",
+                      border: b.subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)",
+                    }}
+                  >
+                    {s.label} · ₪{fees[s.key] ?? ""}
+                  </button>
+                ))}
+              </div>
+
+              <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 8 }}>למי המשלוח?</label>
+              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                {bigBtn(b.forWho === "self", "אליי", () => onChange({ forWho: "self", rName: "", rPhone: "" }))}
+                {bigBtn(b.forWho === "other", "למישהו אחר", () => onChange({ forWho: "other" }))}
+              </div>
+
+              {b.forWho ? (
+                <>
+                  {prevAddress ? (
+                    <button
+                      onClick={fillPrevAddress}
+                      style={{ width: "100%", padding: "11px", borderRadius: 10, border: "1px solid var(--green)", background: "#fff", color: "var(--green)", fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 14 }}
+                    >
+                      מילוי אותה כתובת
+                    </button>
+                  ) : null}
+
+                  {toOther ? (
+                    <>
+                      {field("שם המקבל *", b.rName || "", (v) => onChange({ rName: v }), { placeholder: "שם המקבל" })}
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>טלפון המקבל *</label>
+                        <input
+                          value={b.rPhone || ""}
+                          onChange={(e) => onChange({ rPhone: e.target.value })}
+                          type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
+                          style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${rPhoneBad ? "#b3261e" : "var(--line)"}`, fontSize: 15 }}
+                        />
+                        {rPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון מלא.</p> : null}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {field(toOther ? "כתובת המקבל *" : "כתובת למשלוח *", b.rAddr || "", (v) => onChange({ rAddr: v }), { placeholder: "רחוב, מספר, עיר" })}
+                </>
+              ) : null}
+            </>
+          ) : null}
+
+          {b.method ? (
+            <>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>ברכה לכרטיס (אופציונלי)</label>
+                <textarea
+                  value={b.greeting || ""}
+                  onChange={(e) => onChange({ greeting: e.target.value.slice(0, 100) })}
+                  rows={2}
+                  maxLength={100}
+                  style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }}
+                  placeholder="הברכה שתודפס על הכרטיס"
+                />
+                <p style={{ textAlign: "left", color: "var(--muted)", fontSize: 12, marginTop: 4 }}>{(b.greeting || "").length}/100</p>
+              </div>
+
+              <p style={{ fontWeight: 700, marginBottom: 12 }}>{b.method === "pickup" ? "מועד איסוף" : "מועד משלוח"}</p>
+              {options.length === 0 ? (
+                <p style={{ color: "var(--muted)", fontSize: 14 }}>אין מועדים זמינים כרגע. ניצור קשר לתיאום.</p>
+              ) : (
+                <>
+                  <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>יום</label>
+                  <select
+                    value={b.selDate || ""}
+                    onChange={(e) => {
+                      const day = options.find((o) => o.date === e.target.value);
+                      onChange({ selDate: e.target.value, selWindow: day?.windows[0] || "" });
+                    }}
+                    style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15, marginBottom: 14, background: "#fff" }}
+                  >
+                    {options.map((o) => <option key={o.date} value={o.date}>{o.label}</option>)}
+                  </select>
+
+                  <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>שעה</label>
+                  <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    {(currentDay?.windows || []).map((w) => (
+                      <button
+                        key={w}
+                        onClick={() => onChange({ selWindow: w })}
+                        style={{
+                          padding: "11px 8px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                          background: b.selWindow === w ? "var(--green)" : "#fff",
+                          color: b.selWindow === w ? "#fff" : "var(--ink)",
+                          border: b.selWindow === w ? "1px solid var(--green)" : "1px solid var(--line)",
+                        }}
+                      >
+                        {w.replace("-", ":00-") + ":00"}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {multi && complete ? (
+                <button
+                  onClick={() => onChange({ collapsed: true })}
+                  style={{ width: "100%", marginTop: 16, padding: "11px", borderRadius: 10, border: "1px solid var(--green)", background: "#fff", color: "var(--green)", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                >
+                  אישור פרטי המסירה
+                </button>
+              ) : null}
+            </>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
