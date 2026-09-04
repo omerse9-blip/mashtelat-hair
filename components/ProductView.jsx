@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { sizeLabel, singleSizeText } from "../lib/siteData";
+import { sizeLabel, singleSizeText, availableFromFull } from "../lib/siteData";
 import { useCart } from "./CartProvider";
 import AddonsPopup from "./AddonsPopup";
 
@@ -20,6 +20,7 @@ export default function ProductView({ product, addonGroups }) {
 
   const hasAddons = addonGroups && addonGroups.length > 0;
   const disclaimer = product.categories?.disclaimer || DEFAULT_DISCLAIMER;
+  const availableText = availableFromFull(product);
 
   const sizes = product.product_sizes || [];
   const current = hasSizes ? sizes[sel] : null;
@@ -63,6 +64,8 @@ export default function ProductView({ product, addonGroups }) {
       sizeLabel: hasSizes ? sizeLabel(current) : singleText,
       price: price,
       image: image,
+      availableFromDate: product.available_from_date || null,
+      availableFromWindow: product.available_from_window || null,
     }, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 1600);
@@ -116,9 +119,15 @@ export default function ProductView({ product, addonGroups }) {
           <p className="product-sizetext" style={{ color: "var(--muted)", fontSize: 16, marginBottom: 16 }}>{singleText}</p>
         ) : null}
 
-        <div className="product-price" style={{ fontSize: 30, fontWeight: 700, color: "var(--green)", marginBottom: 24 }}>
+        <div className="product-price" style={{ fontSize: 30, fontWeight: 700, color: "var(--green)", marginBottom: availableText ? 10 : 24 }}>
           {price != null ? `₪${price}` : "—"}
         </div>
+
+        {availableText ? (
+          <p className="product-available" style={{ display: "inline-block", background: "var(--green-soft)", color: "var(--green)", fontSize: 15, fontWeight: 700, padding: "7px 14px", borderRadius: 10, marginBottom: 24 }}>
+            {availableText}
+          </p>
+        ) : null}
 
         {hasSizes ? (
           <div className="product-sizes" style={{ marginBottom: 24 }}>
@@ -218,6 +227,7 @@ export default function ProductView({ product, addonGroups }) {
           .product-title { font-size: 28px !important; margin-bottom: 4px !important; }
           .product-sizetext { font-size: 14px !important; margin-bottom: 8px !important; }
           .product-price { font-size: 24px !important; margin-bottom: 14px !important; }
+          .product-available { font-size: 14px !important; padding: 6px 12px !important; margin-bottom: 16px !important; }
           .product-sizes { margin-bottom: 14px !important; }
           .product-sizedesc { font-size: 14px !important; margin-top: 10px !important; }
           .product-actions { margin-bottom: 12px !important; }
