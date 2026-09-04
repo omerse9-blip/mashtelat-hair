@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useCart } from "../../components/CartProvider";
@@ -6,6 +7,21 @@ import { useDelivery } from "../../components/DeliveryProvider";
 import { getDeliveryFees } from "../../lib/siteData";
 
 const SUB_TYPE_LABELS = { city: "משלוח בעיר", hotel: "משלוח למלון" };
+const HEB_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+// טקסט זמינות עתידית לפריט בעגלה
+function availableText(item) {
+  const iso = item?.availableFromDate;
+  if (!iso) return "";
+  const [y, m, d] = String(iso).split("-").map(Number);
+  if (!y || !m || !d) return "";
+  const date = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (date <= today) return "";
+  const w = item.availableFromWindow ? `, ${item.availableFromWindow}` : "";
+  return `זמין מיום ${HEB_DAYS[date.getDay()]} ${d}.${m}${w}`;
+}
 
 export default function CartPage() {
   const { items, count, total, removeItem, addItem, setQuantity, clear, ready } = useCart();
@@ -31,6 +47,8 @@ export default function CartPage() {
     ? Number(fees[delivery.subType] || 0)
     : 0;
   const grandTotal = total + deliveryFee;
+
+  const hasDeferred = items.some((it) => availableText(it));
 
   function startUndo(removed, label) {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -101,6 +119,12 @@ export default function CartPage() {
             ))}
           </div>
 
+          {hasDeferred ? (
+            <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.6, marginBottom: 18, padding: "12px 14px", background: "var(--green-soft)", borderRadius: 12 }}>
+              פריטים שזמינים במועד מאוחר יותר נמסרים בנפרד. בשלב הבא תוכלו לבחור מועד ואופן מסירה לכל אחד.
+            </p>
+          ) : null}
+
           <div style={{ borderTop: "1px solid var(--line)", paddingTop: 18 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
               <span style={{ fontSize: 15, color: "var(--muted)" }}>סה"כ פריטים ({count})</span>
@@ -137,6 +161,8 @@ export default function CartPage() {
 }
 
 function CartRow({ item, onRemove, setQuantity, isAddon }) {
+  const available = availableText(item);
+
   return (
     <div style={{ display: "flex", gap: 14, alignItems: "center", padding: 12 }}>
       <div style={{ width: isAddon ? 54 : 70, height: isAddon ? 54 : 70, borderRadius: 10, overflow: "hidden", flexShrink: 0, background: "#f4f6f4" }}>
@@ -151,6 +177,11 @@ function CartRow({ item, onRemove, setQuantity, isAddon }) {
         <p style={{ fontWeight: 700, fontSize: isAddon ? 14 : 16 }}>{item.name}</p>
         {item.sizeLabel ? <p style={{ color: "var(--muted)", fontSize: 13 }}>{item.sizeLabel}</p> : null}
         <p style={{ color: "var(--green)", fontWeight: 700, marginTop: 2 }}>₪{Number(item.price).toFixed(0)}</p>
+        {available ? (
+          <p style={{ display: "inline-block", color: "var(--green)", background: "var(--green-soft)", fontSize: 12, fontWeight: 700, padding: "3px 9px", borderRadius: 999, marginTop: 5 }}>
+            {available}
+          </p>
+        ) : null}
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden" }}>
