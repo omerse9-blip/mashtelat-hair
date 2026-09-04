@@ -191,6 +191,7 @@ function ProductCard({ product, activeId, highlight }) {
   const multi = product._multi;
   const isSubscription = product._isSubscription;
   const inStock = product.in_stock;
+  const availableFrom = product._availableFrom;
 
   const productHref = `/product/${product.id}?from=${encodeURIComponent(String(activeId))}`;
 
@@ -230,6 +231,11 @@ function ProductCard({ product, activeId, highlight }) {
             🌸 מנוי
           </span>
         ) : null}
+        {availableFrom ? (
+          <span className="card-available" style={{ position: "absolute", bottom: 10, insetInlineStart: 10, background: "rgba(63,122,82,0.92)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
+            {availableFrom}
+          </span>
+        ) : null}
       </div>
 
       <div className="product-body" style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
@@ -247,6 +253,7 @@ function ProductCard({ product, activeId, highlight }) {
           .product-card .product-body { padding: 9px 10px !important; gap: 3px !important; }
           .product-card .product-name { font-size: 17px !important; }
           .product-card .product-price { font-size: 16px !important; }
+          .product-card .card-available { font-size: 11px !important; padding: 3px 8px !important; bottom: 8px !important; }
         }
       `}</style>
     </Link>
