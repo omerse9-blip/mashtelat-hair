@@ -16,18 +16,19 @@ export async function POST(req) {
     return NextResponse.json({ error: "missing LowProfileId" }, { status: 400 });
   }
 
-  const { data: order, error: findErr } = await supabaseAdmin
+  // תשלום אחד יכול לכסות כמה הזמנות (מסירות במועדים שונים)
+  const { data: orders, error: findErr } = await supabaseAdmin
     .from("orders")
     .select("*")
-    .eq("cardcom_low_profile_id", lowProfileId)
-    .maybeSingle();
+    .eq("cardcom_low_profile_id", lowProfileId);
 
-  if (findErr || !order) {
+  if (findErr || !orders || orders.length === 0) {
     console.error("[cardcom][CRITICAL] webhook order not found", { lowProfileId, findErr });
     return NextResponse.json({ ok: true });
   }
 
-  if (order.cardcom_tranzaction_id) {
+  const pending = orders.filter((o) => !o.cardcom_tranzaction_id);
+  if (pending.length === 0) {
     return NextResponse.json({ ok: true });
   }
 
@@ -72,10 +73,10 @@ export async function POST(req) {
   const { error: updateErr } = await supabaseAdmin
     .from("orders")
     .update(update)
-    .eq("id", order.id);
+    .in("id", pending.map((o) => o.id));
 
   if (updateErr) {
-    console.error("[cardcom] failed updating order after validation", updateErr);
+    console.error("[cardcom] failed updating orders after validation", updateErr);
     return NextResponse.json({ error: "update failed" }, { status: 500 });
   }
 
