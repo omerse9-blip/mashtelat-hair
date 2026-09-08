@@ -45,6 +45,24 @@ export async function POST(req) {
     return NextResponse.json({ error: "validation failed" }, { status: 500 });
   }
 
+  const pendingIds = pending.map((o) => o.id);
+
+  // תשלום לא הצליח — ההזמנה לא הייתה אמורה להיווצר מלכתחילה, אז לא משאירים ממנה זכר
+  if (result.ResponseCode !== 0) {
+    console.error("[cardcom] payment failed, deleting pending order(s)", {
+      lowProfileId,
+      orderNumbers: pending.map((o) => o.order_number),
+      description: result.Description,
+    });
+    await supabaseAdmin.from("order_items").delete().in("order_id", pendingIds);
+    const { error: deleteErr } = await supabaseAdmin.from("orders").delete().in("id", pendingIds);
+    if (deleteErr) {
+      console.error("[cardcom] failed deleting failed-payment orders", deleteErr);
+      return NextResponse.json({ error: "cleanup failed" }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   const tokenInfo = result.TokenInfo || {};
   const documentInfo = result.DocumentInfo || {};
 
@@ -58,11 +76,11 @@ export async function POST(req) {
     cardcom_description: result.Description || "",
     cardcom_document_type: documentInfo.DocumentType || null,
     cardcom_document_number: documentInfo.DocumentNumber ?? null,
+    // תשלום אושר בפועל — ההזמנה הופכת גלויה לצוות
+    status: "new",
   };
 
-  if (result.ResponseCode !== 0) {
-    update.payment_status = "failed";
-  } else if (result.Operation === "ChargeOnly") {
+  if (result.Operation === "ChargeOnly") {
     update.payment_status = "paid";
     update.cardcom_tranzaction_id = result.TranzactionId;
   } else if (result.Operation === "CreateTokenOnly") {
@@ -73,7 +91,7 @@ export async function POST(req) {
   const { error: updateErr } = await supabaseAdmin
     .from("orders")
     .update(update)
-    .in("id", pending.map((o) => o.id));
+    .in("id", pendingIds);
 
   if (updateErr) {
     console.error("[cardcom] failed updating orders after validation", updateErr);
