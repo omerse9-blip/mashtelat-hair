@@ -27,7 +27,19 @@ export async function POST(req) {
     }
   }
 
-  // יצירת הזמנה לכל מסירה
+  // מחיקת הזמנה+פריטיה, לשימוש כשמשהו נכשל לפני שהתשלום אושר —
+  // הזמנה שממתינה לתשלום לא אמורה להשאיר זכר אם היא לא מגיעה לתשלום מוצלח
+  async function deleteOrders(orderNumbers) {
+    if (!orderNumbers.length) return;
+    const { data: rows } = await supabaseAdmin.from("orders").select("id").in("order_number", orderNumbers);
+    const ids = (rows || []).map((r) => r.id);
+    if (ids.length) {
+      await supabaseAdmin.from("order_items").delete().in("order_id", ids);
+      await supabaseAdmin.from("orders").delete().in("id", ids);
+    }
+  }
+
+  // יצירת הזמנה לכל מסירה — נוצרת במצב "ממתין לתשלום", בלתי נראית לצוות עד לאישור קארדקום
   const orderNumbers = [];
   for (const g of groups) {
     const d = g.details || {};
@@ -50,9 +62,19 @@ export async function POST(req) {
     });
     if (orderErr) {
       console.error("[cardcom] order creation failed", orderErr);
+      await deleteOrders(orderNumbers);
       return NextResponse.json({ error: "שגיאה ביצירת ההזמנה" }, { status: 500 });
     }
     orderNumbers.push(orderNumber);
+  }
+
+  const { error: pendingErr } = await supabaseAdmin.from("orders").update({
+    status: "pending_payment",
+  }).in("order_number", orderNumbers);
+  if (pendingErr) {
+    console.error("[cardcom] failed setting pending_payment status", pendingErr);
+    await deleteOrders(orderNumbers);
+    return NextResponse.json({ error: "שגיאה ביצירת ההזמנה" }, { status: 500 });
   }
 
   // סכום כולל: פריטים של כל המסירות + דמי משלוח של כל מסירה
@@ -114,15 +136,13 @@ export async function POST(req) {
     result = await createLowProfile(payload);
   } catch (e) {
     console.error("[cardcom] create low profile network error", e);
+    await deleteOrders(orderNumbers);
     return NextResponse.json({ error: "שגיאת תקשורת מול ספק הסליקה" }, { status: 500 });
   }
 
   if (result.ResponseCode !== 0) {
     console.error("[cardcom][CRITICAL] create low profile failed", { orderNumbers, description: result.Description });
-    await supabaseAdmin.from("orders").update({
-      payment_status: "error",
-      cardcom_description: result.Description || "",
-    }).in("order_number", orderNumbers);
+    await deleteOrders(orderNumbers);
     return NextResponse.json(
       { error: "מצטערים, אירעה שגיאת שרת, נסו שוב בעוד כמה רגעים, ואם השגיאה חוזרת צרו איתנו קשר" },
       { status: 502 }
@@ -137,6 +157,7 @@ export async function POST(req) {
 
   if (updateErr) {
     console.error("[cardcom] failed saving LowProfileId", updateErr);
+    await deleteOrders(orderNumbers);
     return NextResponse.json({ error: "שגיאה בשמירת פרטי התשלום" }, { status: 500 });
   }
 
