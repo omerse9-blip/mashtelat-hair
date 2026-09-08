@@ -88,13 +88,13 @@ export default function NurseryCatalog({ categories, productsByCat, heroImageUrl
 
       <ParallaxHero imageUrl={heroImageUrl} mediaType={heroMediaType} />
 
-      <section style={{ textAlign: "center", marginBottom: 32, marginTop: 28 }}>
-        <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 32 }}>
+      <section style={{ textAlign: "center", marginBottom: 26, marginTop: 28 }}>
+        <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 16 }}>
           משתלת העיר באילת - עציצים, זרי פרחים וצמחי נוי, הזמינו אונליין עם משלוח או איסוף עצמי.
         </p>
       </section>
 
-      <div style={{ maxWidth: 420, margin: "0 auto 44px" }}>
+      <div style={{ maxWidth: 420, margin: "0 auto 26px" }}>
         <DeliveryPicker scrollTargetId="categories-start" />
       </div>
 
