@@ -7,12 +7,13 @@ const DEFAULT_MESSAGE = "כרגע איננו קולטים הזמנות חדשו�
 function formatCountdown(ms) {
   if (ms <= 0) return null;
   const totalSeconds = Math.ceil(ms / 1000);
-  const totalMinutes = Math.floor(totalSeconds / 60);
 
-  if (totalMinutes < 2) {
-    const secs = totalSeconds % 60;
-    return `נחזור בעוד ${secs} ${secs === 1 ? "שניה" : "שניות"}`;
+  if (totalSeconds < 60) {
+    return `נחזור בעוד ${totalSeconds} ${totalSeconds === 1 ? "שניה" : "שניות"}`;
   }
+
+  let totalMinutes = Math.floor(totalSeconds / 60);
+  if (totalMinutes === 1) totalMinutes = 2; // אף פעם לא "דקה אחת"
 
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
