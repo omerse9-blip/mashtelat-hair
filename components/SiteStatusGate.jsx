@@ -6,7 +6,14 @@ const DEFAULT_MESSAGE = "כרגע איננו קולטים הזמנות חדשו�
 
 function formatCountdown(ms) {
   if (ms <= 0) return null;
-  const totalMinutes = Math.ceil(ms / 60000);
+  const totalSeconds = Math.ceil(ms / 1000);
+  const totalMinutes = Math.floor(totalSeconds / 60);
+
+  if (totalMinutes < 2) {
+    const secs = totalSeconds % 60;
+    return `נחזור בעוד ${secs} ${secs === 1 ? "שניה" : "שניות"}`;
+  }
+
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
   const minutes = totalMinutes % 60;
@@ -35,7 +42,7 @@ export default function SiteStatusGate({ children }) {
 
   useEffect(() => {
     if (!status?.disabled_until) return;
-    const tick = setInterval(() => setNow(Date.now()), 15000);
+    const tick = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(tick);
   }, [status?.disabled_until]);
 
