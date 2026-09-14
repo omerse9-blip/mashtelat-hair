@@ -3,6 +3,7 @@ import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { CartProvider } from "../components/CartProvider";
 import { DeliveryProvider } from "../components/DeliveryProvider";
+import SiteStatusGate from "../components/SiteStatusGate";
 import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
 export const metadata = {
   metadataBase: new URL("https://mashtelathair.co.il"),
@@ -123,13 +124,15 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body>
-        <CartProvider>
-          <DeliveryProvider>
-            <SiteHeader searchIndex={searchIndex} nurseryCategories={visibleNurseryCategories} gardenCategories={gardenCategories} />
-            <div style={{ minHeight: "60vh" }}>{children}</div>
-            <SiteFooter />
-          </DeliveryProvider>
-        </CartProvider>
+        <SiteStatusGate>
+          <CartProvider>
+            <DeliveryProvider>
+              <SiteHeader searchIndex={searchIndex} nurseryCategories={visibleNurseryCategories} gardenCategories={gardenCategories} />
+              <div style={{ minHeight: "60vh" }}>{children}</div>
+              <SiteFooter />
+            </DeliveryProvider>
+          </CartProvider>
+        </SiteStatusGate>
       </body>
     </html>
   );
