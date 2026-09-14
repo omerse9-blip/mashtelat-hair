@@ -41,10 +41,18 @@ export default function SiteStatusGate({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!status?.disabled_until) return;
     const tick = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(tick);
-  }, [status?.disabled_until]);
+  }, []);
+
+  useEffect(() => {
+    if (!status?.is_disabled || !status?.disabled_until) return;
+    if (new Date(status.disabled_until).getTime() <= now) {
+      supabase.rpc("expire_site_status").then(() => {
+        setStatus((prev) => (prev ? { ...prev, is_disabled: false, message: null, disabled_until: null } : prev));
+      });
+    }
+  }, [status, now]);
 
   useEffect(() => {
     function updateHeight() {
@@ -68,7 +76,10 @@ export default function SiteStatusGate({ children }) {
     };
   }, []);
 
-  const isDisabled = !!status?.is_disabled;
+  const rawDisabled = !!status?.is_disabled;
+  const timeExpired = !!(status?.disabled_until && new Date(status.disabled_until).getTime() <= now);
+  const isDisabled = rawDisabled && !timeExpired;
+
   let countdownText = null;
   if (isDisabled && status?.disabled_until) {
     const remain = new Date(status.disabled_until).getTime() - now;
