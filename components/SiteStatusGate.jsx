@@ -20,6 +20,7 @@ function formatCountdown(ms) {
 export default function SiteStatusGate({ children }) {
   const [status, setStatus] = useState(null);
   const [now, setNow] = useState(Date.now());
+  const [viewportHeight, setViewportHeight] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -38,6 +39,28 @@ export default function SiteStatusGate({ children }) {
     return () => clearInterval(tick);
   }, [status?.disabled_until]);
 
+  useEffect(() => {
+    function updateHeight() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      setViewportHeight(h);
+    }
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    window.addEventListener("scroll", updateHeight, { passive: true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", updateHeight);
+      window.visualViewport.addEventListener("scroll", updateHeight);
+    }
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("scroll", updateHeight);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", updateHeight);
+        window.visualViewport.removeEventListener("scroll", updateHeight);
+      }
+    };
+  }, []);
+
   const isDisabled = !!status?.is_disabled;
   let countdownText = null;
   if (isDisabled && status?.disabled_until) {
@@ -51,7 +74,9 @@ export default function SiteStatusGate({ children }) {
       {isDisabled && (
         <div
           style={{
-            position: "fixed", inset: 0, zIndex: 9999,
+            position: "fixed", top: 0, left: 0, right: 0,
+            height: viewportHeight ? `${viewportHeight}px` : "100vh",
+            zIndex: 9999,
             backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
             backgroundColor: "rgba(20,20,20,0.4)",
             display: "flex", alignItems: "center", justifyContent: "center",
