@@ -53,6 +53,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
       price,
       image: cardImageOf(product),
       parentKey,
+      onlinePaymentEnabled: !!product.categories?.online_payment_enabled,
     }, 1);
     markAdded(product.id);
   }
@@ -66,6 +67,7 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
       price: Number(size.price),
       image: size.image_url || cardImageOf(product),
       parentKey,
+      onlinePaymentEnabled: !!product.categories?.online_payment_enabled,
     }, 1);
     markAdded(product.id);
     setSizePickFor(null);
