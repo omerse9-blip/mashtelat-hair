@@ -47,18 +47,27 @@ export async function POST(req) {
 
   const pendingIds = pending.map((o) => o.id);
 
-  // תשלום לא הצליח — ההזמנה לא הייתה אמורה להיווצר מלכתחילה, אז לא משאירים ממנה זכר
+  // תשלום נכשל לפי קארדקום — לא מוחקים יותר: ייתכן דיווח שגוי מצד קארדקום על תשלום
+  // שבפועל כן חויב, ומחיקה הייתה מאבדת את ההזמנה לצמיתות בלי שום עקבות. ההזמנה
+  // נשארת גלויה עם תג "נכשל", כדי שאפשר יהיה לבדוק ידנית מול קארדקום במקרה הצורך
   if (result.ResponseCode !== 0) {
-    console.error("[cardcom] payment failed, deleting pending order(s)", {
+    console.error("[cardcom] payment reported as failed by cardcom — keeping order visible for manual review", {
       lowProfileId,
       orderNumbers: pending.map((o) => o.order_number),
       description: result.Description,
     });
-    await supabaseAdmin.from("order_items").delete().in("order_id", pendingIds);
-    const { error: deleteErr } = await supabaseAdmin.from("orders").delete().in("id", pendingIds);
-    if (deleteErr) {
-      console.error("[cardcom] failed deleting failed-payment orders", deleteErr);
-      return NextResponse.json({ error: "cleanup failed" }, { status: 500 });
+    const { error: failUpdateErr } = await supabaseAdmin
+      .from("orders")
+      .update({
+        status: "new",
+        payment_status: "failed",
+        cardcom_response_code: String(result.ResponseCode),
+        cardcom_description: result.Description || "",
+      })
+      .in("id", pendingIds);
+    if (failUpdateErr) {
+      console.error("[cardcom] failed marking failed-payment orders", failUpdateErr);
+      return NextResponse.json({ error: "update failed" }, { status: 500 });
     }
     return NextResponse.json({ ok: true });
   }
