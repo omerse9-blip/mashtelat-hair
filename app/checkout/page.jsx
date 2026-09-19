@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "../../components/CartProvider";
 import { useDelivery } from "../../components/DeliveryProvider";
 import { getDeliveryOptions, getDeliveryFees, createOrder } from "../../lib/siteData";
+import { trackEvent } from "../../lib/tracking";
 
 const FORM_STORAGE_KEY = "mashtela_checkout_form_v3";
 const SUB_TYPES = [
@@ -328,6 +329,7 @@ export default function CheckoutPage() {
           numbers.push(n);
         }
         try { localStorage.removeItem(FORM_STORAGE_KEY); } catch { /* התעלמות */ }
+        trackEvent("order_complete");
         setOrderSent(numbers.length === 1 ? numbers[0] : numbers);
         setSubmitting(false);
         return;
@@ -340,6 +342,7 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "אירעה שגיאה בשליחה. נסו שוב.");
+      trackEvent("order_complete");
       window.location.href = data.url;
     } catch (e) {
       setErr(e.message || "אירעה שגיאה בשליחה. נסו שוב.");
