@@ -5,6 +5,7 @@ import SiteFooter from "../components/SiteFooter";
 import { CartProvider } from "../components/CartProvider";
 import { DeliveryProvider } from "../components/DeliveryProvider";
 import SiteStatusGate from "../components/SiteStatusGate";
+import SessionTracker from "../components/SessionTracker";
 import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
 export const metadata = {
   metadataBase: new URL("https://mashtelathair.co.il"),
@@ -134,6 +135,7 @@ export default async function RootLayout({ children }) {
             </DeliveryProvider>
           </CartProvider>
         </SiteStatusGate>
+        <SessionTracker />
         <Analytics />
       </body>
     </html>
