@@ -52,6 +52,15 @@ export function middleware(request, event) {
   if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     const ua = request.headers.get("user-agent");
     const referer = request.headers.get("referer");
+    const debugHeaders = JSON.stringify({
+      rsc: request.headers.get("rsc"),
+      nextRouterPrefetch: request.headers.get("next-router-prefetch"),
+      nextRouterState: request.headers.get("next-router-state-tree") ? "yes" : null,
+      purpose: request.headers.get("purpose"),
+      secFetchMode: request.headers.get("sec-fetch-mode"),
+      secFetchDest: request.headers.get("sec-fetch-dest"),
+      accept: request.headers.get("accept"),
+    });
     const payload = {
       visitor_id: visitorId,
       session_id: sessionId,
@@ -59,6 +68,7 @@ export function middleware(request, event) {
       referrer_host: referrerHost(referer, request.nextUrl.hostname),
       device_type: isMobileUA(ua) ? "mobile" : "desktop",
       is_new_visitor: isNewVisitor,
+      debug_headers: debugHeaders,
     };
 
     const insertPromise = fetch(`${SUPABASE_URL}/rest/v1/site_visits`, {
