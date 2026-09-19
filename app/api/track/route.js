@@ -1,6 +1,3 @@
-// נקודת קצה שמקבלת אותות מהדפדפן (זמן שהות בדף, הוספה לעגלה, השלמת הזמנה)
-// ורושמת אותם ב-Supabase. הדפדפן לא מדבר ישירות עם Supabase כדי לא לחשוף מפתחות.
-
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -28,7 +25,7 @@ export async function POST(req) {
     return new Response(null, { status: 204 });
   }
 
-  const { type, session_id, visitor_id, path, duration_ms } = body || {};
+  const { type, session_id, visitor_id, path, duration_ms, device_type } = body || {};
   if (!type || !session_id) return new Response(null, { status: 204 });
 
   if (type === "duration") {
@@ -37,6 +34,17 @@ export async function POST(req) {
   } else if (type === "cart_add" || type === "order_complete") {
     if (!visitor_id) return new Response(null, { status: 204 });
     await insert("site_cart_events", { session_id, visitor_id, event_type: type });
+  } else if (type === "pageview") {
+    // ניווט פנימי אמיתי בין דפים באתר (SPA) - ראו הערה ב-lib/tracking.js
+    if (!visitor_id || !path) return new Response(null, { status: 204 });
+    await insert("site_visits", {
+      visitor_id,
+      session_id,
+      path,
+      referrer_host: null,
+      device_type: device_type === "mobile" ? "mobile" : "desktop",
+      is_new_visitor: false,
+    });
   }
 
   return new Response(null, { status: 204 });
