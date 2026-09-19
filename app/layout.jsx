@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { CartProvider } from "../components/CartProvider";
@@ -133,6 +134,7 @@ export default async function RootLayout({ children }) {
             </DeliveryProvider>
           </CartProvider>
         </SiteStatusGate>
+        <Analytics />
       </body>
     </html>
   );
