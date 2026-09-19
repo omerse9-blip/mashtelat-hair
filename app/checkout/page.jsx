@@ -27,7 +27,6 @@ function isoParts(iso) {
   return { dayName: HEB_DAYS[date.getDay()], d, m };
 }
 
-// קיבוץ פריטי העגלה לקבוצות מסירה: זמין עכשיו, ואחריו כל תאריך+חלון בנפרד
 function buildGroups(items) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -61,7 +60,6 @@ function buildGroups(items) {
   return [...out, ...deferred];
 }
 
-// סינון מועדים אפשריים לקבוצה: לא לפני תאריך הזמינות, ובאותו יום לא לפני החלון
 function filterOptions(options, fromDate, fromWindow) {
   if (!fromDate) return options;
   const startH = fromWindow ? parseInt(String(fromWindow).split("-")[0], 10) : null;
@@ -108,7 +106,6 @@ export default function CheckoutPage() {
 
   const groups = buildGroups(items);
 
-  // טעינת טופס שמור
   useEffect(() => {
     try {
       const raw = localStorage.getItem(FORM_STORAGE_KEY);
@@ -124,7 +121,6 @@ export default function CheckoutPage() {
     setFormReady(true);
   }, []);
 
-  // שמירת הטופס בכל שינוי
   useEffect(() => {
     if (!formReady) return;
     try {
@@ -132,19 +128,16 @@ export default function CheckoutPage() {
     } catch { /* התעלמות */ }
   }, [formReady, cName, cPhone, notes, blocks]);
 
-  // דמי המשלוח המוגדרים
   useEffect(() => {
     getDeliveryFees().then(setFees).catch(() => {});
   }, []);
 
-  // טעינת ימי וחלונות המסירה
   useEffect(() => {
     let alive = true;
     getDeliveryOptions(21).then((opts) => { if (alive) setOptions(opts); }).catch(() => setOptions([]));
     return () => { alive = false; };
   }, []);
 
-  // אתחול בלוק לכל קבוצה, כולל מילוי מוקדם מבחירת המשלוח בעמוד הבית
   useEffect(() => {
     if (!formReady || !deliveryReady || !groups.length) return;
     setBlocks((prev) => {
@@ -174,7 +167,6 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formReady, deliveryReady, items.length]);
 
-  // ברירת מחדל למועד בכל בלוק, ברגע שיש אפשרויות
   useEffect(() => {
     if (!options.length || !groups.length) return;
     setBlocks((prev) => {
@@ -216,7 +208,6 @@ export default function CheckoutPage() {
   const feesTotal = groups.reduce((s, g) => s + groupFee(g), 0);
   const grandTotal = total + feesTotal;
 
-  // כתובת שכבר מולאה בבלוק קודם — למילוי מהיר
   function previousAddress(index) {
     for (let i = index - 1; i >= 0; i--) {
       const b = blocks[groups[i].key];
@@ -342,7 +333,6 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "אירעה שגיאה בשליחה. נסו שוב.");
-      trackEvent("order_complete");
       window.location.href = data.url;
     } catch (e) {
       setErr(e.message || "אירעה שגיאה בשליחה. נסו שוב.");
@@ -445,7 +435,6 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
   const currentDay = options.find((o) => o.date === b.selDate);
   const rPhoneBad = (b.rPhone || "").trim() !== "" && !validPhone(b.rPhone);
 
-  // בלוק שעדיין לא מולא נשאר פתוח — אין מה לכווץ
   const complete = !!b.method && !!b.selDate && !!b.selWindow && (
     b.method === "pickup" ||
     (b.subType && b.rAddr?.trim() && (b.forWho === "self" || (b.forWho === "other" && b.rName?.trim() && validPhone(b.rPhone))))
