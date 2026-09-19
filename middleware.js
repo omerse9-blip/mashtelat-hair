@@ -38,8 +38,10 @@ function isRealPageView(headers) {
   // טעינה מלאה של דף - כתובת שהוקלדה, רענון, או לינק חיצוני
   if (secFetchMode === "navigate" && secFetchDest === "document") return true;
 
-  // ניווט פנימי אמיתי בתוך האתר בלחיצה על קישור (RSC fetch אמיתי, לא prefetch)
-  if (headers.get("rsc") === "1") return true;
+  // הערה: ניווט פנימי בתוך האתר (קליק על קישור, בלי טעינה מחדש) לא נספר כאן בכלל,
+  // גם אם זו בקשת RSC אמיתית ולא prefetch - כי Next.js לפעמים מגיש אותו מהמטמון בלי
+  // בקשה חדשה לשרת (אחרי prefetch), ולפעמים כן שולח בקשה. כדי שלא תהיה ספירה כפולה
+  // או חוסרה, כל ניווט פנימי נספר אך ורק בצד הלקוח (SessionTracker.jsx + trackPageview)
 
   // דפדפן ללא כותרות Sec-Fetch (נדיר) - מניחים שזו כניסה אמיתית
   if (secFetchMode == null) return true;
