@@ -9,9 +9,9 @@ import ParallaxHero from "./ParallaxHero";
 import { getDeliveryNotices } from "../lib/siteData";
 
 const SORT_OPTIONS = [
+  { key: "best", label: "הנמכרים ביותר" },
   { key: "price_desc", label: "מהיקר לזול" },
   { key: "price_asc", label: "מהזול ליקר" },
-  { key: "best", label: "הנמכרים ביותר" },
 ];
 
 function sortProducts(products, sort) {
@@ -102,7 +102,7 @@ export default function NurseryCatalog({ categories, productsByCat, heroImageUrl
 
       {categories.map((c) => {
         const products = productsByCat[c.id] || productsByCat[String(c.id)] || [];
-        const sort = sortByCat[c.id] || "price_desc";
+        const sort = sortByCat[c.id] || "best";
         const sorted = sortProducts(products, sort);
         return (
           <section key={c.id} id={`cat-${c.id}`} style={{ marginBottom: 52, scrollMarginTop: 90 }}>
