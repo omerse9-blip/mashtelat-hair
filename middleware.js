@@ -28,11 +28,30 @@ function referrerHost(referer, ownHost) {
   }
 }
 
+// האם זו כניסה אמיתית של אדם, ולא טעינה-מראש ברקע (של Next או של הדפדפן עצמו)
+function isRealPageView(headers) {
+  if (headers.get("next-router-prefetch") || headers.get("purpose") === "prefetch") return false;
+
+  const secFetchMode = headers.get("sec-fetch-mode");
+  const secFetchDest = headers.get("sec-fetch-dest");
+
+  // טעינה מלאה של דף - כתובת שהוקלדה, רענון, או לינק חיצוני
+  if (secFetchMode === "navigate" && secFetchDest === "document") return true;
+
+  // ניווט פנימי אמיתי בתוך האתר בלחיצה על קישור (RSC fetch אמיתי, לא prefetch)
+  if (headers.get("rsc") === "1") return true;
+
+  // דפדפן ללא כותרות Sec-Fetch (נדיר) - מניחים שזו כניסה אמיתית
+  if (secFetchMode == null) return true;
+
+  // כל השאר - טעינה-מראש שהדפדפן יוזם לבד לקישורים בדף (link rel=prefetch) - לא כניסה אמיתית
+  return false;
+}
+
 export function middleware(request, event) {
   const res = NextResponse.next();
 
-  // טעינה-מראש (prefetch) שהדפדפן שולח לבד ברקע - לא כניסה אמיתית, מדלגים
-  if (request.headers.get("next-router-prefetch") || request.headers.get("purpose") === "prefetch") {
+  if (!isRealPageView(request.headers)) {
     return res;
   }
 
@@ -52,15 +71,6 @@ export function middleware(request, event) {
   if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     const ua = request.headers.get("user-agent");
     const referer = request.headers.get("referer");
-    const debugHeaders = JSON.stringify({
-      rsc: request.headers.get("rsc"),
-      nextRouterPrefetch: request.headers.get("next-router-prefetch"),
-      nextRouterState: request.headers.get("next-router-state-tree") ? "yes" : null,
-      purpose: request.headers.get("purpose"),
-      secFetchMode: request.headers.get("sec-fetch-mode"),
-      secFetchDest: request.headers.get("sec-fetch-dest"),
-      accept: request.headers.get("accept"),
-    });
     const payload = {
       visitor_id: visitorId,
       session_id: sessionId,
@@ -68,7 +78,6 @@ export function middleware(request, event) {
       referrer_host: referrerHost(referer, request.nextUrl.hostname),
       device_type: isMobileUA(ua) ? "mobile" : "desktop",
       is_new_visitor: isNewVisitor,
-      debug_headers: debugHeaders,
     };
 
     const insertPromise = fetch(`${SUPABASE_URL}/rest/v1/site_visits`, {
