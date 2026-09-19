@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { trackEvent } from "../lib/tracking";
 const CartContext = createContext(null);
 const STORAGE_KEY = "mashtela_cart_v1";
 export function CartProvider({ children }) {
@@ -26,6 +27,7 @@ export function CartProvider({ children }) {
       }
       return [...prev, { ...item, quantity: qty }];
     });
+    trackEvent("cart_add");
   }, []);
   const removeItem = useCallback((key) => {
     setItems((prev) => prev.filter((x) => x.key !== key));
