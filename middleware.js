@@ -50,8 +50,19 @@ function isRealPageView(headers) {
   return false;
 }
 
+// נתיבים שרובוטי סריקה אוטומטיים מנסים (חיפוש קבצי סודות/פאנלים ישנים) -
+// לא ביקורים אמיתיים, לא נרצה לרשום אותם באנליטיקס בכלל
+function isBotScan(pathname) {
+  if (/(^|\/)\.[^/]+/.test(pathname)) return true; // כל קובץ/תיקייה שמתחילים בנקודה, כמו .env או .git
+  return /^\/(wp-admin|wp-login\.php|phpmyadmin|admin|xmlrpc\.php)/i.test(pathname);
+}
+
 export function middleware(request, event) {
   const res = NextResponse.next();
+
+  if (isBotScan(request.nextUrl.pathname)) {
+    return res;
+  }
 
   if (!isRealPageView(request.headers)) {
     return res;
