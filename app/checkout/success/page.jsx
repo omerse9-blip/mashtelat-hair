@@ -8,6 +8,22 @@ import { trackEvent } from "../../../lib/tracking";
 
 const BUSINESS_WA = "972533669089";
 const FORM_STORAGE_KEY = "mashtela_checkout_form_v2";
+const TRACKED_ORDERS_KEY = "mashtela_tracked_orders";
+
+// מונע ספירה כפולה של אותה הזמנה אם הלקוח מרענן את עמוד ההצלחה
+function alreadyTracked(order) {
+  if (!order) return false;
+  try {
+    const raw = localStorage.getItem(TRACKED_ORDERS_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    if (list.includes(order)) return true;
+    list.push(order);
+    localStorage.setItem(TRACKED_ORDERS_KEY, JSON.stringify(list.slice(-50)));
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -17,7 +33,9 @@ function SuccessContent() {
   useEffect(() => {
     clear();
     try { localStorage.removeItem(FORM_STORAGE_KEY); } catch { /* התעלמות */ }
-    trackEvent("order_complete");
+    if (!alreadyTracked(order)) {
+      trackEvent("order_complete");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
