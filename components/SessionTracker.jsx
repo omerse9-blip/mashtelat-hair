@@ -1,16 +1,24 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { getCookie, SESSION_COOKIE } from "../lib/tracking";
+import { getCookie, SESSION_COOKIE, trackPageview } from "../lib/tracking";
 
 // עוקב אחרי כמה זמן המבקר שוהה בכל דף, ושולח את זה לשרת כשעוזב את הדף
-// (או עובר לדף אחר באתר, או סוגר את הטאב)
+// (או עובר לדף אחר באתר, או סוגר את הטאב). גם אחראי לדווח על כל ניווט פנימי
+// בתוך האתר (SPA) כצפייה בדף - הכניסה הראשונה כבר נרשמת על ידי המידלוור, אז
+// מדלגים עליה כאן כדי שלא תהיה ספירה כפולה.
 export default function SessionTracker() {
   const pathname = usePathname();
   const startRef = useRef(Date.now());
+  const mountedRef = useRef(false);
 
   useEffect(() => {
     startRef.current = Date.now();
+
+    if (mountedRef.current) {
+      trackPageview(pathname);
+    }
+    mountedRef.current = true;
 
     function send() {
       const sessionId = getCookie(SESSION_COOKIE);
