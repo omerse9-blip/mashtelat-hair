@@ -4,6 +4,7 @@ import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "../../../components/CartProvider";
+import { trackEvent } from "../../../lib/tracking";
 
 const BUSINESS_WA = "972533669089";
 const FORM_STORAGE_KEY = "mashtela_checkout_form_v2";
@@ -16,6 +17,7 @@ function SuccessContent() {
   useEffect(() => {
     clear();
     try { localStorage.removeItem(FORM_STORAGE_KEY); } catch { /* התעלמות */ }
+    trackEvent("order_complete");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
