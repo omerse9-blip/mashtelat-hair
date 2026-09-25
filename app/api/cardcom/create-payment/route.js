@@ -84,6 +84,7 @@ export async function POST(req) {
     }
 
     // סכום כולל: פריטים של כל המסירות + דמי משלוח של כל מסירה
+    // אילת פטורה ממע"מ — כל שורה מסומנת פטורה
     let amount = 0;
     const products = [];
     for (const g of groups) {
@@ -93,6 +94,7 @@ export async function POST(req) {
           Description: it.sizeLabel ? `${it.name} (${it.sizeLabel})` : it.name,
           UnitCost: Number(it.price),
           Quantity: Number(it.quantity),
+          IsVatFree: true,
         });
       }
       const fee = Number(g.deliveryFee || 0);
@@ -102,6 +104,7 @@ export async function POST(req) {
           Description: g.feeLabel || "דמי משלוח",
           UnitCost: fee,
           Quantity: 1,
+          IsVatFree: true,
         });
       }
     }
@@ -130,6 +133,7 @@ export async function POST(req) {
       Document: {
         DocumentTypeToCreate: "Auto",
         IsAllowEditDocument: true,
+        IsVatFree: true,
         Name: first.customer_name,
         Mobile: first.customer_phone,
         Language: "he",
