@@ -133,6 +133,10 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
+    if (orderSent) window.scrollTo({ top: 0, behavior: "auto" });
+  }, [orderSent]);
+
+  useEffect(() => {
     let alive = true;
     getDeliveryOptions(21).then((opts) => { if (alive) setOptions(opts); }).catch(() => setOptions([]));
     return () => { alive = false; };
@@ -242,7 +246,19 @@ export default function CheckoutPage() {
           חלק מהפריטים בהזמנה דורשים תיאום, ולכן היא נשלחה בלי חיוב.
           ניצור איתך קשר טלפוני בהקדם לתיאום פרטי המשלוח והתשלום.
         </p>
-        <Link href="/" style={{ display: "inline-block", marginTop: 24, color: "var(--green)", fontWeight: 700 }}>
+        <a
+          href={`https://wa.me/972533669089?text=${encodeURIComponent(
+            Array.isArray(orderSent)
+              ? `שלום, שלחתי הזמנה במשתלת העיר. מספרי הזמנה ${orderSent.join(", ")}. אשמח לתיאום המשלוח והתשלום.`
+              : `שלום, שלחתי הזמנה במשתלת העיר. מספר הזמנה ${orderSent}. אשמח לתיאום המשלוח והתשלום.`
+          )}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{ display: "block", background: "#25D366", color: "#fff", fontSize: 17, fontWeight: 700, padding: "14px", borderRadius: 12, marginTop: 28, marginBottom: 12 }}
+        >
+          שליחת אישור בוואטסאפ
+        </a>
+        <Link href="/" style={{ display: "block", color: "var(--green)", fontWeight: 600 }}>
           חזרה לקטלוג המשתלה
         </Link>
       </main>
