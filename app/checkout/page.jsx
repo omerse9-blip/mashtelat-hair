@@ -414,8 +414,9 @@ export default function CheckoutPage() {
       </div>
 
       {!allOnlinePayable ? (
-        <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 14 }}>
-          חלק מפריטי ההזמנה דורשים תיאום מחיר משלוח, ולכן ההזמנה תישלח בלי חיוב — ניצור איתך קשר טלפוני להשלמת התשלום.
+        <p style={{ color: "var(--ink)", fontSize: 15, lineHeight: 1.6, marginBottom: 14, padding: "12px 14px", background: "var(--green-soft)", border: "1px solid var(--green)", borderRadius: 12 }}>
+          חלק מפריטי ההזמנה דורשים תיאום מחיר משלוח, ולכן ההזמנה תישלח בלי חיוב.{" "}
+          <strong>ניצור איתך קשר טלפוני להשלמת התשלום.</strong>
         </p>
       ) : null}
 
