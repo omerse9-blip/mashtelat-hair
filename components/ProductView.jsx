@@ -182,8 +182,13 @@ export default function ProductView({ product, addonGroups }) {
         {product.in_stock && everAdded && count > 0 ? (
           <Link
             href="/cart"
-            style={{ display: "block", textAlign: "center", width: "100%", height: 48, lineHeight: "48px", borderRadius: 10, border: "2px solid var(--green)", background: "var(--green-soft)", color: "var(--green)", fontSize: 16, fontWeight: 800, marginBottom: 20 }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", height: 48, borderRadius: 10, border: "2px solid var(--green)", background: "var(--green-soft)", color: "var(--green)", fontSize: 16, fontWeight: 800, marginBottom: 20 }}
           >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="19" cy="21" r="1" />
+              <path d="M1 1h3l2.4 13.2a2 2 0 0 0 2 1.6h9.2a2 2 0 0 0 2-1.6L21.6 6H5.2" />
+            </svg>
             מעבר לעגלה ({count} {count === 1 ? "פריט" : "פריטים"})
           </Link>
         ) : null}
