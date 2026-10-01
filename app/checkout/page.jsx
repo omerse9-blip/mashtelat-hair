@@ -201,6 +201,7 @@ export default function CheckoutPage() {
   }
   function groupFee(g) {
     const b = blocks[g.key];
+    if (!allOnlinePayable) return 0;
     if (!b || b.method !== "delivery" || !b.subType) return 0;
     return Number(fees[b.subType] || 0);
   }
@@ -384,6 +385,7 @@ export default function CheckoutPage() {
           fees={fees}
           itemsTotal={groupTotal(g)}
           fee={groupFee(g)}
+          coordinated={!allOnlinePayable}
           prevAddress={previousAddress(i)}
           onChange={(patch) => updateBlock(g.key, patch)}
         />
@@ -406,7 +408,7 @@ export default function CheckoutPage() {
           </div>
         ) : null}
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, fontWeight: 800, borderTop: "1px solid var(--line)", paddingTop: 8, marginTop: 8 }}>
-          <span>סה"כ לתשלום</span>
+          <span>{allOnlinePayable ? 'סה"כ לתשלום' : 'סה"כ מוצרים (המשלוח יתואם)'}</span>
           <span style={{ color: "var(--green)" }}>₪{grandTotal.toFixed(0)}</span>
         </div>
       </div>
@@ -432,7 +434,7 @@ export default function CheckoutPage() {
   );
 }
 
-function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, fee, prevAddress, onChange }) {
+function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, fee, coordinated, prevAddress, onChange }) {
   const b = block;
   const isDelivery = b.method === "delivery";
   const toOther = isDelivery && b.forWho === "other";
@@ -554,7 +556,7 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
                       border: b.subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)",
                     }}
                   >
-                    {s.label} · ₪{fees[s.key] ?? ""}
+                    {coordinated ? s.label : `${s.label} · ₪${fees[s.key] ?? ""}`}
                   </button>
                 ))}
               </div>

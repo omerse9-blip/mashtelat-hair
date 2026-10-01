@@ -24,7 +24,7 @@ function availableText(item) {
 }
 
 export default function CartPage() {
-  const { items, count, total, removeItem, addItem, setQuantity, clear, ready } = useCart();
+  const { items, count, total, removeItem, addItem, setQuantity, clear, ready, allOnlinePayable } = useCart();
   const { delivery, ready: deliveryReady } = useDelivery();
   const [undo, setUndo] = useState(null); // { items: [...], label }
   const [fees, setFees] = useState({ city: 30, hotel: 50 });
@@ -43,7 +43,7 @@ export default function CartPage() {
   const addonsOf = (key) => items.filter((it) => it.parentKey === key);
   const orphanAddons = items.filter((it) => it.parentKey && !parents.some((p) => p.key === it.parentKey));
 
-  const deliveryFee = deliveryReady && delivery.method === "delivery" && delivery.subType
+  const deliveryFee = allOnlinePayable && deliveryReady && delivery.method === "delivery" && delivery.subType
     ? Number(fees[delivery.subType] || 0)
     : 0;
   const grandTotal = total + deliveryFee;
@@ -137,7 +137,7 @@ export default function CartPage() {
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18, marginTop: 8, paddingTop: 8, borderTop: "1px dashed var(--line)" }}>
-              <span style={{ fontSize: 18, fontWeight: 700 }}>סה"כ לתשלום</span>
+              <span style={{ fontSize: 18, fontWeight: 700 }}>{allOnlinePayable ? 'סה"כ לתשלום' : 'סה"כ מוצרים (המשלוח יתואם)'}</span>
               <span style={{ fontSize: 24, fontWeight: 800, color: "var(--green)" }}>₪{grandTotal.toFixed(0)}</span>
             </div>
             <Link href="/checkout" style={{ display: "block", textAlign: "center", background: "var(--green)", color: "#fff", fontSize: 17, fontWeight: 700, padding: "14px", borderRadius: 12 }}>
