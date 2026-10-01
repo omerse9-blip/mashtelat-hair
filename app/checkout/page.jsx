@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "../../components/CartProvider";
 import { useDelivery } from "../../components/DeliveryProvider";
-import { getDeliveryOptions, getDeliveryFees, createOrder } from "../../lib/siteData";
+import { getDeliveryOptions, getDeliveryFees } from "../../lib/siteData";
 import { trackEvent } from "../../lib/tracking";
 
 const FORM_STORAGE_KEY = "mashtela_checkout_form_v3";
@@ -304,6 +304,7 @@ export default function CheckoutPage() {
       const payload = groups.map((g) => ({
         details: detailsFor(g),
         items: g.items.map((it) => ({
+          productId: it.productId,
           name: it.name,
           sizeLabel: it.sizeLabel || "",
           price: Number(it.price),
@@ -314,11 +315,14 @@ export default function CheckoutPage() {
       }));
 
       if (!allOnlinePayable) {
-        const numbers = [];
-        for (const p of payload) {
-          const n = await createOrder(p.details, p.items);
-          numbers.push(n);
-        }
+        const orderRes = await fetch("/api/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ groups: payload }),
+        });
+        const orderData = await orderRes.json();
+        if (!orderRes.ok) throw new Error(orderData.error || "אירעה שגיאה בשליחה. נסו שוב.");
+        const numbers = orderData.orderNumbers;
         try { localStorage.removeItem(FORM_STORAGE_KEY); } catch { /* התעלמות */ }
         trackEvent("order_complete");
         setOrderSent(numbers.length === 1 ? numbers[0] : numbers);

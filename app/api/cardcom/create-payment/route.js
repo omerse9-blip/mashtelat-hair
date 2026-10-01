@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { cardcomConfig, createLowProfile } from "../../../../lib/cardcom";
+import { priceGroups, PricingError } from "../../../../lib/orderPricing";
 
 export async function POST(req) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -26,7 +27,7 @@ export async function POST(req) {
     const body = await req.json();
 
     // תמיכה בשני המבנים: groups (מסירות מרובות) או details+items (מסירה אחת)
-    const groups = Array.isArray(body?.groups) && body.groups.length
+    let groups = Array.isArray(body?.groups) && body.groups.length
       ? body.groups
       : (body?.details && Array.isArray(body?.items)
         ? [{ details: body.details, items: body.items, deliveryFee: body.details.delivery_fee || 0, feeLabel: "דמי משלוח" }]
@@ -45,6 +46,9 @@ export async function POST(req) {
         return NextResponse.json({ error: "העגלה ריקה" }, { status: 400 });
       }
     }
+
+    // המחירים ודמי המשלוח נקבעים כאן מהמסד. מה שהדפדפן שלח משמש רק לזיהוי ולבדיקה
+    groups = await priceGroups(supabaseAdmin, groups, { requireOnline: true });
 
     // יצירת הזמנה לכל מסירה — נוצרת במצב "ממתין לתשלום", בלתי נראית לצוות עד לאישור קארדקום
     for (const g of groups) {
@@ -173,6 +177,10 @@ export async function POST(req) {
 
     return NextResponse.json({ url: result.Url, orderNumber: orderNumbers[0], orderNumbers });
   } catch (unexpectedErr) {
+    if (unexpectedErr instanceof PricingError) {
+      await deleteOrders(orderNumbers);
+      return NextResponse.json({ error: unexpectedErr.message }, { status: unexpectedErr.status });
+    }
     console.error("[cardcom][CRITICAL] unexpected failure, cleaning up", unexpectedErr);
     await deleteOrders(orderNumbers);
     return NextResponse.json(
