@@ -77,7 +77,35 @@ export default async function ProductPage({ params }) {
 
     return (
       <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
-        <Link
+        <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)", display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <Link href="/" style={{ color: "var(--muted)" }}>דף הבית</Link>
+          {catName ? (
+            <>
+              <span>/</span>
+              <Link href={`/?cat=${encodeURIComponent(product.category_id)}`} style={{ color: "var(--green)", fontWeight: 600 }}>
+                {catName}
+              </Link>
+            </>
+          ) : null}
+          <span>/</span>
+          <span style={{ color: "var(--ink)" }}>{product.name}</span>
+        </nav>
+        <SubscriptionProductView
+          product={product}
+          discounts={discounts}
+          windowOptions={windowOptions}
+          pool={pool}
+          deliveryFees={deliveryFees}
+        />
+      </main>
+    );
+  }
+
+  const addonGroups = await getAddonsForCategory(product.category_id);
+
+  return (
+    <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
+      <Link
         href={catName ? `/?cat=${encodeURIComponent(product.category_id)}` : "/"}
         style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 15, fontWeight: 700, color: "var(--green)", marginBottom: 14 }}
       >
