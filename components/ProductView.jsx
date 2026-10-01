@@ -182,7 +182,7 @@ export default function ProductView({ product, addonGroups }) {
         {product.in_stock && everAdded && count > 0 ? (
           <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
             <Link
-              href={product.category_id ? `/?cat=${encodeURIComponent(product.category_id)}` : "/"}
+              href={`/?focus=${encodeURIComponent(product.id)}`}
               style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", height: 48, borderRadius: 10, border: "2px solid var(--line)", background: "#fff", color: "var(--ink)", fontSize: 15, fontWeight: 700 }}
             >
               המשך בקנייה
