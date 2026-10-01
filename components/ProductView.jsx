@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { sizeLabel, singleSizeText, availableFromFull } from "../lib/siteData";
 import { useCart } from "./CartProvider";
 import AddonsPopup from "./AddonsPopup";
@@ -13,10 +14,11 @@ export default function ProductView({ product, addonGroups }) {
   const [sel, setSel] = useState(0);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [everAdded, setEverAdded] = useState(false);
   const [zoom, setZoom] = useState(false);
   const [addonsOpen, setAddonsOpen] = useState(false);
   const [parentKey, setParentKey] = useState(null);
-  const { addItem } = useCart();
+  const { addItem, count } = useCart();
 
   const hasAddons = addonGroups && addonGroups.length > 0;
   const disclaimer = product.categories?.disclaimer || DEFAULT_DISCLAIMER;
@@ -68,6 +70,7 @@ export default function ProductView({ product, addonGroups }) {
       availableFromWindow: product.available_from_window || null,
     }, qty);
     setAdded(true);
+    setEverAdded(true);
     setTimeout(() => setAdded(false), 1600);
     if (hasAddons) {
       setParentKey(key);
@@ -175,6 +178,15 @@ export default function ProductView({ product, addonGroups }) {
             המוצר אזל מהמלאי
           </div>
         )}
+
+        {product.in_stock && everAdded && count > 0 ? (
+          <Link
+            href="/cart"
+            style={{ display: "block", textAlign: "center", width: "100%", height: 48, lineHeight: "48px", borderRadius: 10, border: "2px solid var(--green)", background: "var(--green-soft)", color: "var(--green)", fontSize: 16, fontWeight: 800, marginBottom: 20 }}
+          >
+            מעבר לעגלה ({count} {count === 1 ? "פריט" : "פריטים"})
+          </Link>
+        ) : null}
 
         {product.in_stock && hasAddons ? (
           <button
