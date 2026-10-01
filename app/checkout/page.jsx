@@ -87,7 +87,7 @@ function field(label, value, onChange, props = {}) {
 }
 
 export default function CheckoutPage() {
-  const { items, total, count, ready, allOnlinePayable } = useCart();
+  const { items, total, count, ready, allOnlinePayable, clear } = useCart();
   const { delivery, ready: deliveryReady } = useDelivery();
 
   const [cName, setCName] = useState("");
@@ -221,7 +221,7 @@ export default function CheckoutPage() {
 
   if (!ready) return null;
 
-  if (count === 0) {
+  if (count === 0 && !orderSent) {
     return (
       <main style={{ maxWidth: 600, margin: "0 auto", padding: "64px 20px", textAlign: "center", color: "var(--muted)" }}>
         העגלה ריקה.{" "}
@@ -326,6 +326,7 @@ export default function CheckoutPage() {
         const numbers = orderData.orderNumbers;
         try { localStorage.removeItem(FORM_STORAGE_KEY); } catch { /* התעלמות */ }
         trackEvent("order_complete");
+        clear();
         setOrderSent(numbers.length === 1 ? numbers[0] : numbers);
         setSubmitting(false);
         return;
