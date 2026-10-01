@@ -77,46 +77,27 @@ export default async function ProductPage({ params }) {
 
     return (
       <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
-        <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)", display: "flex", flexWrap: "wrap", gap: 8 }}>
-          <Link href="/" style={{ color: "var(--muted)" }}>דף הבית</Link>
-          {catName ? (
-            <>
-              <span>/</span>
-              <Link href={`/?cat=${encodeURIComponent(product.category_id)}`} style={{ color: "var(--green)", fontWeight: 600 }}>
-                {catName}
-              </Link>
-            </>
-          ) : null}
-          <span>/</span>
-          <span style={{ color: "var(--ink)" }}>{product.name}</span>
-        </nav>
-        <SubscriptionProductView
-          product={product}
-          discounts={discounts}
-          windowOptions={windowOptions}
-          pool={pool}
-          deliveryFees={deliveryFees}
-        />
-      </main>
-    );
-  }
-
-  const addonGroups = await getAddonsForCategory(product.category_id);
-
-  return (
-    <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
+        <Link
+        href={catName ? `/?cat=${encodeURIComponent(product.category_id)}` : "/"}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 15, fontWeight: 700, color: "var(--green)", marginBottom: 14 }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+        {catName ? `חזרה ל${catName}` : "חזרה לקטלוג"}
+      </Link>
       <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)", display: "flex", flexWrap: "wrap", gap: 8 }}>
         <Link href="/" style={{ color: "var(--muted)" }}>דף הבית</Link>
         {catName ? (
           <>
             <span>/</span>
-            <Link href={`/?cat=${encodeURIComponent(product.category_id)}`} style={{ color: "var(--green)", fontWeight: 600 }}>
+            <Link href={`/?cat=${encodeURIComponent(product.category_id)}`} style={{ color: "var(--muted)" }}>
               {catName}
             </Link>
           </>
         ) : null}
         <span>/</span>
-        <span style={{ color: "var(--ink)" }}>{product.name}</span>
+        <span style={{ color: "var(--ink)", fontWeight: 700 }}>{product.name}</span>
       </nav>
       <ProductView product={product} addonGroups={addonGroups} />
     </main>
