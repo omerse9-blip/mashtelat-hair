@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { cardcomConfig, createLowProfile } from "../../../../lib/cardcom";
 import { priceGroups, PricingError } from "../../../../lib/orderPricing";
+import { normalizePhone, isValidPhone } from "../../../../lib/phone";
 
 export async function POST(req) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -41,6 +42,9 @@ export async function POST(req) {
     if (!first.customer_name?.trim() || !first.customer_phone?.trim()) {
       return NextResponse.json({ error: "חסרים פרטי לקוח" }, { status: 400 });
     }
+    if (!isValidPhone(first.customer_phone)) {
+      return NextResponse.json({ error: "מספר הטלפון אינו תקין" }, { status: 400 });
+    }
     for (const g of groups) {
       if (!Array.isArray(g.items) || g.items.length === 0) {
         return NextResponse.json({ error: "העגלה ריקה" }, { status: 400 });
@@ -55,11 +59,11 @@ export async function POST(req) {
       const d = g.details || {};
       const { data: orderNumber, error: orderErr } = await supabaseAdmin.rpc("create_public_order", {
         p_customer_name: d.customer_name,
-        p_customer_phone: d.customer_phone,
+        p_customer_phone: normalizePhone(d.customer_phone),
         p_customer_address: d.customer_address || "",
         p_is_gift: d.is_gift,
         p_recipient_name: d.recipient_name || "",
-        p_recipient_phone: d.recipient_phone || "",
+        p_recipient_phone: normalizePhone(d.recipient_phone),
         p_recipient_address: d.recipient_address || "",
         p_notes: d.notes || "",
         p_items: g.items,

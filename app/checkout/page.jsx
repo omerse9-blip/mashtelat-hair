@@ -6,6 +6,7 @@ import { useCart } from "../../components/CartProvider";
 import { useDelivery } from "../../components/DeliveryProvider";
 import { getDeliveryOptions, getDeliveryFees } from "../../lib/siteData";
 import { trackEvent } from "../../lib/tracking";
+import { normalizePhone, isValidPhone } from "../../lib/phone";
 
 const FORM_STORAGE_KEY = "mashtela_checkout_form_v3";
 const SUB_TYPES = [
@@ -14,11 +15,8 @@ const SUB_TYPES = [
 ];
 const HEB_DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 
-function digitsOf(s) {
-  return (s || "").replace(/[^0-9]/g, "");
-}
 function validPhone(s) {
-  return digitsOf(s).length >= 9;
+  return isValidPhone(s);
 }
 
 function isoParts(iso) {
@@ -268,7 +266,7 @@ export default function CheckoutPage() {
   function validate() {
     if (!cName.trim()) return "יש למלא שם מלא.";
     if (!cPhone.trim()) return "יש למלא מספר טלפון — שדה חובה.";
-    if (!validPhone(cPhone)) return "מספר הטלפון אינו תקין — יש להזין מספר מלא.";
+    if (!validPhone(cPhone)) return "מספר הטלפון אינו תקין — יש להזין מספר ישראלי תקין.";
     for (let i = 0; i < groups.length; i++) {
       const g = groups[i];
       const b = blocks[g.key] || {};
@@ -295,11 +293,11 @@ export default function CheckoutPage() {
     const toOther = isDelivery && b.forWho === "other";
     return {
       customer_name: cName.trim(),
-      customer_phone: cPhone.trim(),
+      customer_phone: normalizePhone(cPhone),
       customer_address: isDelivery && !toOther ? (b.rAddr || "").trim() : "",
       is_gift: toOther,
       recipient_name: toOther ? (b.rName || "").trim() : "",
-      recipient_phone: toOther ? (b.rPhone || "").trim() : "",
+      recipient_phone: toOther ? normalizePhone(b.rPhone) : "",
       recipient_address: isDelivery ? (b.rAddr || "").trim() : "",
       notes: notes.trim(),
       fulfillment_type: b.method === "pickup" ? "pickup" : "delivery",
@@ -381,7 +379,7 @@ export default function CheckoutPage() {
             type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
             style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${cPhoneBad ? "#b3261e" : "var(--line)"}`, fontSize: 15 }}
           />
-          {cPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון מלא.</p> : null}
+          {cPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
         </div>
       </div>
 
@@ -608,7 +606,7 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
                           type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
                           style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${rPhoneBad ? "#b3261e" : "var(--line)"}`, fontSize: 15 }}
                         />
-                        {rPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון מלא.</p> : null}
+                        {rPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
                       </div>
                     </>
                   ) : null}

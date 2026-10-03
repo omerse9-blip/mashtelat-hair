@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { normalizePhone, isValidPhone } from "../lib/phone";
 
 const FREQUENCIES = [
   { key: "monthly", label: "חודשי" },
@@ -314,7 +315,9 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
     ? Math.ceil(discountedFlowerPrice * remainingDates.length + deliveryFeeDisc * remainingDates.length)
     : subscriptionMonthlyPrice;
 
-  const detailsComplete = form.customerName && form.customerPhone && form.subType && (form.isGift ? form.recipientAddress : form.customerAddress);
+  const customerPhoneBad = form.customerPhone.trim() !== "" && !isValidPhone(form.customerPhone);
+  const recipientPhoneBad = form.isGift && form.recipientPhone.trim() !== "" && !isValidPhone(form.recipientPhone);
+  const detailsComplete = form.customerName && form.customerPhone && !customerPhoneBad && !recipientPhoneBad && form.subType && (form.isGift ? form.recipientAddress : form.customerAddress);
   const billingResolved = !hasRemaining || !!form.billingChoice;
   const payDisabled = !detailsComplete || !billingResolved;
 
@@ -351,11 +354,11 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
         .from("subscriptions")
         .insert({
           customer_name: form.customerName,
-          customer_phone: form.customerPhone,
+          customer_phone: normalizePhone(form.customerPhone),
           customer_address: form.isGift ? null : form.customerAddress,
           is_gift: form.isGift,
           recipient_name: form.isGift ? form.recipientName : null,
-          recipient_phone: form.isGift ? form.recipientPhone : null,
+          recipient_phone: form.isGift ? (normalizePhone(form.recipientPhone) || null) : null,
           recipient_address: form.isGift ? form.recipientAddress : null,
           frequency: form.frequency,
           monthly_week: form.frequency === "monthly" ? form.monthlyWeek : null,
@@ -641,7 +644,8 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
             <input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} className="sub-input" style={inputStyle} />
           </Field>
           <Field label="טלפון">
-            <input type="tel" inputMode="tel" value={form.customerPhone} onChange={(e) => setField("customerPhone", e.target.value)} className="sub-input" style={inputStyle} />
+            <input type="tel" inputMode="tel" value={form.customerPhone} onChange={(e) => setField("customerPhone", e.target.value)} className="sub-input" style={{ ...inputStyle, ...(customerPhoneBad ? { borderColor: "#b3261e" } : {}) }} />
+            {customerPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
           </Field>
 
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
@@ -660,7 +664,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           {form.isGift && (
             <>
               <Field label="שם המקבל/ת"><input value={form.recipientName} onChange={(e) => setField("recipientName", e.target.value)} className="sub-input" style={inputStyle} /></Field>
-              <Field label="טלפון המקבל/ת"><input type="tel" inputMode="tel" value={form.recipientPhone} onChange={(e) => setField("recipientPhone", e.target.value)} className="sub-input" style={inputStyle} /></Field>
+              <Field label="טלפון המקבל/ת"><input type="tel" inputMode="tel" value={form.recipientPhone} onChange={(e) => setField("recipientPhone", e.target.value)} className="sub-input" style={{ ...inputStyle, ...(recipientPhoneBad ? { borderColor: "#b3261e" } : {}) }} />{recipientPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}</Field>
             </>
           )}
 
