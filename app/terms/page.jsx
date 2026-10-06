@@ -3,6 +3,7 @@ import LegalLayout from "../../components/LegalLayout";
 export const metadata = {
   title: "תקנון ותנאי שימוש — משתלת העיר",
   description: "תקנון ותנאי השימוש של אתר משתלת העיר / גינון העיר.",
+  robots: { index: false, follow: true },
 };
 
 export default function TermsPage() {
