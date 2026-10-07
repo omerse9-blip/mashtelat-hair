@@ -16,9 +16,6 @@ export const metadata = {
     shortcut: "/logo-mashtela.png",
     apple: "/logo-mashtela.png",
   },
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
     description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",

@@ -7,5 +7,15 @@ const nextConfig = {
     imageSizes: [80, 120, 160, 240, 320, 480],
     unoptimized: true,
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "mashtelat-hair.vercel.app" }],
+        destination: "https://mashtelathair.co.il/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 export default nextConfig;

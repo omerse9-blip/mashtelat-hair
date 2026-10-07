@@ -4,6 +4,7 @@ import NurseryCatalog from "../components/NurseryCatalog";
 export const metadata = {
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
   description: "משתלה באילת עם עציצים, זרי פרחים, צמחי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית. הזמינו אונליין עכשיו.",
+  alternates: { canonical: "/" },
 };
 function toCard(p, subscriptionMinPrice) {
   const isSubscription = !!p.is_subscription;

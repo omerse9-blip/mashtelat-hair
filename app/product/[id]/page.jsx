@@ -30,6 +30,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
+    alternates: { canonical: `/product/${params.id}` },
     openGraph: {
       title,
       description,

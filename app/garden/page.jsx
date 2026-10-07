@@ -8,6 +8,7 @@ export const revalidate = 0;
 export const metadata = {
   title: "גינון העיר — הקמת גינות, תחזוקה ושדרוג באילת",
   description: "גינון העיר: הקמת גינות, תחזוקה שוטפת ושדרוג גינה באילת. צפו בעבודות שלנו ותאמו פגישה.",
+  alternates: { canonical: "/garden" },
 };
 
 export default async function GardenPage() {
