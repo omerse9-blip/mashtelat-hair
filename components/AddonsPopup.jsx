@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useCart } from "./CartProvider";
 import { sizeLabel } from "../lib/siteData";
+import useDialogA11y from "./useDialogA11y";
 
 export default function AddonsPopup({ open, onClose, groups, parentKey, parentName }) {
   const { addItem } = useCart();
+  const dialogRef = useRef(null);
   const [openGroup, setOpenGroup] = useState(null);   // מחלקה שנפתחה (שכבה שנייה)
   const [sizePickFor, setSizePickFor] = useState(null); // מוצר שנבחרת לו מידה
   const [addedKeys, setAddedKeys] = useState(() => new Set()); // פריטים שכבר נוספו, כל עוד החלון פתוח
@@ -28,6 +30,13 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [open, openGroup, sizePickFor, onClose]);
+
+  // Esc: סוגר לפי סדר, קודם בחירת גודל, אז שכבת פריטים, אז החלון; הפוקוס נלכד בתוך החלון
+  useDialogA11y(open, dialogRef, () => {
+    if (sizePickFor) setSizePickFor(null);
+    else if (openGroup) setOpenGroup(null);
+    else onClose();
+  });
 
   if (!open) return null;
 
@@ -82,20 +91,20 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
   const inGroup = !!openGroup;
 
   return (
-    <div style={overlay} onClick={handleOverlayClick}>
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="addons-title" tabIndex={-1} style={overlay} onClick={handleOverlayClick}>
       <div style={sheet} onClick={(e) => e.stopPropagation()}>
         <div style={sheetHeader}>
           {inGroup ? (
-            <button onClick={() => setOpenGroup(null)} aria-label="חזרה" style={closeBtn}>‹</button>
+            <button onClick={() => setOpenGroup(null)} aria-label="חזרה לרשימת המחלקות" style={closeBtn}><span aria-hidden="true">‹</span></button>
           ) : (
-            <button onClick={onClose} aria-label="סגירה" style={closeBtn}>✕</button>
+            <button onClick={onClose} aria-label="סגירת חלון התוספות" style={closeBtn}><span aria-hidden="true">✕</span></button>
           )}
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontWeight: 700, fontSize: 18 }}>
+            <h2 id="addons-title" style={{ fontWeight: 700, fontSize: 18 }}>
               {inGroup ? openGroup.category_name : "תוספת מושלמת"}
-            </p>
+            </h2>
           </div>
-          <span style={{ width: 32 }} />
+          <span style={{ width: 44 }} />
         </div>
 
         <div style={sheetBody}>
@@ -129,12 +138,12 @@ export default function AddonsPopup({ open, onClose, groups, parentKey, parentNa
           style={sizeOverlay}
           onClick={(e) => { e.stopPropagation(); setSizePickFor(null); }}
         >
-          <div style={sizeBox} onClick={(e) => e.stopPropagation()}>
+          <div style={sizeBox} role="group" aria-label={`בחירת גודל עבור ${sizePickFor.name}`} onClick={(e) => e.stopPropagation()}>
             <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 4, textAlign: "center" }}>{sizePickFor.name}</p>
             <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 12, textAlign: "center" }}>בחירת גודל</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {sizePickFor.product_sizes.map((s) => (
-                <button key={s.id} onClick={() => addWithSize(sizePickFor, s)} style={sizeOption}>
+              {sizePickFor.product_sizes.map((s, idx) => (
+                <button key={s.id} autoFocus={idx === 0} onClick={() => addWithSize(sizePickFor, s)} style={sizeOption}>
                   <span>{sizeLabel(s)}</span>
                   <span style={{ fontWeight: 700, color: "var(--green)" }}>₪{Number(s.price)}</span>
                 </button>
@@ -155,11 +164,11 @@ function GroupCard({ group, onOpen }) {
   return (
     <button style={{ ...card, cursor: "pointer", textAlign: "inherit" }} onClick={onOpen}>
       <div style={cardImg}>
-        {img ? <img src={img} alt={group.category_name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={cardImgEmpty}>🪴</div>}
+        {img ? <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={cardImgEmpty} aria-hidden="true">🪴</div>}
       </div>
       <div style={cardBody}>
         <p style={groupName}>{group.category_name}</p>
-        <span style={{ ...addBtn, background: "var(--green)", display: "block", textAlign: "center" }}>לבחירה ›</span>
+        <span style={{ ...addBtn, background: "var(--green)", display: "block", textAlign: "center" }}>לבחירה <span aria-hidden="true">›</span></span>
       </div>
     </button>
   );
@@ -181,9 +190,10 @@ function AddonCard({ product, added, onAdd }) {
       <div style={cardBody}>
         <p style={cardName}>{product.name}</p>
         <p style={cardPriceStyle}>{multi ? `החל מ-₪${price}` : `₪${price}`}</p>
-        <button onClick={onAdd} style={{ ...addBtn, background: added ? "#2f6b43" : "var(--green)" }}>
+        <button onClick={onAdd} aria-label={added ? `${product.name} נוסף לסל, הוספה נוספת` : `הוספת ${product.name} לסל`} style={{ ...addBtn, background: added ? "#2f6b43" : "var(--green)" }}>
           {added ? "✓ בסל · הוספה נוספת" : "הוספה לסל"}
         </button>
+        <span role="status" className="sr-only">{added ? `${product.name} נוסף לסל` : ""}</span>
       </div>
     </div>
   );
@@ -200,7 +210,7 @@ function cardImageOf(product) {
 const overlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 };
 const sheet = { background: "#fff", width: "100%", maxWidth: 520, maxHeight: "88vh", borderRadius: 18, display: "flex", flexDirection: "column", overflow: "hidden" };
 const sheetHeader = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--line)", flexShrink: 0 };
-const closeBtn = { width: 32, height: 32, borderRadius: 999, border: "none", background: "#f2f2f0", fontSize: 18, cursor: "pointer" };
+const closeBtn = { width: 44, height: 44, borderRadius: 999, border: "none", background: "#f2f2f0", fontSize: 18, cursor: "pointer" };
 const sheetBody = { padding: "12px", overflowY: "auto", flex: 1 };
 const sheetFooter = { display: "flex", gap: 10, padding: "10px 16px", borderTop: "1px solid var(--line)", flexShrink: 0 };
 const goCartBtn = { flex: 1, textAlign: "center", padding: "11px", borderRadius: 10, background: "var(--green)", color: "#fff", fontSize: 15, fontWeight: 700, textDecoration: "none" };

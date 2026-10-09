@@ -89,9 +89,9 @@ export default function NurseryCatalog({ categories, productsByCat, heroImageUrl
       <ParallaxHero imageUrl={heroImageUrl} mediaType={heroMediaType} />
 
       <section style={{ textAlign: "center", marginBottom: 26, marginTop: 28 }}>
-        <p style={{ color: "var(--muted)", fontSize: 19, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 16 }}>
+        <h1 style={{ color: "var(--muted)", fontSize: 19, fontWeight: 400, maxWidth: 560, margin: "0 auto", borderBottom: "1px solid var(--line)", paddingBottom: 16 }}>
           משתלת העיר באילת - עציצים, זרי פרחים וצמחי נוי, הזמינו אונליין עם משלוח או איסוף עצמי.
-        </p>
+        </h1>
       </section>
 
       <div style={{ maxWidth: 420, margin: "0 auto 26px" }}>
@@ -116,13 +116,14 @@ export default function NurseryCatalog({ categories, productsByCat, heroImageUrl
               </div>
             ) : (
               <>
-                <div className="sort-bar">
+                <div className="sort-bar" role="group" aria-label={`מיון המוצרים במחלקה ${c.name}`}>
                   {SORT_OPTIONS.map((o) => {
                     const active = sort === o.key;
                     return (
                       <button
                         key={o.key}
                         type="button"
+                        aria-pressed={active}
                         onClick={() => setSortByCat((prev) => ({ ...prev, [c.id]: o.key }))}
                         className="sort-btn"
                         style={{
@@ -213,26 +214,26 @@ function ProductCard({ product, activeId, highlight }) {
         {img ? (
           <Image
             src={img}
-            alt={product.name}
+            alt=""
             fill
             sizes="(max-width: 640px) 50vw, 220px"
             style={{ objectFit: "cover" }}
           />
         ) : (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 28 }}>🪴</div>
+          <div aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 28 }}>🪴</div>
         )}
         {!inStock ? (
-          <span style={{ position: "absolute", top: 10, insetInlineStart: 10, background: "rgba(44,58,48,0.82)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
+          <span style={{ position: "absolute", top: 10, insetInlineStart: 10, background: "rgba(31,42,36,0.92)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
             אזל מהמלאי
           </span>
         ) : null}
         {isSubscription ? (
-          <span style={{ position: "absolute", top: 10, insetInlineEnd: 10, background: "rgba(63,122,82,0.92)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
+          <span style={{ position: "absolute", top: 10, insetInlineEnd: 10, background: "#2f6b43", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
             🌸 מנוי
           </span>
         ) : null}
         {availableFrom ? (
-          <span className="card-available" style={{ position: "absolute", bottom: 10, insetInlineStart: 10, background: "rgba(63,122,82,0.92)", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
+          <span className="card-available" style={{ position: "absolute", bottom: 10, insetInlineStart: 10, background: "#2f6b43", color: "#fff", fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 999, zIndex: 1 }}>
             {availableFrom}
           </span>
         ) : null}

@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import useDialogA11y from "./useDialogA11y";
 
 function SearchIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
       <circle cx="11" cy="11" r="7" />
       <path d="m21 21-4.35-4.35" />
     </svg>
@@ -17,9 +18,13 @@ export default function SearchOverlay({ index, categories = [], baseHref = "/", 
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const inputRef = useRef(null);
+  const dialogRef = useRef(null);
   const router = useRouter();
 
   const data = index && index.nursery ? index : { nursery: [], garden: [] };
+
+  // לכידת פוקוס בתוך החיפוש, סגירה ב-Esc והחזרת הפוקוס לכפתור הפתיחה (נקרא לפני אפקט הפוקוס על שדה החיפוש)
+  useDialogA11y(open, dialogRef, closeSearch);
 
   useEffect(() => {
     if (!open) return;
@@ -99,14 +104,21 @@ export default function SearchOverlay({ index, categories = [], baseHref = "/", 
     <>
       <button
         onClick={openSearch}
-        aria-label="Search"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "transparent", cursor: "pointer", padding: 0 }}
+        aria-label="חיפוש באתר"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "transparent", cursor: "pointer", padding: 0, width: 44, height: 44 }}
       >
         <SearchIcon />
       </button>
 
       {open ? (
         <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="חיפוש באתר"
+          tabIndex={-1}
           style={{
             position: "fixed",
             top: 0, left: 0, right: 0, bottom: 0,
@@ -121,10 +133,12 @@ export default function SearchOverlay({ index, categories = [], baseHref = "/", 
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexShrink: 0 }}>
               <input
                 ref={inputRef}
+                type="search"
+                aria-label="חיפוש מוצר, צמח או מילה בתיאור"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="חיפוש מוצר, צמח, מילה בתיאור..."
-                style={{ flex: 1, fontSize: 17, padding: "12px 16px", borderRadius: 12, border: "1px solid var(--line)", outline: "none" }}
+                style={{ flex: 1, fontSize: 17, padding: "12px 16px", borderRadius: 12, border: "1px solid #8a8f8c" }}
               />
               <button
                 onClick={closeSearch}
@@ -134,6 +148,10 @@ export default function SearchOverlay({ index, categories = [], baseHref = "/", 
                 ✕
               </button>
             </div>
+
+            <p role="status" className="sr-only">
+              {term ? (total === 0 ? "לא נמצאו תוצאות" : `נמצאו ${total} תוצאות`) : ""}
+            </p>
 
             <div style={{ overflowY: "auto", flex: 1, minHeight: 0 }}>
               {!term ? (

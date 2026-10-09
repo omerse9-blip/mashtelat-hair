@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useDelivery } from "./DeliveryProvider";
 import { getDeliveryOptions } from "../lib/siteData";
+import useDialogA11y from "./useDialogA11y";
 
 const BTN_BG = "#fbf8f1";
 const BTN_BORDER = "#ece3d4";
@@ -11,7 +12,7 @@ const METHOD_BTN_WIDTH = 220;
 
 function TruckIcon({ color = "#111" }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "scaleX(-1)", flexShrink: 0 }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "scaleX(-1)", flexShrink: 0 }} aria-hidden="true" focusable="false">
       <path d="M1 3h13v13H1z" />
       <path d="M14 8h4l3 3v5h-7V8z" />
       <circle cx="5.5" cy="18.5" r="1.8" />
@@ -22,7 +23,7 @@ function TruckIcon({ color = "#111" }) {
 
 function StorePinIcon({ color = "#111" }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden="true" focusable="false">
       <path d="M3 9.5 12 3l9 6.5" />
       <path d="M5 9.5V20h5v-6h4v6h5V9.5" />
       <path d="M9.5 9.5h5" />
@@ -89,6 +90,9 @@ export default function DeliveryPicker({ scrollTargetId }) {
       setOpen(false);
     }
   }
+
+  const modalRef = useRef(null);
+  useDialogA11y(open && mounted, modalRef, closeModal);
 
   function pickMethod(val) {
     setTMethod(val);
@@ -167,6 +171,11 @@ export default function DeliveryPicker({ scrollTargetId }) {
       style={{ position: "fixed", inset: 0, background: "rgba(33,58,45,0.45)", backdropFilter: "blur(2px)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delivery-modal-title"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%", maxWidth: 480, minHeight: "52vh", maxHeight: "88vh", overflowY: "auto",
@@ -176,15 +185,15 @@ export default function DeliveryPicker({ scrollTargetId }) {
       >
         <div style={{ position: "relative", marginBottom: 24 }}>
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontWeight: 700, fontSize: 20, color: "var(--green)", marginBottom: 4 }}>אופן אספקת המוצרים</p>
+            <h2 id="delivery-modal-title" style={{ fontWeight: 700, fontSize: 20, color: "var(--green)", marginBottom: 4 }}>אופן אספקת המוצרים</h2>
             <p style={{ fontSize: 14, color: "var(--muted)" }}>בחרו את השיטה הנוחה לכם</p>
           </div>
           <button
             onClick={closeModal}
-            aria-label="Close"
-            style={{ position: "absolute", top: 0, right: 0, width: 34, height: 34, borderRadius: 999, border: "none", background: BTN_BG, color: "var(--ink)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            aria-label="סגירת החלון"
+            style={{ position: "absolute", top: 0, right: 0, width: 44, height: 44, borderRadius: 999, border: "none", background: BTN_BG, color: "var(--ink)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            ✕
+            <span aria-hidden="true">✕</span>
           </button>
         </div>
 
@@ -192,6 +201,7 @@ export default function DeliveryPicker({ scrollTargetId }) {
           <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
             <button
               onClick={() => pickMethod("delivery")}
+              aria-pressed={tMethod === "delivery"}
               style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 10, width: METHOD_BTN_WIDTH, padding: "16px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "delivery" ? "var(--green)" : "#fff", color: tMethod === "delivery" ? "#fff" : "var(--ink)", border: tMethod === "delivery" ? "1px solid var(--green)" : "1px solid var(--line)" }}
             >
               <TruckIcon color={tMethod === "delivery" ? "#fff" : "#111"} />
@@ -199,6 +209,7 @@ export default function DeliveryPicker({ scrollTargetId }) {
             </button>
             <button
               onClick={() => pickMethod("pickup")}
+              aria-pressed={tMethod === "pickup"}
               style={{ display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: 10, width: METHOD_BTN_WIDTH, padding: "16px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tMethod === "pickup" ? "var(--green)" : "#fff", color: tMethod === "pickup" ? "#fff" : "var(--ink)", border: tMethod === "pickup" ? "1px solid var(--green)" : "1px solid var(--line)" }}
             >
               <StorePinIcon color={tMethod === "pickup" ? "#fff" : "#111"} />
@@ -215,6 +226,7 @@ export default function DeliveryPicker({ scrollTargetId }) {
                 <button
                   key={s.key}
                   onClick={() => pickSubType(s.key)}
+                  aria-pressed={tSubType === s.key}
                   style={{ width: "100%", padding: "14px 18px", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", background: tSubType === s.key ? "var(--green)" : "#fff", color: tSubType === s.key ? "#fff" : "var(--ink)", border: tSubType === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}
                 >
                   {s.label}
@@ -236,6 +248,7 @@ export default function DeliveryPicker({ scrollTargetId }) {
                       <button
                         key={o.date}
                         onClick={() => pickQuickDate(o, QUICK_LABELS[i])}
+                        aria-pressed={tDate === o.date}
                         style={{ flex: 1, padding: "12px 6px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", background: tDate === o.date ? "var(--green)" : "#fff", color: tDate === o.date ? "#fff" : "var(--ink)", border: tDate === o.date ? "1px solid var(--green)" : "1px solid var(--line)" }}
                       >
                         {QUICK_LABELS[i]}
@@ -253,8 +266,9 @@ export default function DeliveryPicker({ scrollTargetId }) {
                   <div style={{ marginBottom: 16 }}>
                     <select
                       value={tDate}
+                      aria-label="בחירת תאריך"
                       onChange={(e) => pickFromList(e.target.value)}
-                      style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15, background: "#fff", marginBottom: 8 }}
+                      style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid #8a8f8c", fontSize: 15, background: "#fff", marginBottom: 8 }}
                     >
                       <option value="">בחירת תאריך</option>
                       {options.map((o) => <option key={o.date} value={o.date}>{o.label}</option>)}
@@ -267,12 +281,13 @@ export default function DeliveryPicker({ scrollTargetId }) {
 
                 {tDate ? (
                   <>
-                    <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>שעה</label>
-                    <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+                    <p id="picker-window-label" style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>שעה</p>
+                    <div dir="ltr" role="group" aria-labelledby="picker-window-label" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
                       {(currentDay?.windows || []).map((w) => (
                         <button
                           key={w}
                           onClick={() => setTWindow(w)}
+                          aria-pressed={tWindow === w}
                           style={{ padding: "11px 8px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", background: tWindow === w ? "var(--green)" : "#fff", color: tWindow === w ? "#fff" : "var(--ink)", border: tWindow === w ? "1px solid var(--green)" : "1px solid var(--line)" }}
                         >
                           {w.replace("-", ":00-") + ":00"}
@@ -297,24 +312,30 @@ export default function DeliveryPicker({ scrollTargetId }) {
         {step === "address" ? (
           <div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>רחוב *</label>
-              <input
-                value={tStreet}
-                onChange={(e) => setTStreet(e.target.value)}
-                placeholder="שם הרחוב"
-                style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }}
-              />
+              <label style={{ display: "block" }}>
+                <span style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>רחוב *</span>
+                <input
+                  value={tStreet}
+                  onChange={(e) => setTStreet(e.target.value)}
+                  placeholder="שם הרחוב"
+                  aria-required="true"
+                  style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid #8a8f8c", fontSize: 15 }}
+                />
+              </label>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>מספר בית *</label>
-              <input
-                value={tHouse}
-                onChange={(e) => setTHouse(e.target.value)}
-                placeholder="מספר"
-                style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }}
-              />
+              <label style={{ display: "block" }}>
+                <span style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>מספר בית *</span>
+                <input
+                  value={tHouse}
+                  onChange={(e) => setTHouse(e.target.value)}
+                  placeholder="מספר"
+                  aria-required="true"
+                  style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid #8a8f8c", fontSize: 15 }}
+                />
+              </label>
             </div>
-            {addrErr ? <p style={{ color: "#b3261e", fontSize: 14, marginBottom: 14 }}>{addrErr}</p> : null}
+            {addrErr ? <p role="alert" style={{ color: "#b3261e", fontSize: 14, marginBottom: 14 }}>{addrErr}</p> : null}
             <button
               onClick={finish}
               style={{ width: "100%", background: "var(--green)", color: "#fff", fontSize: 16, fontWeight: 700, padding: "14px", borderRadius: 12, border: "none", cursor: "pointer" }}
@@ -331,6 +352,7 @@ export default function DeliveryPicker({ scrollTargetId }) {
     <div style={{ display: "flex", justifyContent: "center" }}>
       <button
         onClick={openModal}
+        aria-haspopup="dialog"
         style={{
           display: "inline-flex", alignItems: "center", maxWidth: "100%",
           padding: "11px 18px", borderRadius: 999, border: "none", background: "var(--green)",

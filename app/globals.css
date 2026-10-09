@@ -1,7 +1,7 @@
 :root {
   --bg: #f7f2e9;
   --ink: #1f2a24;
-  --muted: #7a857e;
+  --muted: #5a665f;
   --line: #e4ddd0;
   --green: #3f7a52;
   --green-soft: #eef4ef;
@@ -19,3 +19,124 @@ html, body {
 }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; }
+
+/* ===== נגישות ===== */
+
+/* טקסט למקראי מסך בלבד */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* קישור דילוג לתוכן, מופיע בפוקוס מקלדת */
+.skip-link {
+  position: absolute; top: -120px; inset-inline-start: 8px; z-index: 10000;
+  background: #1f2a24; color: #fff; padding: 12px 18px; border-radius: 0 0 10px 10px;
+  font-weight: 700; font-size: 16px;
+}
+.skip-link:focus { top: 0; }
+#main-content:focus { outline: none; }
+
+/* סימון פוקוס ברור לניווט במקלדת */
+:focus-visible {
+  outline: 3px solid #0b57d0;
+  outline-offset: 2px;
+}
+
+/* כיבוד העדפת מערכת להפחתת תנועה, ועצירת תנועה מסרגל הנגישות */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html[data-a11y-motion="off"] *,
+html[data-a11y-motion="off"] *::before,
+html[data-a11y-motion="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* הגדלת טקסט: זום על תוכן הדף והפוטר (הכותרת העליונה נשארת קבועה) */
+html[data-a11y-zoom="1"] #site-zoom { zoom: 1.15; }
+html[data-a11y-zoom="2"] #site-zoom { zoom: 1.3; }
+html[data-a11y-zoom] .parallax-hero { width: 100%; margin-left: 0; margin-right: 0; }
+
+/* גופן קריא */
+html.a11y-font body,
+html.a11y-font body * {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+  letter-spacing: 0.02em;
+}
+
+/* הדגשת קישורים */
+html.a11y-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  font-weight: 700 !important;
+}
+
+/* ניגודיות גבוהה: רקע שחור, טקסט לבן, קישורים צהובים */
+html.a11y-contrast {
+  --bg: #000;
+  --ink: #fff;
+  --muted: #fff;
+  --line: #fff;
+  --green: #ffeb3b;
+  --green-soft: #000;
+  --card: #000;
+}
+html.a11y-contrast,
+html.a11y-contrast body {
+  background: #000 !important;
+  color: #fff !important;
+}
+html.a11y-contrast body *:where(:not(svg):not(svg *):not(img):not(video):not(iframe)) {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+html.a11y-contrast body a,
+html.a11y-contrast body a *:where(:not(svg):not(svg *)) {
+  color: #ffeb3b !important;
+  text-decoration: underline !important;
+}
+html.a11y-contrast svg { filter: brightness(1.8); }
+html.a11y-contrast :focus-visible { outline-color: #ffeb3b; }
+html.a11y-contrast .a11y-opt[aria-pressed="true"] { outline: 3px solid #ffeb3b; }
+
+/* סרגל נגישות */
+.a11y-fab {
+  position: fixed; left: 14px; bottom: 14px; z-index: 900;
+  width: 52px; height: 52px; border-radius: 999px;
+  border: 2px solid #fff; background: #0b57d0; color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+.a11y-panel {
+  position: fixed; left: 14px; bottom: 76px; z-index: 901;
+  width: min(320px, calc(100vw - 28px)); max-height: calc(100dvh - 100px); overflow-y: auto;
+  background: #fff; color: #1f2a24; border: 1px solid #cfc7b8; border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); padding: 14px;
+}
+.a11y-panel h2 { font-size: 17px; font-weight: 700; margin-bottom: 12px; }
+.a11y-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.a11y-opt {
+  min-height: 48px; padding: 8px; border-radius: 10px; border: 1px solid #8a8f8c;
+  background: #fff; color: #1f2a24; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.a11y-opt:disabled { opacity: 0.5; cursor: default; }
+.a11y-opt[aria-pressed="true"] { background: #1f2a24; color: #fff; border-color: #1f2a24; }
+.a11y-status { font-size: 13px; color: #1f2a24; margin: 0 0 12px; text-align: center; }
+.a11y-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.a11y-footer .a11y-reset { flex: 1; }
+.a11y-link { color: #0b57d0; font-weight: 700; font-size: 14px; text-decoration: underline; padding: 8px 4px; }
+
+@media print {
+  .a11y-fab, .a11y-panel, .skip-link { display: none !important; }
+}

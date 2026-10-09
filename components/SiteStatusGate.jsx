@@ -92,6 +92,9 @@ export default function SiteStatusGate({ children }) {
       {children}
       {isDisabled && (
         <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-label="האתר אינו קולט הזמנות כרגע"
           style={{
             position: "fixed", top: 0, left: 0, right: 0,
             height: viewportHeight ? `${viewportHeight}px` : "100vh",

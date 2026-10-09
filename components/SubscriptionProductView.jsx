@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useId, Children, cloneElement, isValidElement } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { normalizePhone, isValidPhone } from "../lib/phone";
 
@@ -494,13 +494,13 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
 
       {step === 1 && (
         <div>
-          <button onClick={toggleSurpriseMe}
+          <button onClick={toggleSurpriseMe} aria-pressed={!!form.surpriseMe}
             className="sub-opt-btn"
             style={{ width: "100%", marginBottom: 14,
               background: form.surpriseMe ? "var(--green)" : "#fff", color: form.surpriseMe ? "#fff" : "var(--ink)",
               border: form.surpriseMe ? "1px solid var(--green)" : "1px solid var(--line)",
               display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-            <span>✨</span><span>תפתיעו אותי</span>
+            <span aria-hidden="true">✨</span><span>תפתיעו אותי</span>
           </button>
 
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>אילו סגנונות הכי מתחברים אליך?</p>
@@ -509,12 +509,12 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
               const selected = !form.surpriseMe && form.chosenIds.includes(p.id);
               const img = flowerImage(p, form.size);
               return (
-                <button key={p.id} onClick={() => toggleBouquet(p.id)} className="sub-flower-card"
+                <button key={p.id} onClick={() => toggleBouquet(p.id)} aria-pressed={selected} className="sub-flower-card"
                   style={{ border: selected ? "2px solid var(--green)" : "1px solid var(--line)", borderRadius: 10, overflow: "hidden", background: "#fff", cursor: "pointer", padding: 0 }}>
                   <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "var(--green-soft)" }}>
-                    {img ? <img src={img} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                    {img ? <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
                     {selected && (
-                      <span style={{ position: "absolute", top: 5, insetInlineEnd: 5, background: "var(--green)", color: "#fff", borderRadius: 999, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>
+                      <span aria-hidden="true" style={{ position: "absolute", top: 5, insetInlineEnd: 5, background: "var(--green)", color: "#fff", borderRadius: 999, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>
                     )}
                   </div>
                   <p style={{ fontWeight: 600, color: "var(--ink)" }}>{p.name}</p>
@@ -539,7 +539,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
             {SIZES.map((s) => {
               const p = estPriceForSize(s.key);
               return (
-                <button key={s.key} onClick={() => setField("size", s.key)} className="sub-opt-btn"
+                <button key={s.key} onClick={() => setField("size", s.key)} aria-pressed={form.size === s.key} className="sub-opt-btn"
                   style={{ flex: 1,
                     background: form.size === s.key ? "var(--green)" : "#fff", color: form.size === s.key ? "#fff" : "var(--ink)",
                     border: form.size === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
@@ -553,7 +553,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזו תדירות נספק את הזר?</p>
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {FREQUENCIES.map((f) => (
-              <button key={f.key} onClick={() => setField("frequency", f.key)} className="sub-opt-btn"
+              <button key={f.key} onClick={() => setField("frequency", f.key)} aria-pressed={form.frequency === f.key} className="sub-opt-btn"
                 style={{ flex: 1,
                   background: form.frequency === f.key ? "var(--green)" : "#fff", color: form.frequency === f.key ? "#fff" : "var(--ink)",
                   border: form.frequency === f.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
@@ -565,7 +565,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזה יום קבוע?</p>
           <div className="sub-day-grid" style={{ marginBottom: 12 }}>
             {DAY_OPTIONS.map((d) => (
-              <button key={d.key} onClick={() => setField("deliveryDay", d.key)} className="sub-opt-btn-day"
+              <button key={d.key} onClick={() => setField("deliveryDay", d.key)} aria-pressed={form.deliveryDay === d.key} className="sub-opt-btn-day"
                 style={{
                   background: form.deliveryDay === d.key ? "var(--green)" : "#fff", color: form.deliveryDay === d.key ? "#fff" : "var(--ink)",
                   border: form.deliveryDay === d.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
@@ -579,7 +579,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
               <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>שבוע בחודש</p>
               <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
                 {MONTHLY_WEEK_OPTIONS.map((w) => (
-                  <button key={w.key} onClick={() => setField("monthlyWeek", w.key)} className="sub-opt-btn"
+                  <button key={w.key} onClick={() => setField("monthlyWeek", w.key)} aria-pressed={form.monthlyWeek === w.key} className="sub-opt-btn"
                     style={{ flex: 1,
                       background: form.monthlyWeek === w.key ? "var(--green)" : "#fff", color: form.monthlyWeek === w.key ? "#fff" : "var(--ink)",
                       border: form.monthlyWeek === w.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
@@ -595,7 +595,7 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
               <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>באיזו שעה?</p>
               <div dir="ltr" className="sub-day-grid" style={{ marginBottom: 20 }}>
                 {windowsForDay.map((w) => (
-                  <button key={w} onClick={() => setField("deliveryWindow", w)} className="sub-opt-btn-window"
+                  <button key={w} onClick={() => setField("deliveryWindow", w)} aria-pressed={form.deliveryWindow === w} className="sub-opt-btn-window"
                     style={{
                       background: form.deliveryWindow === w ? "var(--green)" : "#fff", color: form.deliveryWindow === w ? "#fff" : "var(--ink)",
                       border: form.deliveryWindow === w ? "1px solid var(--green)" : "1px solid var(--line)" }}>
@@ -645,16 +645,16 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           </Field>
           <Field label="טלפון">
             <input type="tel" inputMode="tel" value={form.customerPhone} onChange={(e) => setField("customerPhone", e.target.value)} className="sub-input" style={{ ...inputStyle, ...(customerPhoneBad ? { borderColor: "#b3261e" } : {}) }} />
-            {customerPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
+            {customerPhoneBad ? <p role="alert" style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
           </Field>
 
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <button onClick={() => setField("isGift", false)} className="sub-opt-btn" style={{ flex: 1,
+            <button onClick={() => setField("isGift", false)} aria-pressed={form.isGift === false} className="sub-opt-btn" style={{ flex: 1,
               background: !form.isGift ? "var(--green)" : "#fff", color: !form.isGift ? "#fff" : "var(--ink)",
               border: !form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
               המנוי מיועד לי
             </button>
-            <button onClick={() => setField("isGift", true)} className="sub-opt-btn" style={{ flex: 1,
+            <button onClick={() => setField("isGift", true)} aria-pressed={form.isGift === true} className="sub-opt-btn" style={{ flex: 1,
               background: form.isGift ? "var(--green)" : "#fff", color: form.isGift ? "#fff" : "var(--ink)",
               border: form.isGift ? "1px solid var(--green)" : "1px solid var(--line)" }}>
               🎁 מתנה
@@ -664,14 +664,14 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
           {form.isGift && (
             <>
               <Field label="שם המקבל/ת"><input value={form.recipientName} onChange={(e) => setField("recipientName", e.target.value)} className="sub-input" style={inputStyle} /></Field>
-              <Field label="טלפון המקבל/ת"><input type="tel" inputMode="tel" value={form.recipientPhone} onChange={(e) => setField("recipientPhone", e.target.value)} className="sub-input" style={{ ...inputStyle, ...(recipientPhoneBad ? { borderColor: "#b3261e" } : {}) }} />{recipientPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}</Field>
+              <Field label="טלפון המקבל/ת"><input type="tel" inputMode="tel" value={form.recipientPhone} onChange={(e) => setField("recipientPhone", e.target.value)} className="sub-input" style={{ ...inputStyle, ...(recipientPhoneBad ? { borderColor: "#b3261e" } : {}) }} />{recipientPhoneBad ? <p role="alert" style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}</Field>
             </>
           )}
 
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>סוג משלוח</p>
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
             {SUB_TYPES.map((s) => (
-              <button key={s.key} onClick={() => setField("subType", s.key)} className="sub-opt-btn" style={{ flex: 1,
+              <button key={s.key} onClick={() => setField("subType", s.key)} aria-pressed={form.subType === s.key} className="sub-opt-btn" style={{ flex: 1,
                 background: form.subType === s.key ? "var(--green)" : "#fff", color: form.subType === s.key ? "#fff" : "var(--ink)",
                 border: form.subType === s.key ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 {s.label}
@@ -698,14 +698,14 @@ export default function SubscriptionProductView({ product, discounts, windowOpti
               <p style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
                 איך רוצה להתחיל?
               </p>
-              <button onClick={() => setField("billingChoice", "now")} className="sub-secondary-btn"
+              <button onClick={() => setField("billingChoice", "now")} aria-pressed={form.billingChoice === "now"} className="sub-secondary-btn"
                 style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start", marginBottom: 8,
                   background: form.billingChoice === "now" ? "var(--green)" : "#fff", color: form.billingChoice === "now" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "now" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
                 <div>עכשיו · ₪{partialPrice} ({flowersCountLabel(remainingDates.length)}, מתחיל ב-{firstDateLabel})</div>
                 <div style={{ fontSize: "0.92em", opacity: 0.75, fontWeight: 600, marginTop: 3 }}>ומהחודש הבא: ₪{subscriptionMonthlyPrice} לחודש</div>
               </button>
-              <button onClick={() => setField("billingChoice", "next")} className="sub-secondary-btn"
+              <button onClick={() => setField("billingChoice", "next")} aria-pressed={form.billingChoice === "next"} className="sub-secondary-btn"
                 style={{ width: "100%", fontWeight: 700, cursor: "pointer", textAlign: "start",
                   background: form.billingChoice === "next" ? "var(--green)" : "#fff", color: form.billingChoice === "next" ? "#fff" : "var(--ink)",
                   border: form.billingChoice === "next" ? "1px solid var(--green)" : "1px solid var(--line)" }}>
@@ -753,13 +753,22 @@ function SummaryLine({ label, value }) {
 }
 
 function Field({ label, children }) {
+  const id = useId();
+  let linked = false;
+  const kids = Children.map(children, (child) => {
+    if (!linked && isValidElement(child) && (child.type === "input" || child.type === "textarea")) {
+      linked = true;
+      return cloneElement(child, { id });
+    }
+    return child;
+  });
   return (
     <div style={{ marginBottom: 12 }}>
-      <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 5, color: "var(--ink)" }}>{label}</label>
-      {children}
+      <label htmlFor={id} style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 5, color: "var(--ink)" }}>{label}</label>
+      {kids}
     </div>
   );
 }
 
-const inputStyle = { width: "100%", border: "1px solid var(--line)", fontFamily: "inherit" };
+const inputStyle = { width: "100%", border: "1px solid #8a8f8c", fontFamily: "inherit" };
 const textareaStyle = { ...inputStyle, resize: "vertical", lineHeight: 1.5, wordSpacing: "normal", whiteSpace: "pre-wrap" };

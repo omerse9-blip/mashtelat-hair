@@ -15,14 +15,14 @@ export default function LegalLayout({ title, updated, current, children }) {
       </div>
 
       <header style={{ borderBottom: "2px solid var(--green)", paddingBottom: 18, marginBottom: 32 }}>
-        <p style={{ color: "#cf9b6f", fontWeight: 700, fontSize: 13, letterSpacing: 1.5, marginBottom: 8 }}>גינון העיר · משתלת העיר</p>
+        <p style={{ color: "#8a5a2b", fontWeight: 700, fontSize: 13, letterSpacing: 1.5, marginBottom: 8 }}>גינון העיר · משתלת העיר</p>
         <h1 style={{ fontSize: 34, fontWeight: 700, lineHeight: 1.15, color: "var(--ink)" }}>{title}</h1>
         {updated ? <p style={{ color: "var(--muted)", fontSize: 14, marginTop: 10 }}>עדכון אחרון: {updated}</p> : null}
       </header>
 
       <article className="legal-body">{children}</article>
 
-      <nav style={{ marginTop: 56, paddingTop: 28, borderTop: "1px solid var(--line)" }}>
+      <nav aria-label="מסמכים נוספים" style={{ marginTop: 56, paddingTop: 28, borderTop: "1px solid var(--line)" }}>
         <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 14, color: "var(--ink)" }}>מסמכים נוספים</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {DOCS.filter((d) => d.href !== current).map((d) => (
@@ -50,7 +50,7 @@ export default function LegalLayout({ title, updated, current, children }) {
           border-radius: 14px; padding: 18px 20px; margin-bottom: 28px;
           color: var(--ink); font-size: 16px;
         }
-        .legal-body a { color: var(--green); font-weight: 600; }
+        .legal-body a { color: var(--green); font-weight: 600; text-decoration: underline; }
         @media (max-width: 640px) {
           .legal-body { font-size: 16px; }
           .legal-body h2 { font-size: 19px; }

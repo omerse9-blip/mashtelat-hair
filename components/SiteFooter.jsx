@@ -38,7 +38,7 @@ const hoursRange = { unicodeBidi: "isolate", direction: "ltr", display: "inline-
 
 function PhoneIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--green)" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--green)" aria-hidden="true" focusable="false">
       <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.18z"/>
     </svg>
   );
@@ -46,7 +46,7 @@ function PhoneIcon() {
 
 function MailIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <path d="M2 7l10 6 10-6" />
     </svg>
@@ -55,7 +55,7 @@ function MailIcon() {
 
 function WhatsappIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
       <path fill="#25D366" d="M16 0C7.164 0 0 7.164 0 16c0 2.824.738 5.476 2.03 7.78L0 32l8.43-2.2A15.93 15.93 0 0016 32c8.836 0 16-7.164 16-16S24.836 0 16 0z"/>
       <path fill="#fff" d="M23.41 19.46c-.4-.2-2.37-1.17-2.74-1.3-.37-.13-.64-.2-.9.2-.27.4-1.04 1.3-1.27 1.57-.23.27-.47.3-.87.1-.4-.2-1.68-.62-3.2-1.97-1.18-1.05-1.98-2.35-2.21-2.75-.23-.4-.02-.62.18-.82.18-.18.4-.47.6-.7.2-.23.27-.4.4-.67.13-.27.07-.5-.03-.7-.1-.2-.9-2.17-1.23-2.97-.32-.78-.65-.67-.9-.68-.23-.01-.5-.01-.77-.01s-.7.1-1.07.5c-.37.4-1.4 1.37-1.4 3.34s1.43 3.87 1.63 4.14c.2.27 2.82 4.3 6.83 6.03.95.41 1.7.66 2.28.84.96.3 1.83.26 2.52.16.77-.12 2.37-.97 2.7-1.9.33-.94.33-1.74.23-1.9-.1-.17-.36-.27-.76-.47z"/>
     </svg>
@@ -64,7 +64,7 @@ function WhatsappIcon() {
 
 function InstagramIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <defs>
         <radialGradient id="ig-grad" cx="0.3" cy="1" r="1.2">
           <stop offset="0" stopColor="#FED576" />
@@ -82,7 +82,7 @@ function InstagramIcon() {
 
 function FacebookIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2" aria-hidden="true" focusable="false">
       <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.01 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.08 24 18.09 24 12.07z"/>
     </svg>
   );
@@ -90,7 +90,7 @@ function FacebookIcon() {
 
 function Social(props) {
   return (
-    <a href={props.href} target="_blank" rel="noreferrer" style={channelRow}>
+    <a href={props.href} target="_blank" rel="noopener noreferrer" style={channelRow} aria-label={`${props.network}: ${props.label} (נפתח בלשונית חדשה)`}>
       <span style={iconWrap}>{props.icon}</span>
       <span style={channelText}>{props.label}</span>
     </a>
@@ -120,42 +120,42 @@ export default function SiteFooter() {
     <footer style={{ borderTop: "1px solid var(--line)", marginTop: 80, background: FOOTER_BG }}>
       <div style={grid}>
         <div>
-          <p style={colHeading}>משתלת העיר</p>
+          <h2 style={colHeading}>משתלת העיר</h2>
           <p style={bodyText}>יוזמה 6, אזור התעשייה, אילת</p>
-          <a href={MAPS} target="_blank" rel="noreferrer" style={navBtn}>ניווט למשתלה</a>
+          <a href={MAPS} target="_blank" rel="noopener noreferrer" style={navBtn} aria-label="ניווט למשתלה במפות (נפתח בלשונית חדשה)">ניווט למשתלה</a>
         </div>
 
         <div>
-          <p style={colHeading}>שעות פתיחה</p>
+          <h2 style={colHeading}>שעות פתיחה</h2>
           <p style={{ ...bodyText, marginBottom: 6 }}>ראשון עד חמישי: <span style={hoursRange}>9:00 - 18:00</span></p>
           <p style={bodyText}>שישי: <span style={hoursRange}>9:00 - 15:00</span></p>
         </div>
 
         <div>
-          <p style={colHeading}>יצירת קשר</p>
-          <a href={`tel:${PHONE}`} style={channelRow}>
+          <h2 style={colHeading}>יצירת קשר</h2>
+          <a href={`tel:${PHONE}`} style={channelRow} aria-label={`חיוג לטלפון ${PHONE_DISPLAY}`}>
             <span style={iconWrap}><PhoneIcon /></span>
             <span style={channelText}>{PHONE_DISPLAY}</span>
           </a>
-          <a href={`https://wa.me/${WA}`} target="_blank" rel="noreferrer" style={channelRow}>
+          <a href={`https://wa.me/${WA}`} target="_blank" rel="noopener noreferrer" style={channelRow} aria-label={`שליחת הודעה בוואטסאפ למספר ${PHONE_DISPLAY} (נפתח בלשונית חדשה)`}>
             <span style={iconWrap}><WhatsappIcon /></span>
             <span style={channelText}>{PHONE_DISPLAY}</span>
           </a>
-          <a href={`mailto:${EMAIL}`} style={channelRow}>
+          <a href={`mailto:${EMAIL}`} style={channelRow} aria-label={`שליחת דוא"ל אל ${EMAIL}`}>
             <span style={iconWrap}><MailIcon /></span>
             <span style={channelText}>{EMAIL}</span>
           </a>
         </div>
 
         <div>
-          <p style={colHeading}>עקבו אחרינו</p>
-          <Social href={IG_NURSERY} label="משתלת העיר" icon={<InstagramIcon />} />
-          <Social href={FB_NURSERY} label="משתלת העיר" icon={<FacebookIcon />} />
-          <Social href={FB_GARDEN} label="גינון העיר" icon={<FacebookIcon />} />
+          <h2 style={colHeading}>עקבו אחרינו</h2>
+          <Social href={IG_NURSERY} label="משתלת העיר" network="אינסטגרם" icon={<InstagramIcon />} />
+          <Social href={FB_NURSERY} label="משתלת העיר" network="פייסבוק" icon={<FacebookIcon />} />
+          <Social href={FB_GARDEN} label="גינון העיר" network="פייסבוק" icon={<FacebookIcon />} />
         </div>
 
         <div>
-          <p style={colHeading}>מידע ותקנון</p>
+          <h2 style={colHeading}>מידע ותקנון</h2>
           <p style={bodyText}><Link href="/terms" style={navLink}>תקנון ותנאי שימוש</Link></p>
           <p style={bodyText}><Link href="/refund-policy" style={navLink}>מדיניות ביטולים והחזרות</Link></p>
           <p style={bodyText}><Link href="/privacy" style={navLink}>מדיניות פרטיות</Link></p>
@@ -164,12 +164,12 @@ export default function SiteFooter() {
       </div>
 
       <div style={bottomBar}>
-        <div style={bottomLinks}>
+        <nav aria-label="קישורים משפטיים" style={bottomLinks}>
           <Link href="/terms" style={mutedLink}>תקנון</Link>
           <Link href="/refund-policy" style={mutedLink}>ביטולים והחזרות</Link>
           <Link href="/privacy" style={mutedLink}>פרטיות</Link>
           <Link href="/accessibility" style={mutedLink}>נגישות</Link>
-        </div>
+        </nav>
         © {new Date().getFullYear()} משתלת העיר · גינון העיר · כל הזכויות שמורות
       </div>
     </footer>

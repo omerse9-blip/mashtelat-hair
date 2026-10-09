@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { supabase } from "../../lib/supabaseClient";
+import useDialogA11y from "../../components/useDialogA11y";
 
 const FREQ_LABEL_BY_KEY = { monthly: "חודשי", biweekly: "דו שבועי", weekly: "שבועי" };
 const SIZE_LABEL_BY_KEY = { small: "קטן", medium: "בינוני", large: "גדול" };
@@ -158,7 +159,8 @@ export default function AccountPage() {
                 <input
                   value={nameValue}
                   onChange={(e) => setNameValue(e.target.value)}
-                  style={{ flex: 1, border: "1px solid var(--line)", borderRadius: 9, padding: "8px 11px", fontSize: 14, fontFamily: "inherit" }}
+                  aria-label="שם להצגה"
+                  style={{ flex: 1, border: "1px solid #8a8f8c", borderRadius: 9, padding: "8px 11px", fontSize: 14, fontFamily: "inherit" }}
                   autoFocus
                 />
                 <button onClick={saveName} disabled={savingName}
@@ -270,6 +272,8 @@ function CancelModal({ subscriptionId, onClose, onDone }) {
   const [reasonKey, setReasonKey] = useState("");
   const [freeText, setFreeText] = useState("");
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef(null);
+  useDialogA11y(true, dialogRef, onClose);
 
   async function confirm() {
     setBusy(true);
@@ -293,8 +297,8 @@ function CancelModal({ subscriptionId, onClose, onDone }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(43,58,42,0.45)" }}>
-      <div style={{ width: "100%", maxWidth: 380, borderRadius: 16, padding: 18, background: "#fff", maxHeight: "88vh", overflowY: "auto" }}>
-        <h3 style={{ fontFamily: "'Rubik', sans-serif", fontSize: 17, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 14 }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title" tabIndex={-1} style={{ width: "100%", maxWidth: 380, borderRadius: 16, padding: 18, background: "#fff", maxHeight: "88vh", overflowY: "auto" }}>
+        <h3 id="cancel-modal-title" style={{ fontFamily: "'Rubik', sans-serif", fontSize: 17, fontWeight: 700, color: "var(--ink)", textAlign: "center", marginBottom: 14 }}>
           ביטול מנוי
         </h3>
 
@@ -302,7 +306,7 @@ function CancelModal({ subscriptionId, onClose, onDone }) {
           {CANCEL_REASONS.map((r) => {
             const selected = reasonKey === r.key;
             return (
-              <button key={r.key} onClick={() => setReasonKey(r.key)}
+              <button key={r.key} onClick={() => setReasonKey(r.key)} aria-pressed={selected}
                 style={{ width: "100%", textAlign: "start", padding: "10px 12px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
                   background: selected ? "var(--green)" : "#fff", color: selected ? "#fff" : "var(--ink)",
                   border: selected ? "1px solid var(--green)" : "1px solid var(--line)" }}>
@@ -314,8 +318,9 @@ function CancelModal({ subscriptionId, onClose, onDone }) {
 
         {reasonKey === "other" && (
           <textarea value={freeText} onChange={(e) => setFreeText(e.target.value)} rows={3} autoFocus
+            aria-label="סיבת הביטול במילים שלך"
             placeholder="ספרי לנו במילים שלך..."
-            style={{ width: "100%", border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", fontSize: 14, marginBottom: 12, resize: "vertical", fontFamily: "inherit" }} />
+            style={{ width: "100%", border: "1px solid #8a8f8c", borderRadius: 10, padding: "10px 12px", fontSize: 14, marginBottom: 12, resize: "vertical", fontFamily: "inherit" }} />
         )}
 
         <div style={{ display: "flex", gap: 8 }}>

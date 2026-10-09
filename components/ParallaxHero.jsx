@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function ParallaxHero({ children, imageUrl, mediaType = "image" }) {
   const outerRef = useRef(null);
   const bgRef = useRef(null);
+  const userPausedRef = useRef(false);
+  const [playing, setPlaying] = useState(true);
+  const isVideo = mediaType === "video";
 
   useEffect(() => {
     const outer = outerRef.current;
     const bg = bgRef.current;
     if (!outer || !bg) return;
 
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // תנועה כבויה: לפי הגדרת המערכת או לפי כפתור "עצירת תנועה" בסרגל הנגישות
+    const motionOff = () =>
+      reducedQuery.matches || document.documentElement.getAttribute("data-a11y-motion") === "off";
 
     let ticking = false;
 
@@ -19,6 +25,11 @@ export default function ParallaxHero({ children, imageUrl, mediaType = "image" }
     const speedFactor = isMobile ? 0.25 : 0.5;
 
     const update = () => {
+      if (motionOff()) {
+        bg.style.transform = "none";
+        ticking = false;
+        return;
+      }
       const rect = outer.getBoundingClientRect();
       const scrolledPast = -rect.top;
       const offset = scrolledPast * speedFactor;
@@ -26,10 +37,15 @@ export default function ParallaxHero({ children, imageUrl, mediaType = "image" }
       ticking = false;
     };
 
-    if (prefersReduced) {
-      bg.style.transform = "none";
-      return;
-    }
+    const syncVideo = () => {
+      if (!isVideo || typeof bg.pause !== "function") return;
+      if (motionOff()) {
+        bg.pause();
+      } else if (!userPausedRef.current) {
+        const p = bg.play();
+        if (p && p.catch) p.catch(() => {});
+      }
+    };
 
     const onScroll = () => {
       if (!ticking) {
@@ -38,18 +54,52 @@ export default function ParallaxHero({ children, imageUrl, mediaType = "image" }
       }
     };
 
+    const onMotionChange = () => {
+      update();
+      syncVideo();
+    };
+
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+
     update();
+    syncVideo();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", update);
+    window.addEventListener("a11y-motion-change", onMotionChange);
+    if (reducedQuery.addEventListener) reducedQuery.addEventListener("change", onMotionChange);
+    if (isVideo) {
+      bg.addEventListener("play", onPlay);
+      bg.addEventListener("pause", onPause);
+    }
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", update);
+      window.removeEventListener("a11y-motion-change", onMotionChange);
+      if (reducedQuery.removeEventListener) reducedQuery.removeEventListener("change", onMotionChange);
+      if (isVideo) {
+        bg.removeEventListener("play", onPlay);
+        bg.removeEventListener("pause", onPause);
+      }
     };
-  }, []);
+  }, [isVideo]);
+
+  function toggleVideo() {
+    const v = bgRef.current;
+    if (!v || typeof v.pause !== "function") return;
+    if (v.paused) {
+      userPausedRef.current = false;
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    } else {
+      userPausedRef.current = true;
+      v.pause();
+    }
+  }
 
   return (
     <div ref={outerRef} className="parallax-hero">
-      {mediaType === "video" ? (
+      {isVideo ? (
         <video
           ref={bgRef}
           className="parallax-hero-bg parallax-hero-video"
@@ -58,6 +108,8 @@ export default function ParallaxHero({ children, imageUrl, mediaType = "image" }
           muted
           loop
           playsInline
+          aria-hidden="true"
+          tabIndex={-1}
         />
       ) : (
         <div
@@ -68,6 +120,17 @@ export default function ParallaxHero({ children, imageUrl, mediaType = "image" }
       )}
       <div className="parallax-hero-scrim" />
       <div className="parallax-hero-content">{children}</div>
+
+      {isVideo ? (
+        <button
+          type="button"
+          className="parallax-hero-toggle"
+          onClick={toggleVideo}
+          aria-label={playing ? "השהיית סרטון הרקע" : "הפעלת סרטון הרקע"}
+        >
+          <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span>
+        </button>
+      ) : null}
 
       <style>{`
         .parallax-hero {
@@ -115,6 +178,23 @@ export default function ParallaxHero({ children, imageUrl, mediaType = "image" }
           align-items: flex-start;
           justify-content: center;
           padding: 20px 24px 24px;
+        }
+        .parallax-hero-toggle {
+          position: absolute;
+          bottom: 14px;
+          inset-inline-start: 14px;
+          z-index: 2;
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          border: 2px solid #fff;
+          background: rgba(31, 42, 36, 0.85);
+          color: #fff;
+          font-size: 14px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         @media (max-width: 640px) {
           .parallax-hero {

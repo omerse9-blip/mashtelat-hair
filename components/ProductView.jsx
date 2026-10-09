@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { sizeLabel, singleSizeText, availableFromFull } from "../lib/siteData";
 import { useCart } from "./CartProvider";
 import AddonsPopup from "./AddonsPopup";
+import useDialogA11y from "./useDialogA11y";
 
 const DEFAULT_DISCLAIMER = "• התמונה להמחשה בלבד.";
 
@@ -55,6 +56,24 @@ export default function ProductView({ product, addonGroups }) {
     }
   }
 
+  const zoomRef = useRef(null);
+  useDialogA11y(!!(zoom && image), zoomRef, closeZoom);
+
+  // פתיחת התמונה המוגדלת גם במקלדת
+  const zoomProps = image
+    ? {
+        role: "button",
+        tabIndex: 0,
+        "aria-label": `הגדלת התמונה של ${product.name}`,
+        onKeyDown: (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openZoom();
+          }
+        },
+      }
+    : {};
+
   function handleAdd() {
     const key = hasSizes ? `${product.id}_${current.id || sel}` : product.id;
     addItem({
@@ -89,6 +108,7 @@ export default function ProductView({ product, addonGroups }) {
       <div className="product-image-col">
         <div
           onClick={openZoom}
+          {...zoomProps}
           className="product-image"
           style={{ background: "#f4f6f4", borderRadius: 18, overflow: "hidden", cursor: image ? "zoom-in" : "default", position: "relative" }}
         >
@@ -134,13 +154,14 @@ export default function ProductView({ product, addonGroups }) {
 
         {hasSizes ? (
           <div className="product-sizes" style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div role="group" aria-label="בחירת גודל" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {sizes.map((s, i) => {
                 const active = i === sel;
                 return (
                   <button
                     key={s.id || i}
                     onClick={() => setSel(i)}
+                    aria-pressed={active}
                     style={{
                       fontSize: 14, fontWeight: 600, padding: "8px 16px", borderRadius: 10, cursor: "pointer",
                       background: active ? "var(--green)" : "#fff",
@@ -161,10 +182,10 @@ export default function ProductView({ product, addonGroups }) {
 
         {product.in_stock ? (
           <div className="product-actions" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden" }}>
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} style={{ width: 40, height: 44, border: "none", background: "#fff", fontSize: 20, cursor: "pointer" }}>−</button>
-              <span style={{ minWidth: 36, textAlign: "center", fontWeight: 700 }}>{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} style={{ width: 40, height: 44, border: "none", background: "#fff", fontSize: 20, cursor: "pointer" }}>+</button>
+            <div role="group" aria-label="כמות" style={{ display: "flex", alignItems: "center", border: "1px solid #8a8f8c", borderRadius: 10, overflow: "hidden" }}>
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="הפחתת כמות" style={{ width: 44, height: 44, border: "none", background: "#fff", fontSize: 20, cursor: "pointer" }}><span aria-hidden="true">−</span></button>
+              <span aria-live="polite" style={{ minWidth: 36, textAlign: "center", fontWeight: 700 }}>{qty}</span>
+              <button onClick={() => setQty((q) => q + 1)} aria-label="הוספת כמות" style={{ width: 44, height: 44, border: "none", background: "#fff", fontSize: 20, cursor: "pointer" }}><span aria-hidden="true">+</span></button>
             </div>
             <button
               onClick={handleAdd}
@@ -172,6 +193,7 @@ export default function ProductView({ product, addonGroups }) {
             >
               {added ? "✓ נוסף לסל" : "הוספה לסל"}
             </button>
+            <span role="status" className="sr-only">{added ? `${product.name} נוסף לסל` : ""}</span>
           </div>
         ) : (
           <div style={{ textAlign: "center", padding: "12px", borderRadius: 10, background: "#f4f4f4", color: "var(--muted)", fontWeight: 600, marginBottom: 20 }}>
@@ -217,14 +239,14 @@ export default function ProductView({ product, addonGroups }) {
       </div>
 
       {zoom && image ? (
-        <div onClick={closeZoom} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}>
-          <img src={image} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12 }} />
+        <div ref={zoomRef} role="dialog" aria-modal="true" aria-label={`תמונה מוגדלת: ${product.name}`} tabIndex={-1} onClick={closeZoom} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}>
+          <img src={image} alt={product.name} onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12 }} />
           <button
             onClick={closeZoom}
-            style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 40, height: 40, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
-            aria-label="סגירה"
+            style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 44, height: 44, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
+            aria-label="סגירת התמונה המוגדלת"
           >
-            ✕
+            <span aria-hidden="true">✕</span>
           </button>
         </div>
       ) : null}

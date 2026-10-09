@@ -6,6 +6,8 @@ import { CartProvider } from "../components/CartProvider";
 import { DeliveryProvider } from "../components/DeliveryProvider";
 import SiteStatusGate from "../components/SiteStatusGate";
 import SessionTracker from "../components/SessionTracker";
+import AccessibilityToolbar from "../components/AccessibilityToolbar";
+import { A11Y_INIT_SCRIPT } from "../lib/a11yInit";
 import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
 export const metadata = {
   metadataBase: new URL("https://mashtelathair.co.il"),
@@ -112,8 +114,9 @@ export default async function RootLayout({ children }) {
   const nurseryCatIdsWithProducts = new Set(searchIndex.nursery.map((p) => String(p.categoryId)));
   const visibleNurseryCategories = nurseryCategories.filter((c) => nurseryCatIdsWithProducts.has(String(c.id)));
   return (
-    <html lang="he" dir="rtl">
+    <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: A11Y_INIT_SCRIPT }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Gveret+Levin&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet" />
@@ -123,15 +126,19 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body>
+        <a href="#main-content" className="skip-link">דילוג לתוכן הראשי</a>
         <SiteStatusGate>
           <CartProvider>
             <DeliveryProvider>
               <SiteHeader searchIndex={searchIndex} nurseryCategories={visibleNurseryCategories} gardenCategories={gardenCategories} />
-              <div style={{ minHeight: "60vh" }}>{children}</div>
-              <SiteFooter />
+              <div id="site-zoom">
+                <div id="main-content" tabIndex={-1} style={{ minHeight: "60vh" }}>{children}</div>
+                <SiteFooter />
+              </div>
             </DeliveryProvider>
           </CartProvider>
         </SiteStatusGate>
+        <AccessibilityToolbar />
         <SessionTracker />
         <Analytics />
       </body>

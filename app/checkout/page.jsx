@@ -73,13 +73,16 @@ function filterOptions(options, fromDate, fromWindow) {
 function field(label, value, onChange, props = {}) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }}
-        {...props}
-      />
+      <label style={{ display: "block" }}>
+        <span style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{label}</span>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-required={String(label).includes("*") ? "true" : undefined}
+          style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid #8a8f8c", fontSize: 15 }}
+          {...props}
+        />
+      </label>
     </div>
   );
 }
@@ -372,14 +375,19 @@ export default function CheckoutPage() {
         <p style={{ fontWeight: 700, marginBottom: 12 }}>הפרטים שלך</p>
         {field("שם מלא *", cName, setCName, { placeholder: "שם" })}
         <div style={{ marginBottom: 0 }}>
-          <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>טלפון *</label>
-          <input
-            value={cPhone}
-            onChange={(e) => setCPhone(e.target.value)}
-            type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
-            style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${cPhoneBad ? "#b3261e" : "var(--line)"}`, fontSize: 15 }}
-          />
-          {cPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
+          <label style={{ display: "block" }}>
+            <span style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>טלפון *</span>
+            <input
+              value={cPhone}
+              onChange={(e) => setCPhone(e.target.value)}
+              type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
+              aria-required="true"
+              aria-invalid={cPhoneBad ? "true" : undefined}
+              aria-describedby={cPhoneBad ? "cphone-error" : undefined}
+              style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${cPhoneBad ? "#b3261e" : "#8a8f8c"}`, fontSize: 15 }}
+            />
+          </label>
+          {cPhoneBad ? <p id="cphone-error" role="alert" style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
         </div>
       </div>
 
@@ -407,8 +415,10 @@ export default function CheckoutPage() {
       ))}
 
       <div style={{ marginBottom: 18 }}>
-        <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>הערות למשתלה (אופציונלי)</label>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }} />
+        <label style={{ display: "block" }}>
+          <span style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>הערות למשתלה (אופציונלי)</span>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid #8a8f8c", fontSize: 15 }} />
+        </label>
       </div>
 
       <div style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 18, marginBottom: 18, background: "var(--green-soft)" }}>
@@ -436,7 +446,7 @@ export default function CheckoutPage() {
         </p>
       ) : null}
 
-      {err ? <p style={{ color: "#b3261e", fontSize: 14, marginBottom: 14 }}>{err}</p> : null}
+      {err ? <p role="alert" style={{ color: "#b3261e", fontSize: 14, marginBottom: 14 }}>{err}</p> : null}
 
       <button
         onClick={handleSubmit}
@@ -494,6 +504,7 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
   const bigBtn = (active, label, onClick) => (
     <button
       onClick={onClick}
+      aria-pressed={active}
       style={{
         flex: 1, padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer",
         background: active ? "var(--green)" : "#fff",
@@ -514,7 +525,7 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
           <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: k === group.items.length - 1 ? 0 : 10 }}>
             <div style={{ width: 46, height: 46, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "#f4f6f4" }}>
               {it.image ? (
-                <img src={it.image} alt={it.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <img src={it.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
                 <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🪴</div>
               )}
@@ -566,6 +577,7 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
                   <button
                     key={s.key}
                     onClick={() => onChange({ subType: s.key })}
+                    aria-pressed={b.subType === s.key}
                     style={{
                       flex: 1, padding: "12px", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer",
                       background: b.subType === s.key ? "var(--green)" : "#fff",
@@ -578,8 +590,8 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
                 ))}
               </div>
 
-              <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 8 }}>למי המשלוח?</label>
-              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+              <p id={`forwho-label-${group.key}`} style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>למי המשלוח?</p>
+              <div role="group" aria-labelledby={`forwho-label-${group.key}`} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                 {bigBtn(b.forWho === "self", "אליי", () => onChange({ forWho: "self", rName: "", rPhone: "" }))}
                 {bigBtn(b.forWho === "other", "למישהו אחר", () => onChange({ forWho: "other" }))}
               </div>
@@ -599,14 +611,19 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
                     <>
                       {field("שם המקבל *", b.rName || "", (v) => onChange({ rName: v }), { placeholder: "שם המקבל" })}
                       <div style={{ marginBottom: 14 }}>
-                        <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>טלפון המקבל *</label>
-                        <input
-                          value={b.rPhone || ""}
-                          onChange={(e) => onChange({ rPhone: e.target.value })}
-                          type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
-                          style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${rPhoneBad ? "#b3261e" : "var(--line)"}`, fontSize: 15 }}
-                        />
-                        {rPhoneBad ? <p style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
+                        <label style={{ display: "block" }}>
+                          <span style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>טלפון המקבל *</span>
+                          <input
+                            value={b.rPhone || ""}
+                            onChange={(e) => onChange({ rPhone: e.target.value })}
+                            type="tel" inputMode="tel" placeholder="05X-XXXXXXX"
+                            aria-required="true"
+                            aria-invalid={rPhoneBad ? "true" : undefined}
+                            aria-describedby={rPhoneBad ? `rphone-error-${group.key}` : undefined}
+                            style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: `1px solid ${rPhoneBad ? "#b3261e" : "#8a8f8c"}`, fontSize: 15 }}
+                          />
+                        </label>
+                        {rPhoneBad ? <p id={`rphone-error-${group.key}`} role="alert" style={{ color: "#b3261e", fontSize: 13, marginTop: 4 }}>יש להזין מספר טלפון תקין.</p> : null}
                       </div>
                     </>
                   ) : null}
@@ -620,15 +637,17 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
           {b.method ? (
             <>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>ברכה לכרטיס (אופציונלי)</label>
-                <textarea
-                  value={b.greeting || ""}
-                  onChange={(e) => onChange({ greeting: e.target.value.slice(0, 100) })}
-                  rows={2}
-                  maxLength={100}
-                  style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15 }}
-                  placeholder="הברכה שתודפס על הכרטיס"
-                />
+                <label style={{ display: "block" }}>
+                  <span style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>ברכה לכרטיס (אופציונלי)</span>
+                  <textarea
+                    value={b.greeting || ""}
+                    onChange={(e) => onChange({ greeting: e.target.value.slice(0, 100) })}
+                    rows={2}
+                    maxLength={100}
+                    style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid #8a8f8c", fontSize: 15 }}
+                    placeholder="הברכה שתודפס על הכרטיס"
+                  />
+                </label>
                 <p style={{ textAlign: "left", color: "var(--muted)", fontSize: 12, marginTop: 4 }}>{(b.greeting || "").length}/100</p>
               </div>
 
@@ -637,24 +656,26 @@ function DeliveryBlock({ group, index, multi, block, options, fees, itemsTotal, 
                 <p style={{ color: "var(--muted)", fontSize: 14 }}>אין מועדים זמינים כרגע. ניצור קשר לתיאום.</p>
               ) : (
                 <>
-                  <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>יום</label>
+                  <label htmlFor={`day-${group.key}`} style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>יום</label>
                   <select
+                    id={`day-${group.key}`}
                     value={b.selDate || ""}
                     onChange={(e) => {
                       const day = options.find((o) => o.date === e.target.value);
                       onChange({ selDate: e.target.value, selWindow: day?.windows[0] || "" });
                     }}
-                    style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid var(--line)", fontSize: 15, marginBottom: 14, background: "#fff" }}
+                    style={{ width: "100%", padding: "11px 12px", borderRadius: 10, border: "1px solid #8a8f8c", fontSize: 15, marginBottom: 14, background: "#fff" }}
                   >
                     {options.map((o) => <option key={o.date} value={o.date}>{o.label}</option>)}
                   </select>
 
-                  <label style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 6 }}>שעה</label>
-                  <div dir="ltr" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <p id={`window-label-${group.key}`} style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>שעה</p>
+                  <div dir="ltr" role="group" aria-labelledby={`window-label-${group.key}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {(currentDay?.windows || []).map((w) => (
                       <button
                         key={w}
                         onClick={() => onChange({ selWindow: w })}
+                        aria-pressed={b.selWindow === w}
                         style={{
                           padding: "11px 8px", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
                           background: b.selWindow === w ? "var(--green)" : "#fff",

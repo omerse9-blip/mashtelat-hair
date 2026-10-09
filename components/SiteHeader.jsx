@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 import SearchOverlay from "./SearchOverlay";
+import useDialogA11y from "./useDialogA11y";
 import { supabase } from "../lib/supabaseClient";
 
 const BTN_BORDER = "#ece3d4";
@@ -12,7 +13,7 @@ const WA_LINK = "https://wa.me/972533669089";
 
 function CartIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
       <circle cx="9" cy="21" r="1" />
       <circle cx="19" cy="21" r="1" />
       <path d="M1 1h3l2.4 13.2a2 2 0 0 0 2 1.6h9.2a2 2 0 0 0 2-1.6L21.6 6H5.2" />
@@ -22,7 +23,7 @@ function CartIcon() {
 
 function WhatsAppIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--green)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--green)" aria-hidden="true" focusable="false">
       <path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.08L2 22l5.06-1.33A9.94 9.94 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2Zm0 18.13c-1.62 0-3.13-.45-4.43-1.24l-.32-.19-3.01.79.8-2.93-.2-.3A8.11 8.11 0 0 1 3.9 12c0-4.48 3.65-8.13 8.12-8.13 4.47 0 8.12 3.65 8.12 8.13 0 4.48-3.65 8.13-8.12 8.13Zm4.47-6.08c-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.29.18-.53.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.34-1.67-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.32-.75-1.8-.2-.48-.4-.42-.55-.42-.14 0-.3-.02-.46-.02-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.02 0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.14 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28Z" />
     </svg>
   );
@@ -30,7 +31,7 @@ function WhatsAppIcon() {
 
 function AccountIcon({ size = 19 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21c0-4 3.58-7 8-7s8 3 8 7" />
     </svg>
@@ -108,6 +109,9 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
     }
   }
 
+  const menuRef = useRef(null);
+  useDialogA11y(menuOpen && mounted, menuRef, closeMenu);
+
   function goToAccount() {
     setMenuOpen(false);
     router.push("/account");
@@ -154,6 +158,11 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
       style={{ position: "fixed", inset: 0, background: "rgba(33,58,45,0.45)", backdropFilter: "blur(2px)", zIndex: 1000, display: "flex", justifyContent: "flex-start" }}
     >
       <div
+        ref={menuRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={menuTitle}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "min(84vw, 340px)", height: "100%", background: "#f7f2e9",
@@ -164,10 +173,10 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           <span style={{ fontWeight: 700, fontSize: 19, color: "#fff" }}>{menuTitle}</span>
           <button
             onClick={closeMenu}
-            aria-label="Close"
-            style={{ width: 36, height: 36, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            aria-label="סגירת התפריט"
+            style={{ width: 44, height: 44, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            ✕
+            <span aria-hidden="true">✕</span>
           </button>
         </div>
 
@@ -200,7 +209,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
             }}
           >
             <span>דף הבית</span>
-            <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>›</span>
+            <span aria-hidden="true" style={{ color: "#8a5a2b", fontSize: 18, fontWeight: 700 }}>›</span>
           </button>
           {categories.length === 0 ? (
             <p style={{ color: "var(--muted)", fontSize: 15, padding: "16px 12px" }}>אין מחלקות להצגה.</p>
@@ -219,7 +228,7 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
                 }}
               >
                 <span>{c.name}</span>
-                <span style={{ color: "#cf9b6f", fontSize: 18, fontWeight: 700 }}>›</span>
+                <span aria-hidden="true" style={{ color: "#8a5a2b", fontSize: 18, fontWeight: 700 }}>›</span>
               </button>
             ))
           )}
@@ -245,8 +254,10 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
         <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
           <button
             onClick={() => setMenuOpen(true)}
-            aria-label="Menu"
-            style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 5, width: 26, height: 22, border: "none", background: "transparent", cursor: "pointer", padding: 0 }}
+            aria-label="פתיחת התפריט"
+            aria-haspopup="dialog"
+            aria-expanded={menuOpen}
+            style={{ flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 5, width: 44, height: 44, border: "none", background: "transparent", cursor: "pointer", padding: "0 9px" }}
           >
             <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
             <span style={{ display: "block", width: "100%", height: 2, background: "var(--green)", borderRadius: 2 }} />
@@ -255,19 +266,19 @@ export default function SiteHeader({ searchIndex, nurseryCategories = [], garden
           <SearchOverlay index={searchIndex} categories={categories} baseHref={baseHref} pathname={pathname} />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <nav aria-label="אתרי העסק" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
           <NavTab href="/" label="משתלת העיר" active={!isGarden} />
           <NavTab href="/garden" label="גינון העיר" active={isGarden} />
-        </div>
+        </nav>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, flex: 1, minWidth: 0 }}>
-          <a href={WA_LINK} target="_blank" rel="noreferrer" aria-label="WhatsApp" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, flex: 1, minWidth: 0 }}>
+          <a href={WA_LINK} target="_blank" rel="noopener noreferrer" aria-label="שליחת הודעה בוואטסאפ (נפתח בלשונית חדשה)" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44 }}>
             <WhatsAppIcon />
           </a>
-          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Cart">
+          <Link href="/cart" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44 }} aria-label={count > 0 ? `העגלה שלי, ${count} פריטים` : "העגלה שלי"}>
             <CartIcon />
             {count > 0 ? (
-              <span style={{ position: "absolute", top: -6, insetInlineEnd: -8, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: "var(--green)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span aria-hidden="true" style={{ position: "absolute", top: -6, insetInlineEnd: -8, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 999, background: "var(--green)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {count}
               </span>
             ) : null}
@@ -284,6 +295,7 @@ function NavTab({ href, label, active }) {
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       style={{
         fontSize: 14,
         fontWeight: 700,

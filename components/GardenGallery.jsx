@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import useDialogA11y from "./useDialogA11y";
 
 const BOOK_URL = "https://ginun-haair.vercel.app/book";
 
@@ -74,6 +75,9 @@ export default function GardenGallery({ categories, worksByCat }) {
     }
   }
 
+  const zoomRef = useRef(null);
+  useDialogA11y(!!zoom, zoomRef, closeZoom);
+
   const tabStyle = (active) => ({
     fontSize: 15, fontWeight: 600, padding: "9px 20px", borderRadius: 999, cursor: "pointer",
     background: active ? "var(--green)" : "#fff",
@@ -92,9 +96,9 @@ export default function GardenGallery({ categories, worksByCat }) {
   return (
     <div>
       {categories.length > 0 ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 36 }}>
+        <div role="group" aria-label="מחלקות הגינון" style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 36 }}>
           {categories.map((c) => (
-            <button key={c.id} onClick={() => selectCategory(c.id)} style={tabStyle(String(c.id) === String(activeId))}>
+            <button key={c.id} aria-pressed={String(c.id) === String(activeId)} onClick={() => selectCategory(c.id)} style={tabStyle(String(c.id) === String(activeId))}>
               {c.name}
             </button>
           ))}
@@ -111,7 +115,19 @@ export default function GardenGallery({ categories, worksByCat }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 18, marginBottom: videos.length ? 40 : 0 }}>
               {images.map((w) => (
                 <figure key={w.id} id={`work-${w.id}`} style={{ margin: 0, borderRadius: 14, ...ringStyle(w.id) }}>
-                  <div onClick={() => setZoom(w.media_url)} style={{ position: "relative", aspectRatio: "4 / 3", borderRadius: 14, overflow: "hidden", background: "#f4f6f4", cursor: "zoom-in" }}>
+                  <div
+                    onClick={() => setZoom(w.media_url)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={w.caption ? `הגדלת התמונה: ${w.caption}` : "הגדלת התמונה"}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setZoom(w.media_url);
+                      }
+                    }}
+                    style={{ position: "relative", aspectRatio: "4 / 3", borderRadius: 14, overflow: "hidden", background: "#f4f6f4", cursor: "zoom-in" }}
+                  >
                     <Image
                       src={w.media_url}
                       alt={w.caption || ""}
@@ -131,7 +147,7 @@ export default function GardenGallery({ categories, worksByCat }) {
               {videos.map((w) => (
                 <figure key={w.id} id={`work-${w.id}`} style={{ margin: 0, borderRadius: 14, ...ringStyle(w.id) }}>
                   <div style={{ aspectRatio: "16 / 9", borderRadius: 14, overflow: "hidden", background: "#000" }}>
-                    <iframe src={`https://www.youtube.com/embed/${w.media_url}`} title={w.caption || "video"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: "100%", height: "100%", border: "none" }} />
+                    <iframe src={`https://www.youtube.com/embed/${w.media_url}`} title={w.caption || "סרטון גינון"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: "100%", height: "100%", border: "none" }} />
                   </div>
                   {w.caption ? <figcaption style={{ color: "var(--muted)", fontSize: 14, marginTop: 8 }}>{w.caption}</figcaption> : null}
                 </figure>
@@ -146,14 +162,14 @@ export default function GardenGallery({ categories, worksByCat }) {
       </div>
 
       {zoom ? (
-        <div onClick={closeZoom} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}>
+        <div ref={zoomRef} role="dialog" aria-modal="true" aria-label="תמונה מוגדלת" tabIndex={-1} onClick={closeZoom} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20, cursor: "zoom-out" }}>
           <img src={zoom} alt="" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12 }} />
           <button
             onClick={closeZoom}
-            style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 40, height: 40, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
-            aria-label="סגירה"
+            style={{ position: "fixed", top: 18, insetInlineEnd: 18, width: 44, height: 44, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.9)", fontSize: 20, cursor: "pointer" }}
+            aria-label="סגירת התמונה המוגדלת"
           >
-            ✕
+            <span aria-hidden="true">✕</span>
           </button>
         </div>
       ) : null}

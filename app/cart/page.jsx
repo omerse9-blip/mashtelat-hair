@@ -151,7 +151,7 @@ export default function CartPage() {
       )}
 
       {undo && (
-        <div style={undoStrip}>
+        <div style={undoStrip} role="status">
           <span style={{ fontSize: 14 }}>{undo.label}</span>
           <button onClick={doUndo} style={undoBtn}>ביטול</button>
         </div>
@@ -167,7 +167,7 @@ function CartRow({ item, onRemove, setQuantity, isAddon }) {
     <div style={{ display: "flex", gap: 14, alignItems: "center", padding: 12 }}>
       <div style={{ width: isAddon ? 54 : 70, height: isAddon ? 54 : 70, borderRadius: 10, overflow: "hidden", flexShrink: 0, background: "#f4f6f4" }}>
         {item.image ? (
-          <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🪴</div>
         )}
@@ -184,12 +184,12 @@ function CartRow({ item, onRemove, setQuantity, isAddon }) {
         ) : null}
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden" }}>
-          <button onClick={() => setQuantity(item.key, item.quantity - 1)} style={{ width: 34, height: 36, border: "none", background: "#fff", fontSize: 18, cursor: "pointer" }}>−</button>
-          <span style={{ minWidth: 30, textAlign: "center", fontWeight: 700 }}>{item.quantity}</span>
-          <button onClick={() => setQuantity(item.key, item.quantity + 1)} style={{ width: 34, height: 36, border: "none", background: "#fff", fontSize: 18, cursor: "pointer" }}>+</button>
+        <div role="group" aria-label={`כמות: ${item.name}`} style={{ display: "flex", alignItems: "center", border: "1px solid #8a8f8c", borderRadius: 10, overflow: "hidden" }}>
+          <button onClick={() => setQuantity(item.key, item.quantity - 1)} aria-label={`הפחתת כמות: ${item.name}`} style={{ width: 44, height: 44, border: "none", background: "#fff", fontSize: 18, cursor: "pointer" }}><span aria-hidden="true">−</span></button>
+          <span aria-live="polite" style={{ minWidth: 30, textAlign: "center", fontWeight: 700 }}>{item.quantity}</span>
+          <button onClick={() => setQuantity(item.key, item.quantity + 1)} aria-label={`הוספת כמות: ${item.name}`} style={{ width: 44, height: 44, border: "none", background: "#fff", fontSize: 18, cursor: "pointer" }}><span aria-hidden="true">+</span></button>
         </div>
-        <button onClick={onRemove} style={{ background: "none", border: "none", color: "#b3261e", fontSize: 13, cursor: "pointer" }}>הסרה</button>
+        <button onClick={onRemove} aria-label={`הסרת ${item.name} מהעגלה`} style={{ background: "none", border: "none", color: "#b3261e", fontSize: 13, cursor: "pointer", minHeight: 44, padding: "0 8px" }}>הסרה</button>
       </div>
     </div>
   );
