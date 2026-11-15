@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { getClosedTodayStatus } from "../lib/siteData";
 
 const DEFAULT_MESSAGE = "כרגע איננו קולטים הזמנות חדשות מהאתר. נחזור להזמנות בהקדם. תודה על הסבלנות, עמכם הסליחה 🌹";
 
@@ -29,12 +30,17 @@ export default function SiteStatusGate({ children }) {
   const [status, setStatus] = useState(null);
   const [now, setNow] = useState(Date.now());
   const [viewportHeight, setViewportHeight] = useState(null);
+  const [closedToday, setClosedToday] = useState(null);
 
   useEffect(() => {
     let alive = true;
     async function load() {
       const { data } = await supabase.from("site_status").select("*").eq("id", 1).maybeSingle();
       if (alive) setStatus(data);
+      try {
+        const c = await getClosedTodayStatus();
+        if (alive) setClosedToday(c);
+      } catch {}
     }
     load();
     const poll = setInterval(load, 30000);
@@ -79,12 +85,26 @@ export default function SiteStatusGate({ children }) {
 
   const rawDisabled = !!status?.is_disabled;
   const timeExpired = !!(status?.disabled_until && new Date(status.disabled_until).getTime() <= now);
-  const isDisabled = rawDisabled && !timeExpired;
+  const manualDisabled = rawDisabled && !timeExpired;
+  const closedDay = !!closedToday?.closed;
+  const isDisabled = manualDisabled || closedDay;
 
   let countdownText = null;
-  if (isDisabled && status?.disabled_until) {
+  if (manualDisabled && status?.disabled_until) {
     const remain = new Date(status.disabled_until).getTime() - now;
     countdownText = formatCountdown(remain);
+  }
+
+  let overlayMessage = status?.message || DEFAULT_MESSAGE;
+  if (!manualDisabled && closedDay) {
+    overlayMessage = "המשתלה סגורה היום, והאתר סגור כעת להזמנות. תודה על ההבנה 🌹";
+    if (closedToday.reopenAt) {
+      const when =
+        closedToday.reopenInDays === 1
+          ? "מחר"
+          : `ביום ${closedToday.reopenDayName}`;
+      countdownText = `נחזור ${when} בשעה ${closedToday.reopenTime}`;
+    }
   }
 
   return (
@@ -112,7 +132,7 @@ export default function SiteStatusGate({ children }) {
             }}
           >
             <p style={{ fontSize: 17, fontWeight: 600, margin: "0 0 10px", color: "#2b3a2a", fontFamily: "Rubik, sans-serif" }}>
-              {status.message || DEFAULT_MESSAGE}
+              {overlayMessage}
             </p>
             {countdownText && (
               <p style={{ fontSize: 14, color: "#6E8C58", fontWeight: 600, margin: 0, fontFamily: "Rubik, sans-serif" }}>
