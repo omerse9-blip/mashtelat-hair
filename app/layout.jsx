@@ -8,7 +8,7 @@ import SiteStatusGate from "../components/SiteStatusGate";
 import SessionTracker from "../components/SessionTracker";
 import AccessibilityToolbar from "../components/AccessibilityToolbar";
 import { A11Y_INIT_SCRIPT } from "../lib/a11yInit";
-import { getCategories, getProducts, getGardenWorks, cardImage, cardPrice } from "../lib/siteData";
+import { getCategories, getProducts, cardImage } from "../lib/siteData";
 export const metadata = {
   metadataBase: new URL("https://mashtelathair.co.il"),
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
@@ -62,44 +62,15 @@ const businessSchema = {
   ],
   url: "https://mashtelathair.co.il",
 };
-async function buildSearchIndex(nurseryCats, gardenCats) {
-  const nursery = [];
+async function nurseryCategoriesWithImages(nurseryCats) {
+  const withProducts = new Set();
   try {
     for (const c of nurseryCats) {
       const products = await getProducts(c.id);
-      for (const p of products) {
-        const image = cardImage(p);
-        if (!image) continue;
-        nursery.push({
-          id: p.id,
-          name: p.name || "",
-          desc: p.description || "",
-          image,
-          price: cardPrice(p),
-          multi: !!(p.has_sizes && p.product_sizes && p.product_sizes.length > 1),
-          categoryId: c.id,
-          categoryName: c.name,
-        });
-      }
+      if (products.some((p) => cardImage(p))) withProducts.add(String(c.id));
     }
   } catch (e) { /* התעלמות */ }
-  const garden = [];
-  try {
-    for (const c of gardenCats) {
-      const works = await getGardenWorks(c.id);
-      for (const w of works) {
-        garden.push({
-          id: w.id,
-          caption: w.caption || "",
-          mediaType: w.media_type,
-          image: w.media_type === "image" ? w.media_url : null,
-          categoryId: c.id,
-          categoryName: c.name,
-        });
-      }
-    }
-  } catch (e) { /* התעלמות */ }
-  return { nursery, garden };
+  return withProducts;
 }
 export default async function RootLayout({ children }) {
   let nurseryCategories = [];
@@ -110,8 +81,7 @@ export default async function RootLayout({ children }) {
   try {
     gardenCategories = await getCategories("garden");
   } catch (e) { /* התעלמות */ }
-  const searchIndex = await buildSearchIndex(nurseryCategories, gardenCategories);
-  const nurseryCatIdsWithProducts = new Set(searchIndex.nursery.map((p) => String(p.categoryId)));
+  const nurseryCatIdsWithProducts = await nurseryCategoriesWithImages(nurseryCategories);
   const visibleNurseryCategories = nurseryCategories.filter((c) => nurseryCatIdsWithProducts.has(String(c.id)));
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
@@ -119,7 +89,7 @@ export default async function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: A11Y_INIT_SCRIPT }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Gveret+Levin&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }}
@@ -130,7 +100,7 @@ export default async function RootLayout({ children }) {
         <SiteStatusGate>
           <CartProvider>
             <DeliveryProvider>
-              <SiteHeader searchIndex={searchIndex} nurseryCategories={visibleNurseryCategories} gardenCategories={gardenCategories} />
+              <SiteHeader nurseryCategories={visibleNurseryCategories} gardenCategories={gardenCategories} />
               <div id="site-zoom">
                 <div id="main-content" tabIndex={-1} style={{ minHeight: "60vh" }}>{children}</div>
                 <SiteFooter />

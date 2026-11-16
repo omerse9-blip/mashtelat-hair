@@ -14,14 +14,15 @@ function SearchIcon() {
   );
 }
 
-export default function SearchOverlay({ index, categories = [], baseHref = "/", pathname = "/" }) {
+export default function SearchOverlay({ categories = [], baseHref = "/", pathname = "/" }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const inputRef = useRef(null);
   const dialogRef = useRef(null);
   const router = useRouter();
 
-  const data = index && index.nursery ? index : { nursery: [], garden: [] };
+  const [data, setData] = useState({ nursery: [], garden: [] });
+  const [loaded, setLoaded] = useState(false);
 
   // לכידת פוקוס בתוך החיפוש, סגירה ב-Esc והחזרת הפוקוס לכפתור הפתיחה (נקרא לפני אפקט הפוקוס על שדה החיפוש)
   useDialogA11y(open, dialogRef, closeSearch);
@@ -42,7 +43,15 @@ export default function SearchOverlay({ index, categories = [], baseHref = "/", 
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
-  function openSearch() { setOpen(true); }
+  function openSearch() {
+    setOpen(true);
+    if (loaded) return;
+    setLoaded(true);
+    fetch("/api/search")
+      .then((r) => r.json())
+      .then((d) => { if (d && d.nursery) setData(d); })
+      .catch(() => setLoaded(false));
+  }
 
   function closeSearch() {
     if (window.history.state && window.history.state.search) {

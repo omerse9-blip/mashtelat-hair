@@ -12,6 +12,11 @@ const SESSION_COOKIE = "mh_sid";
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 365; // שנה - מזהה מבקר קבוע
 const SESSION_MAX_AGE = 60 * 30; // חצי שעה ללא פעילות = ביקור חדש
 
+// סורקים (גוגל, בינג, תצוגות שיתוף ועוד) - לא נספרים כמבקרים
+function isCrawlerUA(ua) {
+  return /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|preview|lighthouse|pagespeed|headless|monitor|uptime/i.test(ua || "");
+}
+
 function isMobileUA(ua) {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(ua || "");
 }
@@ -60,7 +65,7 @@ function isBotScan(pathname) {
 export function middleware(request, event) {
   const res = NextResponse.next();
 
-  if (isBotScan(request.nextUrl.pathname)) {
+  if (isBotScan(request.nextUrl.pathname) || isCrawlerUA(request.headers.get("user-agent"))) {
     return res;
   }
 

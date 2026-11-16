@@ -7,6 +7,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import DeliveryPicker from "./DeliveryPicker";
 import ParallaxHero from "./ParallaxHero";
 import { getDeliveryNotices } from "../lib/siteData";
+import { productPath } from "../lib/slug";
 
 const SORT_OPTIONS = [
   { key: "best", label: "הנמכרים ביותר" },
@@ -140,7 +141,7 @@ export default function NurseryCatalog({ categories, productsByCat, heroImageUrl
 
                 <div className="catalog-grid">
                   {sorted.map((p) => (
-                    <ProductCard key={p.id} product={p} activeId={c.id} highlight={String(p.id) === focusId} />
+                    <ProductCard key={p.id} product={p} highlight={String(p.id) === focusId} />
                   ))}
                 </div>
               </>
@@ -186,7 +187,7 @@ export default function NurseryCatalog({ categories, productsByCat, heroImageUrl
   );
 }
 
-function ProductCard({ product, activeId, highlight }) {
+function ProductCard({ product, highlight }) {
   const img = product._image;
   const price = product._price;
   const multi = product._multi;
@@ -194,7 +195,7 @@ function ProductCard({ product, activeId, highlight }) {
   const inStock = product.in_stock;
   const availableFrom = product._availableFrom;
 
-  const productHref = `/product/${product.id}?from=${encodeURIComponent(String(activeId))}`;
+  const productHref = productPath(product.id, product.name);
 
   return (
     <Link
@@ -214,7 +215,7 @@ function ProductCard({ product, activeId, highlight }) {
         {img ? (
           <Image
             src={img}
-            alt=""
+            alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, 220px"
             style={{ objectFit: "cover" }}

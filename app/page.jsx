@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { getCategories, getProducts, getFeaturedProducts, getActiveHeroImage, getSubscriptionMinPrice, cardPrice, cardImage, cardSizeText, availableFromShort } from "../lib/siteData";
 import NurseryCatalog from "../components/NurseryCatalog";
+export const revalidate = 60;
+
 export const metadata = {
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
   description: "משתלה באילת עם עציצים, זרי פרחים, צמחי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית. הזמינו אונליין עכשיו.",

@@ -164,7 +164,7 @@ function GroupCard({ group, onOpen }) {
   return (
     <button style={{ ...card, cursor: "pointer", textAlign: "inherit" }} onClick={onOpen}>
       <div style={cardImg}>
-        {img ? <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={cardImgEmpty} aria-hidden="true">🪴</div>}
+        {img ? <img src={img} alt={group.category_name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <div style={cardImgEmpty} aria-hidden="true">🪴</div>}
       </div>
       <div style={cardBody}>
         <p style={groupName}>{group.category_name}</p>

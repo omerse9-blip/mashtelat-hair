@@ -1,4 +1,5 @@
 import { getAllProductIds } from "../lib/siteData";
+import { productPath } from "../lib/slug";
 
 const BASE_URL = "https://mashtelathair.co.il";
 
@@ -10,9 +11,9 @@ export default async function sitemap() {
 
   let productRoutes = [];
   try {
-    const ids = await getAllProductIds();
-    productRoutes = ids.map((id) => ({
-      url: `${BASE_URL}/product/${id}`,
+    const products = await getAllProductIds();
+    productRoutes = products.map((p) => ({
+      url: `${BASE_URL}${productPath(p.id, p.name)}`,
       changeFrequency: "weekly",
       priority: 0.7,
     }));

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { getCategories, getGardenWorks } from "../../lib/siteData";
 import GardenGallery from "../../components/GardenGallery";
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata = {
   title: "גינון העיר — הקמת גינות, תחזוקה ושדרוג באילת",
@@ -24,6 +24,7 @@ export default async function GardenPage() {
   }
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px 56px" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Gveret+Levin&display=swap" rel="stylesheet" />
       <section style={{ textAlign: "center", marginBottom: 44 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 18 }}>
           <Image

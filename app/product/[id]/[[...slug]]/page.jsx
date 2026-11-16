@@ -1,20 +1,82 @@
 import Link from "next/link";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   getProductById, getAllProductIds, getAddonsForCategory, cardPrice, cardImage,
   getSubscriptionDiscounts, getSubscriptionWindowOptions, getSubscriptionFlowerPool, getDeliveryFees,
-} from "../../../lib/siteData";
-import ProductView from "../../../components/ProductView";
-import SubscriptionProductView from "../../../components/SubscriptionProductView";
+} from "../../../../lib/siteData";
+import { slugify, productPath } from "../../../../lib/slug";
+import ProductView from "../../../../components/ProductView";
+import SubscriptionProductView from "../../../../components/SubscriptionProductView";
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   try {
-    const ids = await getAllProductIds();
-    return ids.map((id) => ({ id }));
+    const products = await getAllProductIds();
+    return products.map((p) => {
+      const slug = slugify(p.name);
+      return { id: p.id, slug: slug ? [slug] : [] };
+    });
   } catch {
     return [];
   }
+}
+
+
+function buildJsonLd(product, catName, path) {
+  const url = `https://mashtelathair.co.il${path}`;
+  const image = cardImage(product);
+  const sizes = product.has_sizes && product.product_sizes?.length ? product.product_sizes : null;
+  const prices = sizes
+    ? sizes.map((x) => Number(x.price)).filter((n) => Number.isFinite(n))
+    : product.single_price != null ? [Number(product.single_price)] : [];
+  const availability = product.in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
+
+  const data = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Product",
+        name: product.name,
+        ...(image ? { image: [image] } : {}),
+        ...(product.description ? { description: product.description } : {}),
+        ...(catName ? { category: catName } : {}),
+        sku: product.id,
+        url,
+        ...(prices.length
+          ? {
+              offers:
+                prices.length > 1 && Math.min(...prices) !== Math.max(...prices)
+                  ? {
+                      "@type": "AggregateOffer",
+                      priceCurrency: "ILS",
+                      lowPrice: Math.min(...prices),
+                      highPrice: Math.max(...prices),
+                      offerCount: prices.length,
+                      availability,
+                      url,
+                    }
+                  : {
+                      "@type": "Offer",
+                      priceCurrency: "ILS",
+                      price: Math.min(...prices),
+                      availability,
+                      url,
+                    },
+            }
+          : {}),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "משתלת העיר", item: "https://mashtelathair.co.il/" },
+          ...(catName ? [{ "@type": "ListItem", position: 2, name: catName }] : []),
+          { "@type": "ListItem", position: catName ? 3 : 2, name: product.name, item: url },
+        ],
+      },
+    ],
+  };
+  return data;
 }
 
 export async function generateMetadata({ params }) {
@@ -30,11 +92,11 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
-    alternates: { canonical: `/product/${params.id}` },
+    alternates: { canonical: productPath(product.id, product.name) },
     openGraph: {
       title,
       description,
-      url: `https://mashtelathair.co.il/product/${params.id}`,
+      url: `https://mashtelathair.co.il${productPath(product.id, product.name)}`,
       siteName: "משתלת העיר",
       locale: "he_IL",
       type: "website",
@@ -45,16 +107,28 @@ export async function generateMetadata({ params }) {
 
 export default async function ProductPage({ params }) {
   const product = await getProductById(params.id);
-  if (!product) {
-    return (
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 20px", textAlign: "center" }}>
-        <p style={{ fontSize: 20, marginBottom: 16 }}>המוצר לא נמצא.</p>
-        <Link href="/" style={{ color: "var(--green)", fontWeight: 600 }}>חזרה למשתלה</Link>
-      </main>
-    );
+  if (!product) notFound();
+
+  // כתובת ישנה או שם שהשתנה - הפניה קבועה לכתובת הנכונה
+  const canonicalPath = productPath(product.id, product.name);
+  let requestedSlug = "";
+  try {
+    requestedSlug = params.slug?.[0] ? decodeURIComponent(params.slug[0]).normalize("NFC") : "";
+  } catch {
+    requestedSlug = "";
+  }
+  if (requestedSlug !== slugify(product.name) || (params.slug || []).length > 1) {
+    permanentRedirect(canonicalPath);
   }
 
   const catName = product.categories?.name || "";
+  const jsonLd = buildJsonLd(product, catName, canonicalPath);
+  const jsonLdScript = (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+    />
+  );
 
   if (product.is_subscription) {
     let discounts = [];
@@ -78,6 +152,7 @@ export default async function ProductPage({ params }) {
 
     return (
       <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
+        {jsonLdScript}
         <nav style={{ fontSize: 14, marginBottom: 24, color: "var(--muted)", display: "flex", flexWrap: "wrap", gap: 8 }}>
           <Link href="/" style={{ color: "var(--muted)" }}>דף הבית</Link>
           {catName ? (
@@ -106,6 +181,7 @@ export default async function ProductPage({ params }) {
 
   return (
     <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
+      {jsonLdScript}
       <Link
         href={catName ? `/?focus=${encodeURIComponent(product.id)}` : "/"}
         style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 17, fontWeight: 700, color: "var(--green)", marginBottom: 14 }}

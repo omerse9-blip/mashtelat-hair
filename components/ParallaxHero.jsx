@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 export default function ParallaxHero({ children, imageUrl, mediaType = "image" }) {
   const outerRef = useRef(null);
@@ -112,11 +113,16 @@ export default function ParallaxHero({ children, imageUrl, mediaType = "image" }
           tabIndex={-1}
         />
       ) : (
-        <div
-          ref={bgRef}
-          className="parallax-hero-bg"
-          style={{ backgroundImage: `url(${imageUrl})` }}
-        />
+        <div ref={bgRef} className="parallax-hero-bg">
+          <Image
+            src={imageUrl}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectFit: "cover", objectPosition: "center center" }}
+          />
+        </div>
       )}
       <div className="parallax-hero-scrim" />
       <div className="parallax-hero-content">{children}</div>
