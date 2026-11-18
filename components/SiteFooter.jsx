@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { categoryPath } from "../lib/slug";
 
 const PHONE = "0533669089";
 const PHONE_DISPLAY = "053-366-9089";
@@ -97,7 +98,7 @@ function Social(props) {
   );
 }
 
-export default function SiteFooter() {
+export default function SiteFooter({ categories = [] }) {
   const grid = {
     maxWidth: 1100, margin: "0 auto", padding: "64px 20px", display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 40,
@@ -123,6 +124,15 @@ export default function SiteFooter() {
           <h2 style={colHeading}>משתלת העיר</h2>
           <p style={bodyText}>יוזמה 6, אזור התעשייה, אילת</p>
           <a href={MAPS} target="_blank" rel="noopener noreferrer" style={navBtn} aria-label="ניווט למשתלה במפות (נפתח בלשונית חדשה)">ניווט למשתלה</a>
+          {categories.length > 0 ? (
+            <nav aria-label="מחלקות המשתלה" style={{ marginTop: 18 }}>
+              {categories.map((c) => (
+                <p key={c.id} style={{ ...bodyText, marginBottom: 6 }}>
+                  <Link href={categoryPath(c.id, c.name)} style={navLink}>{c.name}</Link>
+                </p>
+              ))}
+            </nav>
+          ) : null}
         </div>
 
         <div>

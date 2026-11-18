@@ -1,28 +1,14 @@
-import { Suspense } from "react";
-import { getCategories, getProducts, getFeaturedProducts, getActiveHeroImage, getSubscriptionMinPrice, cardPrice, cardImage, cardSizeText, availableFromShort } from "../lib/siteData";
+import { getCategories, getProducts, getFeaturedProducts, getActiveHeroImage, getSubscriptionMinPrice } from "../lib/siteData";
+import { toCard } from "../lib/cards";
 import NurseryCatalog from "../components/NurseryCatalog";
+import HomeSeoContent from "../components/HomeSeoContent";
 export const revalidate = 60;
 
 export const metadata = {
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
-  description: "משתלה באילת עם עציצים, זרי פרחים, צמחי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית. הזמינו אונליין עכשיו.",
+  description: "משתלה באילת: זרי פרחים, צמחי בית, כדים, בלונים ויין למתנה. משלוח באילת ואיסוף עצמי מיוזמה 6, אזור התעשייה. הזמינו אונליין.",
   alternates: { canonical: "/" },
 };
-function toCard(p, subscriptionMinPrice) {
-  const isSubscription = !!p.is_subscription;
-  return {
-    id: p.id,
-    name: p.name,
-    in_stock: p.in_stock,
-    _image: cardImage(p),
-    _price: isSubscription ? subscriptionMinPrice : cardPrice(p),
-    _sizeText: cardSizeText(p),
-    _hasSizes: !!(p.has_sizes && p.product_sizes?.length),
-    _multi: !!(p.has_sizes && p.product_sizes?.length > 1),
-    _isSubscription: isSubscription,
-    _availableFrom: availableFromShort(p),
-  };
-}
 export default async function NurseryPage() {
   let categories = [];
   const productsByCat = {};
@@ -50,9 +36,8 @@ export default async function NurseryPage() {
   }
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px 56px" }}>
-      <Suspense fallback={null}>
-        <NurseryCatalog categories={categories} productsByCat={productsByCat} heroImageUrl={heroImageUrl} heroMediaType={heroMediaType} />
-      </Suspense>
+      <NurseryCatalog categories={categories} productsByCat={productsByCat} heroImageUrl={heroImageUrl} heroMediaType={heroMediaType} />
+      <HomeSeoContent categories={categories.filter((c) => !c.is_featured)} />
     </main>
   );
 }

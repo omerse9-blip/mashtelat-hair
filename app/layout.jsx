@@ -12,7 +12,7 @@ import { getCategories, getProducts, cardImage } from "../lib/siteData";
 export const metadata = {
   metadataBase: new URL("https://mashtelathair.co.il"),
   title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
-  description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
+  description: "משתלה באילת: זרי פרחים, צמחי בית, כדים, בלונים ויין למתנה. משלוח באילת ואיסוף עצמי מיוזמה 6, אזור התעשייה. הזמנה אונליין.",
   icons: {
     icon: "/logo-mashtela.png",
     shortcut: "/logo-mashtela.png",
@@ -20,7 +20,7 @@ export const metadata = {
   },
   openGraph: {
     title: "משתלה באילת - זרי פרחים, עציצים וצמחי נוי | משתלת העיר",
-    description: "משתלה באילת עם עציצים, זרי פרחים, עצי נוי וכלי גינון. איסוף עצמי ומשלוח עד הבית.",
+    description: "משתלה באילת: זרי פרחים, צמחי בית, כדים, בלונים ויין למתנה. משלוח באילת ואיסוף עצמי מיוזמה 6, אזור התעשייה. הזמנה אונליין.",
     url: "https://mashtelathair.co.il",
     siteName: "משתלת העיר",
     locale: "he_IL",
@@ -61,6 +61,24 @@ const businessSchema = {
     },
   ],
   url: "https://mashtelathair.co.il",
+  "@id": "https://mashtelathair.co.il/#business",
+  description: "משתלה באילת: זרי פרחים, צמחי בית, כדים, בלונים ויין למתנה. משלוח באילת ואיסוף עצמי מהמשתלה, הזמנה אונליין.",
+  areaServed: { "@type": "City", name: "אילת" },
+  hasMap: "https://www.google.com/maps/place/?q=place_id:ChIJAYo6AjhxABURzvN46FMox1A",
+  sameAs: [
+    "https://www.instagram.com/mishtelet_city",
+    "https://www.facebook.com/share/1BCkoPJAca/",
+  ],
+  potentialAction: { "@type": "OrderAction", target: "https://mashtelathair.co.il/" },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "משתלת העיר",
+  url: "https://mashtelathair.co.il",
+  inLanguage: "he-IL",
+  publisher: { "@id": "https://mashtelathair.co.il/#business" },
 };
 async function nurseryCategoriesWithImages(nurseryCats) {
   const withProducts = new Set();
@@ -94,6 +112,10 @@ export default async function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
       </head>
       <body>
         <a href="#main-content" className="skip-link">דילוג לתוכן הראשי</a>
@@ -103,7 +125,7 @@ export default async function RootLayout({ children }) {
               <SiteHeader nurseryCategories={visibleNurseryCategories} gardenCategories={gardenCategories} />
               <div id="site-zoom">
                 <div id="main-content" tabIndex={-1} style={{ minHeight: "60vh" }}>{children}</div>
-                <SiteFooter />
+                <SiteFooter categories={visibleNurseryCategories.filter((c) => !c.is_featured)} />
               </div>
             </DeliveryProvider>
           </CartProvider>

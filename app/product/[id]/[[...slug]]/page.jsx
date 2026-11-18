@@ -28,8 +28,8 @@ function buildJsonLd(product, catName, path) {
   const image = cardImage(product);
   const sizes = product.has_sizes && product.product_sizes?.length ? product.product_sizes : null;
   const prices = sizes
-    ? sizes.map((x) => Number(x.price)).filter((n) => Number.isFinite(n))
-    : product.single_price != null ? [Number(product.single_price)] : [];
+    ? sizes.map((x) => Number(x.price)).filter((n) => Number.isFinite(n) && n > 0)
+    : product.single_price != null && Number(product.single_price) > 0 ? [Number(product.single_price)] : [];
   const availability = product.in_stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
 
   const data = {
@@ -87,7 +87,7 @@ export async function generateMetadata({ params }) {
   const title = `${product.name}${cat ? ` — ${cat}` : ""} | משתלת העיר אילת`;
   const description = product.description
     ? product.description.slice(0, 150)
-    : `${product.name} למכירה במשתלת העיר אילת${price != null ? `. החל מ-₪${price}` : ""}.`;
+    : `${product.name} במשתלת העיר אילת, להזמנה אונליין עם משלוח באילת או איסוף עצמי${price != null && price > 0 ? `. החל מ-₪${price}` : ""}.`;
   const image = cardImage(product);
   return {
     title,
