@@ -4,7 +4,7 @@ import {
   getProductById, getAllProductIds, getAddonsForCategory, cardPrice, cardImage,
   getSubscriptionDiscounts, getSubscriptionWindowOptions, getSubscriptionFlowerPool, getDeliveryFees,
 } from "../../../../lib/siteData";
-import { slugify, productPath } from "../../../../lib/slug";
+import { slugify, productPath, categoryPath } from "../../../../lib/slug";
 import ProductView from "../../../../components/ProductView";
 import SubscriptionProductView from "../../../../components/SubscriptionProductView";
 
@@ -23,7 +23,7 @@ export async function generateStaticParams() {
 }
 
 
-function buildJsonLd(product, catName, path) {
+function buildJsonLd(product, catName, path, catId) {
   const url = `https://mashtelathair.co.il${path}`;
   const image = cardImage(product);
   const sizes = product.has_sizes && product.product_sizes?.length ? product.product_sizes : null;
@@ -70,7 +70,7 @@ function buildJsonLd(product, catName, path) {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "משתלת העיר", item: "https://mashtelathair.co.il/" },
-          ...(catName ? [{ "@type": "ListItem", position: 2, name: catName }] : []),
+          ...(catName ? [{ "@type": "ListItem", position: 2, name: catName, item: catId ? `https://mashtelathair.co.il${categoryPath(catId, catName)}` : url }] : []),
           { "@type": "ListItem", position: catName ? 3 : 2, name: product.name, item: url },
         ],
       },
@@ -122,7 +122,7 @@ export default async function ProductPage({ params }) {
   }
 
   const catName = product.categories?.name || "";
-  const jsonLd = buildJsonLd(product, catName, canonicalPath);
+  const jsonLd = buildJsonLd(product, catName, canonicalPath, product.categories?.id);
   const jsonLdScript = (
     <script
       type="application/ld+json"
